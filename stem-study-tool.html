@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revaix Study — Free AI Study Notes, Practice Exams & Exam Marking Tool</title>
+<meta name="description" content="Revaix Study uses AI to instantly summarise your lecture slides, class notes or textbook into study notes, flashcards, practice exams and auto-marking. Free for high school and university students.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c26; --border:#2a2a3a;
+    --accent:#6ee7b7; --accent2:#818cf8; --accent3:#fbbf24;
+    --text:#e8e8f0; --muted:#6b6b80; --danger:#f87171;
+  }
+  body.light { --bg:#f4f4f8; --surface:#ffffff; --surface2:#ebebf2; --border:#d4d4e0; --text:#1a1a2e; --muted:#70708a; }
+  body.light nav { background: rgba(244,244,248,0.92); }
+  body.light::before { background-image: linear-gradient(rgba(110,231,183,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,183,0.06) 1px,transparent 1px); }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden;transition:background 0.2s,color 0.2s;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(110,231,183,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,183,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 16px;}
+  .nav-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:2px;height:54px;}
+  .nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-0.02em;white-space:nowrap;margin-right:8px;}
+  .nav-logo span{color:var(--accent);}
+  .nav-link{background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.7rem;padding:5px 9px;border-radius:7px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .nav-link:hover{color:var(--text);background:var(--surface2);}
+  .nav-link.active{color:var(--text);background:var(--surface2);border:1px solid var(--border);}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+  .nav-settings-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;border-radius:7px;font-size:0.95rem;transition:all 0.15s;}
+  .nav-settings-btn:hover{color:var(--text);background:var(--surface2);}
+  .nav-badge{font-size:0.55rem;background:rgba(110,231,183,0.1);color:var(--accent);border:1px solid rgba(110,231,183,0.2);padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;}
+
+  /* SETTINGS */
+  .settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;backdrop-filter:blur(4px);}
+  .settings-overlay.show{display:block;}
+  .settings-panel{position:fixed;top:0;right:0;width:290px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:201;padding:24px 20px;overflow-y:auto;transform:translateX(100%);transition:transform 0.25s ease;}
+  .settings-panel.show{transform:translateX(0);}
+  .settings-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+  .settings-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;}
+  .settings-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:3px;}
+  .settings-close:hover{color:var(--text);}
+  .settings-sec{margin-bottom:20px;}
+  .settings-sec-label{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;display:block;}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+  .settings-row-label{font-size:0.76rem;color:var(--text);}
+  .toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:100px;cursor:pointer;transition:0.2s;}
+  .toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s;}
+  input:checked+.toggle-slider{background:var(--accent);}
+  input:checked+.toggle-slider:before{transform:translateX(18px);}
+  .text-size-control{display:flex;align-items:center;gap:8px;width:100%;}
+  .text-size-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:0.95rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+  .text-size-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .text-size-display{flex:1;text-align:center;font-size:0.75rem;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px;}
+  .accent-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .accent-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
+  .accent-dot.active{border-color:var(--text);transform:scale(1.15);}
+  .font-sel{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-family:'DM Mono',monospace;font-size:0.76rem;cursor:pointer;appearance:none;}
+
+  /* PAGES */
+  .page{display:none;} .page.active{display:block;}
+  .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* HERO */
+  .hero{margin-bottom:24px;}
+  .hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,3.5vw,2.5rem);line-height:1.1;letter-spacing:-0.03em;margin-bottom:10px;}
+  .hero h1 .hl{color:var(--accent);} .hero h1 .hl2{color:var(--accent2);} .hero h1 .hl3{color:var(--accent3);}
+  .hero p{color:var(--muted);font-size:0.8rem;line-height:1.7;max-width:560px;}
+
+  /* OPTION ROWS */
+  .opt-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+  .opt-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--muted);padding:7px 13px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.72rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .opt-btn:hover{border-color:var(--accent);color:var(--text);}
+  .opt-btn.active{background:rgba(110,231,183,0.08);border-color:var(--accent);color:var(--accent);}
+  .opt-btn.active-p{background:rgba(129,140,248,0.08);border-color:var(--accent2);color:var(--accent2);}
+  .opt-btn.active-y{background:rgba(251,191,36,0.08);border-color:var(--accent3);color:var(--accent3);}
+
+  /* FIELD */
+  .field-label{display:block;font-size:0.63rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+
+  /* UPLOAD */
+  .upload-zone{border:1.5px dashed var(--border);border-radius:12px;padding:28px 22px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);margin-bottom:10px;position:relative;overflow:hidden;}
+  .upload-zone::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(110,231,183,0.05) 0%,transparent 70%);pointer-events:none;}
+  .upload-zone.v2::before{background:radial-gradient(ellipse at 50% 0%,rgba(129,140,248,0.05) 0%,transparent 70%);}
+  .upload-zone.v3::before{background:radial-gradient(ellipse at 50% 0%,rgba(251,191,36,0.05) 0%,transparent 70%);}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(110,231,183,0.03);}
+  .upload-zone.v2:hover,.upload-zone.v2.drag{border-color:var(--accent2);}
+  .upload-zone.v3:hover,.upload-zone.v3.drag{border-color:var(--accent3);}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-icon{font-size:1.5rem;margin-bottom:6px;display:block;}
+  .upload-zone h3{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;margin-bottom:3px;}
+  .upload-zone p{color:var(--muted);font-size:0.7rem;}
+
+  /* FILE PILL */
+  .fp{display:none;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 13px;margin-bottom:10px;}
+  .fp.show{display:flex;}
+  .fp-ic{width:26px;height:26px;background:rgba(251,191,36,0.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;}
+  .fp-ic.p{background:rgba(129,140,248,0.1);}
+  .fp-info{flex:1;min-width:0;}
+  .fp-name{font-size:0.71rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fp-size{font-size:0.61rem;color:var(--muted);margin-top:1px;}
+  .fp-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:3px;transition:color 0.15s;flex-shrink:0;}
+  .fp-rm:hover{color:var(--danger);}
+
+  /* MULTI UPLOAD GRID */
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
+  @media(max-width:600px){.upload-grid{grid-template-columns:1fr;}}
+
+  /* BUTTONS */
+  .btn{width:100%;padding:12px;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em;}
+  .btn-g{background:var(--accent);color:#0a0a0f;} .btn-g:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(110,231,183,0.2);}
+  .btn-p{background:var(--accent2);color:#fff;} .btn-p:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(129,140,248,0.2);}
+  .btn-y{background:var(--accent3);color:#0a0a0f;} .btn-y:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(251,191,36,0.2);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+  .btn-reset{background:none;border:1.5px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:7px;font-family:'DM Mono',monospace;font-size:0.67rem;cursor:pointer;transition:all 0.15s;}
+  .btn-reset:hover{border-color:var(--text);color:var(--text);}
+  .btn-dl{background:none;border:1.5px solid var(--accent);color:var(--accent);padding:7px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .btn-dl:hover{background:rgba(110,231,183,0.08);}
+
+  /* LOADING */
+  .loading{display:none;text-align:center;padding:48px 20px;} .loading.show{display:block;}
+  .spinner{width:38px;height:38px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+  .spinner.p{border-top-color:var(--accent2);} .spinner.y{border-top-color:var(--accent3);}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading p{font-size:0.77rem;color:var(--muted);}
+  .lstep{color:var(--accent);display:block;margin-top:4px;font-size:0.69rem;}
+  .lstep.p{color:var(--accent2);} .lstep.y{color:var(--accent3);}
+
+  /* RESULTS */
+  .results{display:none;animation:fu 0.4s ease;} .results.show{display:block;}
+  @keyframes fu{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  .res-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:8px;flex-wrap:wrap;}
+  .res-hdr h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;}
+  .res-hdr-actions{display:flex;gap:6px;align-items:center;}
+
+  /* TABS */
+  .tabs{display:flex;gap:2px;background:var(--surface);border-radius:9px;padding:3px;margin-bottom:14px;border:1px solid var(--border);flex-wrap:wrap;}
+  .tab{flex:1;min-width:60px;padding:7px 3px;text-align:center;font-family:'DM Mono',monospace;font-size:0.62rem;cursor:pointer;border-radius:6px;border:none;background:none;color:var(--muted);transition:all 0.15s;white-space:nowrap;}
+  .tab.active{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+
+  /* CONTENT CARDS */
+  .cc{display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;line-height:1.8;font-size:0.81rem;}
+  .cc.active{display:block;}
+  .cc h3{font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;color:var(--accent);margin:14px 0 5px;}
+  .cc h3:first-child{margin-top:0;}
+  .cc p{color:var(--text);margin-bottom:5px;}
+  .cc ul,.cc ol{padding-left:16px;color:var(--text);}
+  .cc li{margin-bottom:3px;}
+
+  /* FLASHCARDS */
+  .fc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:500px){.fc-grid{grid-template-columns:1fr;}}
+  .flashcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all 0.2s;position:relative;min-height:90px;}
+  .flashcard:hover{border-color:var(--accent2);}
+  .fc-front{font-size:0.81rem;color:var(--text);line-height:1.5;font-weight:600;}
+  .fc-back{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.77rem;color:var(--accent);line-height:1.5;}
+  .fc-back.show{display:block;}
+  .fc-hint{font-size:0.58rem;color:var(--muted);position:absolute;bottom:8px;right:12px;}
+
+  /* Q ITEMS */
+  .qi{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 15px;margin-bottom:7px;}
+  .qnum{font-size:0.57rem;color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+  .qtag{font-size:0.55rem;background:rgba(129,140,248,0.1);color:var(--accent2);border:1px solid rgba(129,140,248,0.2);padding:2px 7px;border-radius:100px;margin-left:6px;}
+  .qtext{font-size:0.81rem;color:var(--text);margin-bottom:7px;line-height:1.6;}
+  .show-ans{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 9px;border-radius:5px;font-family:'DM Mono',monospace;font-size:0.64rem;cursor:pointer;transition:all 0.15s;}
+  .show-ans:hover{border-color:var(--accent2);color:var(--accent2);}
+  .ans-text{display:none;margin-top:7px;padding-top:7px;border-top:1px solid var(--border);color:var(--accent);font-size:0.76rem;line-height:1.6;}
+  .ans-text.show{display:block;}
+
+  /* SECTION BLOCKS */
+  .sb{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 15px;margin-bottom:7px;}
+  .slabel{font-size:0.57rem;color:var(--accent3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;}
+
+  /* FORMULA BLOCKS */
+  .formula-block{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:9px;padding:12px 15px;margin-bottom:7px;}
+  .formula-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;color:var(--accent2);margin-bottom:6px;}
+  .formula-eq{font-size:0.88rem;color:var(--accent3);font-family:'DM Mono',monospace;background:rgba(251,191,36,0.06);padding:8px 12px;border-radius:6px;margin-bottom:8px;}
+  .formula-step{font-size:0.77rem;color:var(--text);line-height:1.6;margin-bottom:3px;padding-left:10px;border-left:2px solid var(--border);}
+
+  /* MINI TEST */
+  .tq{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 15px;margin-bottom:10px;}
+  textarea{width:100%;margin-top:7px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.76rem;padding:8px 10px;resize:vertical;min-height:68px;line-height:1.6;transition:border-color 0.15s;}
+  textarea:focus{outline:none;border-color:var(--accent2);}
+  textarea::placeholder{color:var(--muted);}
+  .mr{display:none;margin-top:7px;padding:8px 10px;border-radius:6px;font-size:0.76rem;line-height:1.6;}
+  .mr.ok{background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.2);color:var(--accent);display:block;}
+  .mr.half{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:var(--accent3);display:block;}
+  .mr.no{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);display:block;}
+  .btn-sub{width:100%;padding:10px;background:var(--accent2);color:#fff;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.84rem;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+  .btn-sub:hover{opacity:0.85;transform:translateY(-1px);}
+  .btn-sub:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .score-banner{display:none;text-align:center;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;margin-bottom:12px;}
+  .score-banner.show{display:block;}
+  .score-big{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent);}
+  .score-sub{font-size:0.67rem;color:var(--muted);margin-top:2px;}
+
+  /* EXAM READINESS */
+  .readiness-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;}
+  .readiness-label{font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+  .readiness-bar-bg{background:var(--border);border-radius:100px;height:10px;overflow:hidden;margin-bottom:6px;}
+  .readiness-bar{height:100%;border-radius:100px;transition:width 1s ease;background:linear-gradient(90deg,var(--danger),var(--accent3),var(--accent));}
+  .readiness-pct{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent);}
+  .readiness-desc{font-size:0.73rem;color:var(--muted);margin-top:3px;}
+
+  /* MODE SELECTOR */
+  .mode-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:16px;}
+  @media(max-width:560px){.mode-row{grid-template-columns:1fr;}}
+  .mode-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:11px 9px;cursor:pointer;text-align:left;transition:all 0.15s;display:flex;flex-direction:column;gap:3px;}
+  .mode-btn:hover{border-color:var(--accent2);}
+  .mode-btn.active{border-color:var(--accent2);background:rgba(129,140,248,0.07);}
+  .mode-icon{font-size:1rem;}
+  .mode-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;color:var(--text);}
+  .mode-desc{font-size:0.61rem;color:var(--muted);line-height:1.3;}
+
+  /* EXAM DISPLAY */
+  .exam-meta{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 15px;margin-bottom:14px;font-size:0.77rem;line-height:1.7;}
+  .exam-meta strong{color:var(--accent2);font-family:'Syne',sans-serif;font-size:0.9rem;}
+  .exam-q{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:15px 17px;margin-bottom:11px;}
+  .eq-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+  .eq-num{font-size:0.59rem;color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase;}
+  .eq-marks{font-size:0.59rem;color:var(--accent3);background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15);padding:2px 7px;border-radius:100px;}
+  .eq-text{font-size:0.82rem;color:var(--text);line-height:1.7;margin-bottom:9px;}
+  .eq-part{margin-top:5px;padding-left:9px;border-left:2px solid var(--border);margin-bottom:3px;}
+  .exam-score{display:none;text-align:center;padding:18px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;margin-bottom:16px;}
+  .exam-score.show{display:block;}
+  .exam-score-big{font-family:'Syne',sans-serif;font-size:2.3rem;font-weight:800;color:var(--accent2);}
+  .exam-score-sub{font-size:0.68rem;color:var(--muted);margin-top:3px;}
+  .emr{display:none;margin-top:7px;padding:8px 11px;border-radius:6px;font-size:0.76rem;line-height:1.7;}
+  .emr.ok{background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.2);color:var(--accent);display:block;}
+  .emr.half{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:var(--accent3);display:block;}
+  .emr.no{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);display:block;}
+
+  /* MARK PAGE */
+  .mark-q{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:15px 17px;margin-bottom:11px;}
+  .mark-q-text{font-size:0.82rem;color:var(--text);line-height:1.7;margin-bottom:9px;padding:9px 11px;background:var(--surface2);border-radius:7px;border-left:3px solid var(--accent3);}
+  .mark-feedback{display:none;margin-top:9px;padding:10px 12px;border-radius:7px;font-size:0.78rem;line-height:1.7;}
+  .mark-feedback.ok{background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.2);color:var(--accent);display:block;}
+  .mark-feedback.half{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:var(--accent3);display:block;}
+  .mark-feedback.no{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);display:block;}
+  .error-tag{display:inline-block;font-size:0.58rem;padding:2px 8px;border-radius:100px;margin-right:4px;margin-bottom:4px;font-weight:600;letter-spacing:0.04em;}
+  .error-tag.conceptual{background:rgba(248,113,113,0.12);color:var(--danger);border:1px solid rgba(248,113,113,0.25);}
+  .error-tag.algebra{background:rgba(251,191,36,0.12);color:var(--accent3);border:1px solid rgba(251,191,36,0.25);}
+  .error-tag.missing{background:rgba(129,140,248,0.12);color:var(--accent2);border:1px solid rgba(129,140,248,0.25);}
+  .error-tag.correct{background:rgba(110,231,183,0.12);color:var(--accent);border:1px solid rgba(110,231,183,0.25);}
+  .step-breakdown{margin-top:8px;padding:10px 12px;background:var(--surface2);border-radius:7px;font-size:0.75rem;line-height:1.7;}
+  .step-breakdown-title{font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+
+  /* ASSIGNMENT SIDE BY SIDE */
+  .assignment-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+  @media(max-width:700px){.assignment-split{grid-template-columns:1fr;}}
+  .assignment-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .assignment-panel-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+  .assignment-panel-body{padding:14px;max-height:600px;overflow-y:auto;font-size:0.8rem;line-height:1.8;color:var(--text);}
+  .para-analysis{border-radius:9px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);background:var(--surface2);}
+  .para-label{font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+  .para-quote{font-size:0.76rem;color:var(--muted);font-style:italic;margin-bottom:8px;padding-left:8px;border-left:2px solid var(--border);}
+  .para-good{background:rgba(110,231,183,0.06);border:1px solid rgba(110,231,183,0.15);border-radius:7px;padding:8px 10px;margin-bottom:6px;font-size:0.77rem;color:var(--accent);}
+  .para-bad{background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:7px;padding:8px 10px;font-size:0.77rem;color:var(--danger);}
+  .para-good-label{font-size:0.58rem;font-weight:600;margin-bottom:3px;letter-spacing:0.05em;text-transform:uppercase;}
+  .para-bad-label{font-size:0.58rem;font-weight:600;margin-bottom:3px;letter-spacing:0.05em;text-transform:uppercase;color:var(--danger);}
+
+  /* ERR */
+  .err{display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);padding:9px 13px;border-radius:8px;font-size:0.76rem;margin-bottom:12px;}
+  .err.show{display:block;}
+
+  /* LANG SELECT */
+  .lang-sel{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.75rem;cursor:pointer;appearance:none;min-width:130px;}
+  .lang-sel:focus{outline:none;border-color:var(--accent);}
+  .lang-sel option{background:#13131a;}
+
+  footer{margin-top:44px;text-align:center;color:var(--muted);font-size:0.62rem;letter-spacing:0.05em;}
+</style>
+</head>
+<body>
+
+<!-- SETTINGS -->
+<div class="settings-overlay" id="settingsOverlay"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-header"><h3>Settings</h3><button class="settings-close" id="settingsClose">✕</button></div>
+  <div class="settings-sec">
+    <span class="settings-sec-label">Appearance</span>
+    <div class="settings-row"><span class="settings-row-label">Light mode</span><label class="toggle-switch"><input type="checkbox" id="lightModeToggle"><span class="toggle-slider"></span></label></div>
+    <div class="settings-row"><span class="settings-row-label">Reduce motion</span><label class="toggle-switch"><input type="checkbox" id="reduceMotionToggle"><span class="toggle-slider"></span></label></div>
+    <div class="settings-row"><span class="settings-row-label">High contrast</span><label class="toggle-switch"><input type="checkbox" id="highContrastToggle"><span class="toggle-slider"></span></label></div>
+  </div>
+  <div class="settings-sec">
+    <span class="settings-sec-label">Text Size</span>
+    <div class="text-size-control"><button class="text-size-btn" id="textSizeDec">−</button><div class="text-size-display" id="textSizeDisplay">100%</div><button class="text-size-btn" id="textSizeInc">+</button></div>
+  </div>
+  <div class="settings-sec">
+    <span class="settings-sec-label">Accent Colour</span>
+    <div class="accent-row">
+      <div class="accent-dot active" data-color="#6ee7b7" style="background:#6ee7b7"></div>
+      <div class="accent-dot" data-color="#818cf8" style="background:#818cf8"></div>
+      <div class="accent-dot" data-color="#fbbf24" style="background:#fbbf24"></div>
+      <div class="accent-dot" data-color="#f87171" style="background:#f87171"></div>
+      <div class="accent-dot" data-color="#38bdf8" style="background:#38bdf8"></div>
+      <div class="accent-dot" data-color="#fb7185" style="background:#fb7185"></div>
+    </div>
+  </div>
+  <div class="settings-sec">
+    <span class="settings-sec-label">Font</span>
+    <select class="font-sel" id="fontSelect">
+      <option value="'DM Mono', monospace">DM Mono (Default)</option>
+      <option value="'Georgia', serif">Georgia</option>
+      <option value="'Arial', sans-serif">Arial</option>
+      <option value="'Verdana', sans-serif">Verdana</option>
+    </select>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">Revaix<span> Study</span></div>
+    <button class="nav-link active" data-page="lecture">📋 Notes Review</button>
+    <button class="nav-link" data-page="exam">✏️ Practice Exam</button>
+    <button class="nav-link" data-page="mark">🎯 Mark My Work</button>
+    <div class="nav-right">
+      <button class="nav-settings-btn" id="settingsBtn">⚙️</button>
+      <div class="nav-badge">v0.4</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ PAGE 1: NOTES REVIEW ══ -->
+<div class="page active" id="page-lecture">
+<div class="container">
+  <div class="hero">
+    <h1>Stop drowning in<br><span class="hl">notes.</span></h1>
+    <p>Upload any lecture slides, class notes, textbook pages, or PowerPoint — Revaix auto-detects your subject and instantly builds a full study pack. Works for high school and university students.</p>
+  </div>
+
+  <div id="lec-form">
+    <!-- DEPTH -->
+    <label class="field-label">Notes depth</label>
+    <div class="opt-row" id="depthRow">
+      <button class="opt-btn active" data-depth="summarised">⚡ Summarised</button>
+      <button class="opt-btn" data-depth="indepth">📖 In-Depth</button>
+      <button class="opt-btn" data-depth="comprehensive">🔬 Comprehensive</button>
+    </div>
+
+    <!-- FORMAT -->
+    <label class="field-label">Output format</label>
+    <div class="opt-row" id="formatRow">
+      <button class="opt-btn active" data-format="dotpoints">• Dot Points</button>
+      <button class="opt-btn" data-format="paragraphs">¶ Paragraphs</button>
+    </div>
+
+    <!-- LANGUAGE + EXAM MODE -->
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <div>
+        <label class="field-label">Output language</label>
+        <select class="lang-sel" id="lecLang">
+          <option value="English">English</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Mandarin Chinese">Mandarin Chinese</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="Arabic">Arabic</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Korean">Korean</option>
+          <option value="Italian">Italian</option>
+        </select>
+      </div>
+      <div style="margin-top:auto;">
+        <label class="field-label">Mode</label>
+        <div class="opt-row" style="margin-bottom:0">
+          <button class="opt-btn active-y" data-mode-lec="normal" id="lecModeNormal" style="border-color:var(--accent3);color:var(--accent3);background:rgba(251,191,36,0.08)">📚 Normal</button>
+          <button class="opt-btn" data-mode-lec="exam" id="lecModeExam">🎯 Exam Focused</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <label class="field-label">Upload your content <span style="color:var(--muted);font-size:0.6rem">· PDF, PowerPoint (.pptx), or image (JPG/PNG) · max 20MB · AI auto-detects subject</span></label>
+    <div class="upload-zone" id="lecZone">
+      <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
+      <span class="upload-icon">📄</span>
+      <h3>Drop your file here</h3>
+      <p>PDF, PowerPoint, or image · click to browse</p>
+    </div>
+    <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
+    <div class="err" id="lecErr"></div>
+    <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack</button>
+  </div>
+
+  <div class="loading" id="lecLoad"><div class="spinner"></div><p>Building your study pack...<span class="lstep" id="lecStep">Reading content</span></p></div>
+
+  <div class="results" id="lecRes">
+    <div class="res-hdr"><h2>Your Study Pack</h2><button class="btn-reset" id="lecReset">↩ New Upload</button></div>
+    <div class="tabs" id="lecTabs">
+      <button class="tab active" data-tab="ls">📋 Notes</button>
+      <button class="tab" data-tab="lfc">🃏 Flashcards</button>
+      <button class="tab" data-tab="lq">🧠 Questions</button>
+      <button class="tab" data-tab="lc">⚡ Catch-Up</button>
+      <button class="tab" data-tab="lx">📖 By Section</button>
+      <button class="tab" data-tab="lf">∑ Formulas</button>
+      <button class="tab" data-tab="lt">✏️ Test Me</button>
+    </div>
+    <div class="cc active" id="ls"></div>
+    <div class="cc" id="lfc"></div>
+    <div class="cc" id="lq"></div>
+    <div class="cc" id="lc"></div>
+    <div class="cc" id="lx"></div>
+    <div class="cc" id="lf"></div>
+    <div class="cc" id="lt"></div>
+  </div>
+  <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
+</div></div>
+
+<!-- ══ PAGE 2: PRACTICE EXAM ══ -->
+<div class="page" id="page-exam">
+<div class="container">
+  <div class="hero">
+    <h1>Practice exams,<br><span class="hl2">built from real ones.</span></h1>
+    <p>Upload your notes, past exams, and textbook pages — the AI cross-merges everything into a new practice exam styled like the real thing, then auto-marks your answers. <span style="color:var(--muted);font-size:0.73rem">· text-based questions only · AI auto-detects subject</span></p>
+  </div>
+
+  <div id="exam-form">
+    <label class="field-label">Exam mode</label>
+    <div class="mode-row">
+      <button class="mode-btn active" data-mode="both"><span class="mode-icon">📄📝</span><span class="mode-title">Notes + Past Exam</span><span class="mode-desc">New questions from notes, styled like real exam</span></button>
+      <button class="mode-btn" data-mode="notes"><span class="mode-icon">📄</span><span class="mode-title">Notes Only</span><span class="mode-desc">Realistic exam from your lecture content</span></button>
+      <button class="mode-btn" data-mode="reword"><span class="mode-icon">📝</span><span class="mode-title">Reword Past Exam</span><span class="mode-desc">Same questions, different wording</span></button>
+    </div>
+
+    <!-- CROSS MERGE UPLOADS -->
+    <div id="en-wrap" style="margin-bottom:10px">
+      <label class="field-label">📄 Lecture Notes / Study Material</label>
+      <div class="upload-zone" id="enZone"><input type="file" id="enFile" accept=".pdf,.jpg,.jpeg,.png,.webp"><span class="upload-icon">📄</span><h3>Lecture notes, textbook pages, or slides</h3><p>PDF or image (Word/PPT: save as PDF first)</p></div>
+      <div class="fp" id="enPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="enFN">—</div><div class="fp-size" id="enFS">—</div></div><button class="fp-rm" id="enRM">✕</button></div>
+    </div>
+    <div id="ep-wrap" style="margin-bottom:10px">
+      <label class="field-label">📝 Past Exam PDF <span style="color:var(--muted);font-size:0.6rem">(optional — used for style/structure only)</span></label>
+      <div class="upload-zone v2" id="epZone"><input type="file" id="epFile" accept=".pdf"><span class="upload-icon">📝</span><h3>Past exam PDF</h3><p>Teaches the AI your exam style</p></div>
+      <div class="fp" id="epPill"><div class="fp-ic p">📝</div><div class="fp-info"><div class="fp-name" id="epFN">—</div><div class="fp-size" id="epFS">—</div></div><button class="fp-rm" id="epRM">✕</button></div>
+    </div>
+
+    <div class="err" id="examErr"></div>
+    <button class="btn btn-p" id="examBtn" disabled>Generate Practice Exam</button>
+  </div>
+
+  <div class="loading" id="examLoad"><div class="spinner p"></div><p>Building your practice exam...<span class="lstep p" id="examStep">Analysing structure</span></p></div>
+
+  <div class="results" id="examRes">
+    <div class="res-hdr"><h2>Practice Exam</h2><div class="res-hdr-actions"><button class="btn-dl" id="examDlBtn">⬇ Download</button><button class="btn-reset" id="examReset">↩ New Exam</button></div></div>
+    <div class="exam-score" id="examScore"><div class="exam-score-big" id="examScoreBig">—</div><div class="exam-score-sub" id="examScoreSub">Submit your answers to see your score</div></div>
+    <div class="exam-meta" id="examMeta"></div>
+    <div id="examQs"></div>
+    <button class="btn btn-p" id="examSubBtn" style="margin-top:6px">Submit & Auto-Mark</button>
+  </div>
+  <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
+</div></div>
+
+<!-- ══ PAGE 3: MARK MY WORK ══ -->
+<div class="page" id="page-mark">
+<div class="container">
+  <div class="hero">
+    <h1>Submit any work.<br><span class="hl3">Get real feedback.</span></h1>
+    <p>Upload a completed exam or assignment. The AI marks like a teacher — step-by-step breakdown, error classification, and an exam readiness score. Works on any subject, any level.</p>
+  </div>
+
+  <div id="mark-form">
+    <!-- EXAM or ASSIGNMENT -->
+    <label class="field-label">What are you submitting?</label>
+    <div class="opt-row" id="markTypeRow">
+      <button class="opt-btn active" data-marktype="exam">📝 Exam / Test</button>
+      <button class="opt-btn" data-marktype="assignment">📋 Assignment</button>
+    </div>
+
+    <!-- RUBRIC (shown for assignment) -->
+    <div id="rubric-wrap" style="display:none;margin-bottom:10px">
+      <label class="field-label">📋 Rubric / Marking Criteria / Learning Guide <span style="color:var(--muted);font-size:0.6rem">(upload your school's grading criteria)</span></label>
+      <div class="upload-zone v3" id="rubricZone"><input type="file" id="rubricFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"><span class="upload-icon">📋</span><h3>Rubric, marking criteria or learning guide</h3><p>PDF or image (Word: save as PDF first)</p></div>
+      <div class="fp" id="rubricPill"><div class="fp-ic" style="background:rgba(251,191,36,0.1)">📋</div><div class="fp-info"><div class="fp-name" id="rubricFN">—</div><div class="fp-size" id="rubricFS">—</div></div><button class="fp-rm" id="rubricRM">✕</button></div>
+    </div>
+
+    <label class="field-label">📝 Upload your completed work</label>
+    <div class="upload-zone v3" id="markZone"><input type="file" id="markFile" accept=".pdf,.jpg,.jpeg,.png,.webp"><span class="upload-icon">📝</span><h3>Drop your completed exam or assignment here</h3><p>PDF or image (Word: save as PDF first) · max 20MB</p></div>
+    <div class="fp" id="markPill"><div class="fp-ic" style="background:rgba(251,191,36,0.1)">📝</div><div class="fp-info"><div class="fp-name" id="markFN">—</div><div class="fp-size" id="markFS">—</div></div><button class="fp-rm" id="markRM">✕</button></div>
+
+    <div class="err" id="markErr"></div>
+    <button class="btn btn-y" id="markReadBtn" disabled>Mark My Work</button>
+  </div>
+
+  <div class="loading" id="markLoad"><div class="spinner y"></div><p>Marking your work...<span class="lstep y" id="markStep">Reading questions and answers</span></p></div>
+
+  <div class="results" id="markFeedbackSection">
+    <div class="res-hdr"><h2>Your Results</h2><button class="btn-reset" id="markReset">↩ New Upload</button></div>
+
+    <!-- EXAM READINESS -->
+    <div class="readiness-wrap" id="readinessWrap" style="display:none">
+      <div class="readiness-label">Exam Readiness</div>
+      <div class="readiness-bar-bg"><div class="readiness-bar" id="readinessBar" style="width:0%"></div></div>
+      <div class="readiness-pct" id="readinessPct">—</div>
+      <div class="readiness-desc" id="readinessDesc">—</div>
+    </div>
+
+    <!-- SCORE -->
+    <div class="exam-score" id="markScore">
+      <div class="exam-score-big" id="markScoreBig" style="color:var(--accent3)">—</div>
+      <div class="exam-score-sub" id="markScoreSub">—</div>
+    </div>
+    <div id="markFeedbackQs"></div>
+  </div>
+  <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
+</div></div>
+
+<script>
+// ── SETTINGS ──
+const settingsBtn=document.getElementById('settingsBtn'),settingsPanel=document.getElementById('settingsPanel'),settingsOverlay=document.getElementById('settingsOverlay'),settingsClose=document.getElementById('settingsClose');
+const openSettings=()=>{settingsPanel.classList.add('show');settingsOverlay.classList.add('show');};
+const closeSettings=()=>{settingsPanel.classList.remove('show');settingsOverlay.classList.remove('show');};
+settingsBtn.addEventListener('click',openSettings);
+settingsClose.addEventListener('click',closeSettings);
+settingsOverlay.addEventListener('click',closeSettings);
+document.getElementById('lightModeToggle').addEventListener('change',function(){document.body.classList.toggle('light',this.checked);});
+document.getElementById('reduceMotionToggle').addEventListener('change',function(){
+  if(this.checked){const s=document.createElement('style');s.id='rm';s.textContent='*,*::before,*::after{animation-duration:0.001s!important;transition-duration:0.001s!important;}';document.head.appendChild(s);}
+  else{const e=document.getElementById('rm');if(e)e.remove();}
+});
+document.getElementById('highContrastToggle').addEventListener('change',function(){
+  if(this.checked){document.documentElement.style.setProperty('--muted','#a0a0b8');document.documentElement.style.setProperty('--border','#4a4a6a');}
+  else{document.documentElement.style.removeProperty('--muted');document.documentElement.style.removeProperty('--border');}
+});
+let fontScale=1;
+document.getElementById('textSizeInc').addEventListener('click',()=>{if(fontScale>=1.5)return;fontScale=Math.round((fontScale+0.1)*10)/10;document.querySelector('html').style.fontSize=`calc(14px * ${fontScale})`;document.getElementById('textSizeDisplay').textContent=Math.round(fontScale*100)+'%';});
+document.getElementById('textSizeDec').addEventListener('click',()=>{if(fontScale<=0.7)return;fontScale=Math.round((fontScale-0.1)*10)/10;document.querySelector('html').style.fontSize=`calc(14px * ${fontScale})`;document.getElementById('textSizeDisplay').textContent=Math.round(fontScale*100)+'%';});
+document.querySelectorAll('.accent-dot').forEach(d=>{d.addEventListener('click',()=>{document.querySelectorAll('.accent-dot').forEach(x=>x.classList.remove('active'));d.classList.add('active');document.documentElement.style.setProperty('--accent',d.dataset.color);});});
+document.getElementById('fontSelect').addEventListener('change',function(){document.body.style.fontFamily=this.value;});
+
+// ── NAV ──
+document.querySelectorAll('.nav-link').forEach(l=>{
+  l.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-link').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    l.classList.add('active');
+    document.getElementById('page-'+l.dataset.page).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+// ── HELPERS ──
+async function toB64(f){
+  // For images, convert to base64 directly
+  return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Read failed'));r.readAsDataURL(f);});
+}
+function getMediaType(f){
+  const n=f.name.toLowerCase();
+  if(n.endsWith('.pdf'))return'application/pdf';
+  if(n.endsWith('.png'))return'image/png';
+  if(n.endsWith('.jpg')||n.endsWith('.jpeg'))return'image/jpeg';
+  if(n.endsWith('.webp'))return'image/webp';
+  // Word, PowerPoint — send as PDF type, Claude handles them as documents
+  return'application/pdf';
+}
+function buildContent(b64,f,text){
+  const mt=getMediaType(f);
+  const isImage=mt.startsWith('image/');
+  if(isImage){return[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text}];}
+  return[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text}];
+}
+function exJSON(t){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<0)throw new Error('No JSON in response');return JSON.parse(t.slice(a,b+1));}
+function exArr(t){const a=t.indexOf('['),b=t.lastIndexOf(']');if(a<0||b<0)throw new Error('No array in response');return JSON.parse(t.slice(a,b+1));}
+async function api(system,messages,max=6000){
+  const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,system,messages})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
+  const d=await r.json();return d.content.map(i=>i.text||'').join('');
+}
+function wire(zoneId,inputId,pillId,fnId,fsId,rmId,onAdd,onRm){
+  const zone=document.getElementById(zoneId),inp=document.getElementById(inputId),pill=document.getElementById(pillId),fn=document.getElementById(fnId),fs=document.getElementById(fsId),rm=document.getElementById(rmId);
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(e.dataTransfer.files[0])handle(e.dataTransfer.files[0]);});
+  inp.addEventListener('change',()=>{if(inp.files[0])handle(inp.files[0]);});
+  rm.addEventListener('click',()=>{inp.value='';pill.classList.remove('show');zone.style.display='';onRm();});
+  function handle(f){
+    const ext=f.name.split('.').pop().toLowerCase();
+    if(['doc','docx','pptx','ppt'].includes(ext)){
+      alert('Word and PowerPoint files need to be saved as PDF first.\n\nIn Word or PowerPoint: File → Save As → PDF, then upload the PDF.');
+      return;
+    }
+    const allowed=['pdf','jpg','jpeg','png','webp'];
+    if(!allowed.includes(ext)){alert('Supported formats: PDF, JPG, PNG');return;}
+    if(f.size>20*1024*1024){alert('Max 20MB');return;}
+    fn.textContent=f.name;fs.textContent=(f.size/1024).toFixed(0)+' KB';
+    pill.classList.add('show');zone.style.display='none';onAdd(f);
+  }
+}
+function wireTabs(tabsId){
+  document.querySelectorAll('#'+tabsId+' .tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('#'+tabsId+' .tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      let el=document.getElementById(tabsId).nextElementSibling;
+      while(el&&el.classList.contains('cc')){el.classList.remove('active');el=el.nextElementSibling;}
+      document.getElementById(t.dataset.tab).classList.add('active');
+    });
+  });
+}
+function markClass(s,m){const p=s/m;return p>=0.8?'ok':p>=0.4?'half':'no';}
+
+// ── PAGE 1: NOTES REVIEW ──
+let lecF=null, lecDepth='summarised', lecFormat='dotpoints', lecModeVal='normal';
+
+document.querySelectorAll('#depthRow .opt-btn').forEach(b=>{
+  b.addEventListener('click',()=>{document.querySelectorAll('#depthRow .opt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');lecDepth=b.dataset.depth;});
+});
+document.querySelectorAll('#formatRow .opt-btn').forEach(b=>{
+  b.addEventListener('click',()=>{document.querySelectorAll('#formatRow .opt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');lecFormat=b.dataset.format;});
+});
+document.getElementById('lecModeNormal').addEventListener('click',()=>{
+  lecModeVal='normal';
+  document.getElementById('lecModeNormal').className='opt-btn active-y';
+  document.getElementById('lecModeExam').className='opt-btn';
+});
+document.getElementById('lecModeExam').addEventListener('click',()=>{
+  lecModeVal='exam';
+  document.getElementById('lecModeExam').className='opt-btn active';
+  document.getElementById('lecModeNormal').className='opt-btn';
+});
+
+wire('lecZone','lecFile','lecPill','lecFN','lecFS','lecRM',
+  f=>{lecF=f;document.getElementById('lecBtn').disabled=false;document.getElementById('lecErr').classList.remove('show');},
+  ()=>{lecF=null;document.getElementById('lecBtn').disabled=true;}
+);
+wireTabs('lecTabs');
+document.getElementById('lecReset').addEventListener('click',()=>{
+  document.getElementById('lecRes').classList.remove('show');document.getElementById('lec-form').style.display='';
+  lecF=null;document.getElementById('lecFile').value='';document.getElementById('lecPill').classList.remove('show');document.getElementById('lecZone').style.display='';document.getElementById('lecBtn').disabled=true;
+  document.querySelectorAll('#lecTabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  ['ls','lfc','lq','lc','lx','lf','lt'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===0));
+});
+
+document.getElementById('lecBtn').addEventListener('click',async()=>{
+  if(!lecF)return;
+  document.getElementById('lecErr').classList.remove('show');
+  document.getElementById('lec-form').style.display='none';
+  document.getElementById('lecLoad').classList.add('show');
+  const steps=['Reading your content...','Detecting subject...','Building notes...','Generating flashcards...','Writing questions...'];
+  let si=0;const stepEl=document.getElementById('lecStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
+
+  try{
+    const b64=await toB64(lecF);
+    const lang=document.getElementById('lecLang').value;
+    const depthMap={summarised:'concise bullet points covering only the key concepts (max 250 words)',indepth:'thorough notes covering all major concepts with explanations (max 500 words)',comprehensive:'comprehensive and detailed notes covering every concept, definition, example and nuance (max 900 words)'};
+    const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
+    const examExtra=lecModeVal==='exam'?'EXAM FOCUSED MODE: For each topic, also note common exam traps, mark-worthy phrases examiners look for, and high-frequency exam topics. Tag any high-priority exam content with ★.':'';
+
+    const sys=`You are an expert university and high school tutor. Auto-detect the subject from the uploaded content.
+${fmtInstr} ${examExtra}
+Output everything in ${lang}.
+Return ONLY a JSON object — no markdown, no backticks:
+{
+  "subject": "detected subject name",
+  "summary": "HTML notes: ${depthMap[lecDepth]}. Use <h3> for topics, <p> or <ul><li> based on format instruction. Include all key definitions, concepts and examples.",
+  "flashcards": [{"front":"Term or concept","back":"Definition or explanation — 1-2 sentences"}],
+  "questions": [{"question":"Q","answer":"1-2 sentence answer","tag":"topic tag e.g. Differentiation"}],
+  "catchup": "HTML: everything a student who missed class needs to know. ${fmtInstr}",
+  "sections": [{"label":"Pages X-Y · Topic","content":"<p>What this section means, why it matters, the underlying idea. 3-4 sentences.</p>"}],
+  "formulas": [{"name":"Formula name","equation":"the formula","steps":["Step 1: what to do","Step 2: ..."],"example":"worked example"}],
+  "test": [{"question":"written Q","modelAnswer":"ideal answer","marks":2,"tag":"topic"}]
+}
+flashcards=8, questions=6 (with tags), sections=3-5, formulas=all relevant ones (0 if none), test=4 (1-3 marks each). Total under 2000 words.`;
+
+    const raw=await api(sys,[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}],8000);
+    clearInterval(iv);
+    const p=exJSON(raw);
+
+    // Summary / Notes
+    document.getElementById('ls').innerHTML=`<div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">📌 Subject detected: <strong style="color:var(--accent)">${p.subject||'Auto-detected'}</strong></div>${p.summary}`;
+
+    // Flashcards
+    const fcc=document.getElementById('lfc');fcc.innerHTML='<div class="fc-grid" id="fc-grid"></div>';
+    const fcg=document.getElementById('fc-grid');
+    (p.flashcards||[]).forEach((fc,i)=>{
+      const d=document.createElement('div');d.className='flashcard';
+      d.innerHTML=`<div class="fc-front">${fc.front}</div><div class="fc-back" id="fcb-${i}">${fc.back}</div><div class="fc-hint">tap to reveal</div>`;
+      d.addEventListener('click',()=>{const b=document.getElementById(`fcb-${i}`);b.classList.toggle('show');d.querySelector('.fc-hint').textContent=b.classList.contains('show')?'tap to hide':'tap to reveal';});
+      fcg.appendChild(d);
+    });
+
+    // Questions with tags
+    const qc=document.getElementById('lq');qc.innerHTML='';
+    (p.questions||[]).forEach((q,i)=>{
+      const d=document.createElement('div');d.className='qi';
+      d.innerHTML=`<div class="qnum">Question ${i+1} of ${p.questions.length}${q.tag?`<span class="qtag">${q.tag}</span>`:''}</div><div class="qtext">${q.question}</div><button class="show-ans">Show Answer</button><div class="ans-text">${q.answer}</div>`;
+      d.querySelector('.show-ans').addEventListener('click',function(){const a=d.querySelector('.ans-text');a.classList.toggle('show');this.textContent=a.classList.contains('show')?'Hide Answer':'Show Answer';});
+      qc.appendChild(d);
+    });
+
+    // Catch-up
+    document.getElementById('lc').innerHTML=p.catchup;
+
+    // Sections
+    const sc=document.getElementById('lx');sc.innerHTML='';
+    (p.sections||[]).forEach(s=>{const d=document.createElement('div');d.className='sb';d.innerHTML=`<div class="slabel">${s.label}</div>${s.content}`;sc.appendChild(d);});
+
+    // Formulas
+    const fc2=document.getElementById('lf');
+    if(!p.formulas||p.formulas.length===0){
+      fc2.innerHTML=`<p style="color:var(--muted);font-size:0.8rem">No formulas detected in this content — this tab is most useful for maths, physics, chemistry, and engineering.</p>`;
+    }else{
+      fc2.innerHTML='';
+      p.formulas.forEach(f=>{
+        const d=document.createElement('div');d.className='formula-block';
+        const stepsHtml=(f.steps||[]).map(s=>`<div class="formula-step">${s}</div>`).join('');
+        d.innerHTML=`<div class="formula-name">${f.name}</div><div class="formula-eq">${f.equation}</div>${stepsHtml}${f.example?`<div style="margin-top:8px;font-size:0.75rem;color:var(--muted)">Example: ${f.example}</div>`:''}`;
+        fc2.appendChild(d);
+      });
+    }
+
+    // Mini test
+    renderMiniTest(p.test||[],document.getElementById('lt'));
+
+    document.getElementById('lecLoad').classList.remove('show');
+    document.getElementById('lecRes').classList.add('show');
+
+  }catch(e){
+    clearInterval(iv);
+    document.getElementById('lecLoad').classList.remove('show');
+    document.getElementById('lec-form').style.display='';
+    document.getElementById('lecErr').textContent='Error: '+e.message;
+    document.getElementById('lecErr').classList.add('show');
+  }
+});
+
+function renderMiniTest(qs,container){
+  container.innerHTML='';
+  const banner=document.createElement('div');banner.className='score-banner';
+  banner.innerHTML=`<div class="score-big" id="mScore">—</div><div class="score-sub">Submit your answers to see your score</div>`;
+  container.appendChild(banner);
+  qs.forEach((q,i)=>{
+    const d=document.createElement('div');d.className='tq';
+    d.innerHTML=`<div class="qnum">Q${i+1} · ${q.marks} mark${q.marks>1?'s':''}${q.tag?`<span class="qtag">${q.tag}</span>`:''}</div><div class="qtext">${q.question}</div><textarea placeholder="Type your answer..." id="ma-${i}"></textarea><div class="mr" id="mr-${i}"></div>`;
+    container.appendChild(d);
+  });
+  const btn=document.createElement('button');btn.className='btn-sub';btn.textContent='Submit & Auto-Mark';container.appendChild(btn);
+  btn.addEventListener('click',async()=>{
+    const ans=qs.map((q,i)=>({question:q.question,modelAnswer:q.modelAnswer,marks:q.marks,studentAnswer:(document.getElementById(`ma-${i}`)?.value||'').trim()}));
+    if(ans.some(a=>!a.studentAnswer)){alert('Please answer all questions first.');return;}
+    btn.disabled=true;btn.textContent='Marking...';
+    try{
+      const sys=`You are a strict exam marker. Mark like a real teacher — no softness. Award marks per correct step/point, not just for the final answer. Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"feedback":"1-2 sentences of specific feedback — state what was right, what was wrong, and what the examiner wanted"}]`;
+      const raw=await api(sys,[{role:'user',content:ans.map((a,i)=>`Q${i+1} (${a.marks} marks): ${a.question}\nModel: ${a.modelAnswer}\nStudent: ${a.studentAnswer}`).join('\n\n')}],1200);
+      const res=exArr(raw);let tot=0,mx=0;
+      res.forEach((r,i)=>{tot+=r.score;mx+=r.maxScore;const el=document.getElementById(`mr-${i}`);const pc=r.score/r.maxScore;el.className='mr '+(pc>=0.8?'ok':pc>=0.4?'half':'no');el.innerHTML=`<strong>${r.score}/${r.maxScore}</strong> — ${r.feedback}`;});
+      const pc=Math.round((tot/mx)*100);
+      document.getElementById('mScore').textContent=`${tot}/${mx} · ${pc}%`;
+      banner.classList.add('show');
+      banner.querySelector('.score-sub').textContent=pc>=80?'🎉 Great work!':pc>=50?'📚 Good effort — review weak areas':'💪 Keep studying — use the feedback above';
+      btn.textContent='Re-submit';btn.disabled=false;
+    }catch(e){btn.textContent='Marking failed — try again';btn.disabled=false;}
+  });
+}
+
+// ── PAGE 2: PRACTICE EXAM ──
+let enF=null,epF=null,examData=null,examMode='both';
+const checkExam=()=>{
+  const nn=examMode==='both'||examMode==='notes',np=examMode==='both'||examMode==='reword';
+  document.getElementById('examBtn').disabled=!((!nn||enF)&&(!np||epF));
+};
+document.querySelectorAll('.mode-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');examMode=b.dataset.mode;
+    const en=document.getElementById('en-wrap'),ep=document.getElementById('ep-wrap');
+    if(examMode==='both'){en.style.display='';ep.style.display='';}
+    else if(examMode==='notes'){en.style.display='';ep.style.display='none';epF=null;}
+    else{en.style.display='none';ep.style.display='';enF=null;}
+    checkExam();
+  });
+});
+wire('enZone','enFile','enPill','enFN','enFS','enRM',f=>{enF=f;checkExam();},()=>{enF=null;checkExam();});
+wire('epZone','epFile','epPill','epFN','epFS','epRM',f=>{epF=f;checkExam();},()=>{epF=null;checkExam();});
+document.getElementById('examReset').addEventListener('click',()=>{
+  document.getElementById('examRes').classList.remove('show');document.getElementById('exam-form').style.display='';
+  enF=null;epF=null;examData=null;
+  ['enFile','epFile'].forEach(id=>document.getElementById(id).value='');
+  ['enPill','epPill'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  ['enZone','epZone'].forEach(id=>document.getElementById(id).style.display='');
+  document.getElementById('examBtn').disabled=true;document.getElementById('examScore').classList.remove('show');
+});
+
+document.getElementById('examBtn').addEventListener('click',async()=>{
+  document.getElementById('examErr').classList.remove('show');document.getElementById('exam-form').style.display='none';document.getElementById('examLoad').classList.add('show');
+  const steps=['Analysing structure...','Reading your content...','Writing questions...','Finalising exam...'];
+  let si=0;const stepEl=document.getElementById('examStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},2000);
+  try{
+    let sys='',messages=[];
+    const FMT=`{"examTitle":"string","totalMarks":number,"timeAllowed":"string","instructions":"string","questions":[{"number":1,"marks":number,"text":"question","marksPerStep":["Step 1 (1 mark): what is needed","Step 2 (1 mark): ..."],"parts":[{"part":"a","marks":number,"text":"sub-q","modelAnswer":"ideal answer","marksPerStep":["Step 1 (1 mark): ..."]}],"modelAnswer":"only if no parts"}]}`;
+    if(examMode==='both'){
+      const[nb64,pb64]=await Promise.all([toB64(enF),toB64(epF)]);
+      sys=`You are an expert exam writer. Auto-detect the subject from the documents.\nTwo files: 1) Notes/content to test, 2) Past exam for structure/style reference only.\nGenerate a brand new practice exam on the notes content styled like the past exam.\nInclude marksPerStep for every question showing exactly how marks are awarded per step, like a real marking scheme.\nReturn ONLY JSON — no markdown: ${FMT}\nMatch question count and marks from past exam. Total under 2500 words.`;
+      messages=[{role:'user',content:[...buildContent(nb64,enF,'Notes/content file'),...buildContent(pb64,epF,'Past exam for structure')]}];
+    }else if(examMode==='notes'){
+      const nb64=await toB64(enF);
+      sys=`You are an expert exam writer. Auto-detect the subject from the notes.\nGenerate a realistic practice exam from these notes. Include marksPerStep for every question.\nReturn ONLY JSON — no markdown: ${FMT}\nAim for 4-6 questions. Total under 2500 words.`;
+      messages=[{role:'user',content:buildContent(nb64,enF,'Generate practice exam. Return JSON only.')}];
+    }else{
+      const pb64=await toB64(epF);
+      sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
+      messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
+    }
+    const raw=await api(sys,messages,8000);clearInterval(iv);
+    examData=exJSON(raw);renderExam(examData);
+    document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
+  }catch(e){
+    clearInterval(iv);document.getElementById('examLoad').classList.remove('show');document.getElementById('exam-form').style.display='';
+    document.getElementById('examErr').textContent='Error: '+e.message;document.getElementById('examErr').classList.add('show');
+  }
+});
+
+function renderExam(exam){
+  document.getElementById('examMeta').innerHTML=`<strong>${exam.examTitle}</strong><br>Total marks: ${exam.totalMarks} &nbsp;·&nbsp; Time: ${exam.timeAllowed}<br><span style="color:var(--muted);font-size:0.73rem">${exam.instructions}</span>`;
+  const c=document.getElementById('examQs');c.innerHTML='';
+  exam.questions.forEach((q,qi)=>{
+    const div=document.createElement('div');div.className='exam-q';
+    if(q.parts&&q.parts.length>0){
+      div.innerHTML=`<div class="eq-hdr"><div class="eq-num">Question ${q.number}</div><div class="eq-marks">${q.marks} marks</div></div><div class="eq-text">${q.text}</div>`;
+      q.parts.forEach((p,pi)=>{
+        const pd=document.createElement('div');
+        const stepsHtml=(p.marksPerStep||[]).map(s=>`<div style="font-size:0.68rem;color:var(--muted);padding-left:8px">· ${s}</div>`).join('');
+        pd.innerHTML=`<div class="eq-part eq-text"><strong>(${p.part})</strong> [${p.marks} mark${p.marks>1?'s':''}] ${p.text}${stepsHtml}</div><textarea placeholder="Your answer for part (${p.part})..." id="ea-${qi}-${pi}"></textarea><div class="emr" id="er-${qi}-${pi}"></div>`;
+        div.appendChild(pd);
+      });
+    }else{
+      const stepsHtml=(q.marksPerStep||[]).map(s=>`<div style="font-size:0.68rem;color:var(--muted);padding-left:8px">· ${s}</div>`).join('');
+      div.innerHTML=`<div class="eq-hdr"><div class="eq-num">Question ${q.number}</div><div class="eq-marks">${q.marks} marks</div></div><div class="eq-text">${q.text}${stepsHtml}</div><textarea placeholder="Your answer..." id="ea-${qi}-0"></textarea><div class="emr" id="er-${qi}-0"></div>`;
+    }
+    c.appendChild(div);
+  });
+}
+
+document.getElementById('examDlBtn').addEventListener('click',()=>{
+  if(!examData)return;
+  const w=window.open('','_blank');
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${examData.examTitle}</title><style>body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 24px;color:#000;line-height:1.7;}.meta{background:#f5f5f5;border:1px solid #ddd;padding:12px 16px;margin-bottom:24px;font-size:0.85rem;border-radius:6px;}.q-block{border:1px solid #ddd;border-radius:8px;padding:16px 18px;margin-bottom:16px;page-break-inside:avoid;}.q-hdr{display:flex;justify-content:space-between;font-size:0.7rem;text-transform:uppercase;color:#666;margin-bottom:8px;}.q-text{font-size:0.9rem;margin-bottom:12px;}.part{padding-left:14px;border-left:3px solid #ddd;margin:8px 0;}.answer-box{border:1px solid #ccc;border-radius:4px;min-height:100px;margin-top:8px;padding:8px;background:#fafafa;font-size:0.82rem;color:#999;}@media print{button{display:none;}}</style></head><body>`;
+  html+=`<h1 style="font-size:1.4rem;margin-bottom:4px">${examData.examTitle}</h1><div class="meta">Total marks: ${examData.totalMarks} · Time: ${examData.timeAllowed}<br>${examData.instructions}</div>`;
+  examData.questions.forEach(q=>{
+    html+=`<div class="q-block"><div class="q-hdr"><span>Question ${q.number}</span><span>${q.marks} marks</span></div><div class="q-text">${q.text}</div>`;
+    if(q.parts&&q.parts.length>0){q.parts.forEach(p=>{html+=`<div class="part"><strong>(${p.part})</strong> [${p.marks} mark${p.marks>1?'s':''}] ${p.text}<div class="answer-box">Answer:</div></div>`;});}
+    else{html+=`<div class="answer-box">Answer:</div>`;}
+    html+=`</div>`;
+  });
+  html+=`</body></html>`;
+  w.document.write(html);w.document.close();setTimeout(()=>w.print(),400);
+});
+
+document.getElementById('examSubBtn').addEventListener('click',async()=>{
+  if(!examData)return;
+  const toMark=[];
+  examData.questions.forEach((q,qi)=>{
+    if(q.parts&&q.parts.length>0){
+      q.parts.forEach((p,pi)=>{const ans=(document.getElementById(`ea-${qi}-${pi}`)?.value||'').trim();toMark.push({question:`${q.text} — Part (${p.part}): ${p.text}`,modelAnswer:p.modelAnswer,marks:p.marks,marksPerStep:p.marksPerStep||[],studentAnswer:ans,rid:`er-${qi}-${pi}`});});
+    }else{
+      const ans=(document.getElementById(`ea-${qi}-0`)?.value||'').trim();toMark.push({question:q.text,modelAnswer:q.modelAnswer,marks:q.marks,marksPerStep:q.marksPerStep||[],studentAnswer:ans,rid:`er-${qi}-0`});
+    }
+  });
+  if(toMark.some(a=>!a.studentAnswer)){alert('Please answer all questions before submitting.');return;}
+  const btn=document.getElementById('examSubBtn');btn.disabled=true;btn.textContent='Marking your exam...';
+  try{
+    const sys=`You are a strict exam marker. Mark like a real exam board — award marks per step, not just for the final answer. No softness.
+For each question return:
+- score and maxScore
+- stepFeedback: an array showing what the student did at each step and whether they got the mark
+- errorType: "correct", "conceptual", "algebra", or "missing_step"
+- feedback: 2-3 sentences — what was right, what was wrong, what the examiner wanted, how to improve
+Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"stepFeedback":["Step 1: student did X — ✓/✗ (1 mark)"],"errorType":"string","feedback":"string"}]`;
+    const payload=toMark.map((a,i)=>`Q${i+1} (${a.marks} marks):\nQuestion: ${a.question}\nMarking scheme: ${a.marksPerStep.join(', ')}\nModel answer: ${a.modelAnswer}\nStudent answer: ${a.studentAnswer}`).join('\n\n');
+    const raw=await api(sys,[{role:'user',content:payload}],3000);
+    const res=exArr(raw);let tot=0,mx=0;
+    res.forEach((r,i)=>{
+      tot+=r.score;mx+=r.maxScore;
+      const el=document.getElementById(toMark[i].rid);if(!el)return;
+      const pc=r.score/r.maxScore;
+      const tagMap={correct:'correct',conceptual:'conceptual',algebra:'algebra',missing_step:'missing'};
+      const tagClass=tagMap[r.errorType]||'missing';
+      const tagLabel={correct:'✓ Correct',conceptual:'Conceptual Error',algebra:'Algebra Error',missing_step:'Missing Step'}[r.errorType]||r.errorType;
+      const stepsHtml=(r.stepFeedback||[]).map(s=>`<div style="font-size:0.73rem;color:var(--text);padding:3px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('');
+      el.className='emr '+(pc>=0.8?'ok':pc>=0.4?'half':'no');
+      el.innerHTML=`<div style="margin-bottom:6px"><span class="error-tag ${tagClass}">${tagLabel}</span> <strong>${r.score}/${r.maxScore}</strong></div>${stepsHtml?`<div class="step-breakdown"><div class="step-breakdown-title">Step by step</div>${stepsHtml}</div>`:''}<div style="margin-top:8px;font-size:0.76rem">${r.feedback}</div>`;
+    });
+    const pc=Math.round((tot/mx)*100);
+    document.getElementById('examScoreBig').textContent=`${tot}/${mx} · ${pc}%`;
+    document.getElementById('examScoreSub').textContent=pc>=80?'🎉 Excellent work!':pc>=50?'📚 Good effort — review where you dropped marks':'💪 Keep studying — use the step breakdowns above';
+    document.getElementById('examScore').classList.add('show');
+    document.getElementById('examScore').scrollIntoView({behavior:'smooth',block:'nearest'});
+    btn.textContent='Re-submit Answers';btn.disabled=false;
+  }catch(e){btn.textContent='Marking failed — try again';btn.disabled=false;}
+});
+
+// ── PAGE 3: MARK MY WORK ──
+let markF=null,rubricF=null,markType='exam';
+
+document.querySelectorAll('#markTypeRow .opt-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#markTypeRow .opt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');markType=b.dataset.marktype;
+    document.getElementById('rubric-wrap').style.display=markType==='assignment'?'':'none';
+  });
+});
+
+wire('markZone','markFile','markPill','markFN','markFS','markRM',
+  f=>{markF=f;document.getElementById('markReadBtn').disabled=false;document.getElementById('markErr').classList.remove('show');},
+  ()=>{markF=null;document.getElementById('markReadBtn').disabled=true;}
+);
+wire('rubricZone','rubricFile','rubricPill','rubricFN','rubricFS','rubricRM',
+  f=>{rubricF=f;},()=>{rubricF=null;}
+);
+
+document.getElementById('markReset').addEventListener('click',()=>{
+  document.getElementById('markFeedbackSection').classList.remove('show');document.getElementById('mark-form').style.display='';
+  markF=null;rubricF=null;
+  ['markFile','rubricFile'].forEach(id=>document.getElementById(id).value='');
+  ['markPill','rubricPill'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  ['markZone','rubricZone'].forEach(id=>document.getElementById(id).style.display='');
+  document.getElementById('markReadBtn').disabled=true;document.getElementById('markScore').classList.remove('show');document.getElementById('readinessWrap').style.display='none';
+});
+
+document.getElementById('markReadBtn').addEventListener('click',async()=>{
+  if(!markF)return;
+  document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form').style.display='none';document.getElementById('markLoad').classList.add('show');
+  const steps=['Reading your work...','Identifying questions and answers...','Marking step by step...','Classifying errors...','Writing feedback...'];
+  let si=0;const stepEl=document.getElementById('markStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
+
+  try{
+    const b64=await toB64(markF);
+    const isAssignment=markType==='assignment';
+
+    let sysBase=`You are a strict, experienced teacher. Auto-detect the subject from the uploaded work. Mark like a real teacher — no softness, no rounding up.`;
+
+    if(isAssignment){
+      const rubricExtra=rubricF?`The rubric/marking criteria has been provided — mark strictly against it.`:`No rubric provided — use professional academic standards.`;
+      sysBase+=` This is an ASSIGNMENT. ${rubricExtra}
+Read the full assignment carefully. Return ONLY a JSON object — no markdown:
+{
+  "subject":"detected subject",
+  "assignmentTitle":"title of the assignment",
+  "grade":"A/B/C/D/E/F",
+  "totalScore":number,
+  "totalMax":number,
+  "overallFeedback":"3-4 sentences of overall feedback on the assignment quality, structure, and argument",
+  "examReadiness":number,
+  "fullText":"reproduce the full assignment text exactly as written, paragraph by paragraph, separated by double newlines",
+  "paragraphs":[{
+    "number":1,
+    "quote":"first 10-15 words of this paragraph to identify it",
+    "good":"1-2 sentences on what this paragraph does well — specific, not generic",
+    "bad":"1-2 sentences on what is weak, missing, or could be improved — be direct"
+  }],
+  "sections":[{"criterion":"marking criterion","score":number,"max":number,"feedback":"specific feedback for this criterion"}]
+}`;
+    }else{
+      sysBase+=` This is an EXAM.
+Read every question and the student's answer. Mark each one per step like a real exam board.
+Return ONLY a JSON array — no markdown:
+[{
+  "number":"1",
+  "marks":number,
+  "question":"full question text",
+  "studentAnswer":"what student wrote",
+  "score":number,
+  "stepFeedback":["Step 1: student did X — ✓/✗ (1 mark)","Step 2: ..."],
+  "errorType":"correct|conceptual|algebra|missing_step",
+  "feedback":"2-3 sentences: what was right, what was wrong, what examiner wanted, how to improve",
+  "examReadiness":number
+}]
+If a question is blank score 0. Mark per step — if they got the working right but final answer wrong, still award method marks.`;
+    }
+
+    let msgContent;
+    if(isAssignment&&rubricF){
+      const rb64=await toB64(rubricF);
+      msgContent=[
+        ...buildContent(rb64,rubricF,'This is the rubric/marking criteria'),
+        ...buildContent(b64,markF,'This is the student assignment to mark')
+      ];
+    }else{
+      msgContent=buildContent(b64,markF,`This is a completed ${isAssignment?'assignment':'exam'}. Auto-detect subject, read questions and answers, mark everything. Return JSON only.`);
+    }
+
+    const raw=await api(sysBase,[{role:'user',content:msgContent}],8000);
+    clearInterval(iv);
+
+    const fc=document.getElementById('markFeedbackQs');fc.innerHTML='';
+
+    if(isAssignment){
+      const p=exJSON(raw);
+      let tot=p.totalScore||0,mx=p.totalMax||100;
+      document.getElementById('markScoreBig').textContent=`${p.grade||'—'} · ${tot}/${mx}`;
+      document.getElementById('markScoreSub').textContent=`Subject: ${p.subject||'Auto-detected'} · ${p.assignmentTitle||'Assignment'}`;
+      document.getElementById('markScore').classList.add('show');
+
+      // Overall feedback
+      const od=document.createElement('div');od.className='mark-q';
+      od.innerHTML=`<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;margin-bottom:8px">📋 Overall Feedback</div><div class="mark-q-text" style="border-left-color:var(--accent2)">${p.overallFeedback}</div>`;
+      fc.appendChild(od);
+
+      // Criteria scores
+      if(p.sections&&p.sections.length){
+        const crit=document.createElement('div');crit.className='mark-q';
+        crit.innerHTML=`<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:10px">Marking Criteria</div>${
+          p.sections.map(s=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="flex:1"><div style="font-size:0.75rem;color:var(--text);margin-bottom:3px">${s.criterion}</div><div style="font-size:0.72rem;color:var(--muted)">${s.feedback}</div></div><div class="eq-marks" style="flex-shrink:0">${s.score}/${s.max}</div></div>`).join('')
+        }`;
+        fc.appendChild(crit);
+      }
+
+      // Side-by-side: paragraph analysis (left) + assignment text (right)
+      if(p.paragraphs&&p.paragraphs.length){
+        const split=document.createElement('div');split.className='assignment-split';
+
+        // LEFT — paragraph analysis
+        const leftPanel=document.createElement('div');leftPanel.className='assignment-panel';
+        leftPanel.innerHTML=`<div class="assignment-panel-header">🔍 Paragraph Analysis</div>`;
+        const leftBody=document.createElement('div');leftBody.className='assignment-panel-body';
+        p.paragraphs.forEach((para,i)=>{
+          const d=document.createElement('div');d.className='para-analysis';
+          d.innerHTML=`
+            <div class="para-label">Paragraph ${para.number||i+1}</div>
+            ${para.quote?`<div class="para-quote">"${para.quote}..."</div>`:''}
+            <div class="para-good"><div class="para-good-label">✓ What's good</div>${para.good}</div>
+            <div class="para-bad"><div class="para-bad-label">✗ What to improve</div>${para.bad}</div>
+          `;
+          leftBody.appendChild(d);
+        });
+        leftPanel.appendChild(leftBody);
+
+        // RIGHT — assignment text
+        const rightPanel=document.createElement('div');rightPanel.className='assignment-panel';
+        rightPanel.innerHTML=`<div class="assignment-panel-header">📄 Your Assignment</div>`;
+        const rightBody=document.createElement('div');rightBody.className='assignment-panel-body';
+        if(p.fullText){
+          p.fullText.split(/\n\n+/).forEach(para=>{
+            if(!para.trim())return;
+            const pd=document.createElement('p');
+            pd.style.cssText='margin-bottom:14px;font-size:0.8rem;line-height:1.8;color:var(--text)';
+            pd.textContent=para.trim();
+            rightBody.appendChild(pd);
+          });
+        }else{
+          rightBody.innerHTML=`<p style="color:var(--muted);font-size:0.78rem">Assignment text could not be extracted from this file type — refer to your original document alongside the feedback.</p>`;
+        }
+        rightPanel.appendChild(rightBody);
+        split.appendChild(leftPanel);
+        split.appendChild(rightPanel);
+        fc.appendChild(split);
+      }
+
+      if(p.examReadiness){showReadiness(p.examReadiness);}
+    }else{
+      const res=exArr(raw);
+      if(!res.length)throw new Error('No questions found in this exam.');
+      let tot=0,mx=0,readinessTotal=0;
+      res.forEach(r=>{
+        tot+=r.score;mx+=r.marks;if(r.examReadiness)readinessTotal+=r.examReadiness;
+        const d=document.createElement('div');d.className='mark-q';
+        const tagMap={correct:'correct',conceptual:'conceptual',algebra:'algebra',missing_step:'missing'};
+        const tagClass=tagMap[r.errorType]||'missing';
+        const tagLabel={correct:'✓ Correct',conceptual:'Conceptual Error',algebra:'Algebra Error',missing_step:'Missing Step'}[r.errorType]||r.errorType;
+        const stepsHtml=(r.stepFeedback||[]).map(s=>`<div style="font-size:0.73rem;color:var(--text);padding:3px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('');
+        d.innerHTML=`
+          <div class="eq-hdr"><div class="eq-num">Question ${r.number}</div><div class="eq-marks">${r.marks} marks</div></div>
+          <div class="mark-q-text">${r.question}</div>
+          <div class="mark-q-text" style="border-left-color:var(--accent2);color:var(--muted);font-size:0.75rem;margin-top:6px"><em>Your answer:</em> ${r.studentAnswer||'<span style="color:var(--danger)">No answer found</span>'}</div>
+          <div class="mark-feedback ${markClass(r.score,r.marks)}">
+            <div style="margin-bottom:6px"><span class="error-tag ${tagClass}">${tagLabel}</span> <strong>${r.score}/${r.marks}</strong></div>
+            ${stepsHtml?`<div class="step-breakdown"><div class="step-breakdown-title">Step by step</div>${stepsHtml}</div>`:''}
+            <div style="margin-top:8px;font-size:0.76rem">${r.feedback}</div>
+          </div>`;
+        fc.appendChild(d);
+      });
+      const pc=Math.round((tot/mx)*100);
+      document.getElementById('markScoreBig').textContent=`${tot}/${mx} · ${pc}%`;
+      document.getElementById('markScoreSub').textContent=pc>=80?'🎉 Excellent work!':pc>=50?'📚 Good effort — review the feedback carefully':'💪 Keep working at it — the step breakdowns above will help';
+      document.getElementById('markScore').classList.add('show');
+      // Readiness
+      const avgReadiness=res.length?Math.round(readinessTotal/res.length):pc;
+      showReadiness(avgReadiness);
+    }
+
+    document.getElementById('markLoad').classList.remove('show');
+    document.getElementById('markFeedbackSection').classList.add('show');
+
+  }catch(e){
+    clearInterval(iv);
+    document.getElementById('markLoad').classList.remove('show');
+    document.getElementById('mark-form').style.display='';
+    document.getElementById('markErr').textContent='Error: '+e.message;
+    document.getElementById('markErr').classList.add('show');
+  }
+});
+
+function showReadiness(pct){
+  const wrap=document.getElementById('readinessWrap');
+  wrap.style.display='';
+  const clampedPct=Math.min(100,Math.max(0,pct));
+  document.getElementById('readinessPct').textContent=clampedPct+'%';
+  setTimeout(()=>{ document.getElementById('readinessBar').style.width=clampedPct+'%'; },100);
+  document.getElementById('readinessDesc').textContent=
+    clampedPct>=80?'You are well prepared — keep this up going into the exam.':
+    clampedPct>=60?'Good progress — focus on the weak areas highlighted above.':
+    clampedPct>=40?'More revision needed — work through the errors in your feedback.':
+    'Significant revision needed — prioritise the conceptual errors above before your exam.';
+}
+</script>
+</body>
+</html>
