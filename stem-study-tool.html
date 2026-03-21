@@ -900,21 +900,10 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
     const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
     const examExtra=lecModeVal==='exam'?'EXAM FOCUSED MODE: For each topic, also note common exam traps, mark-worthy phrases examiners look for, and high-frequency exam topics. Tag any high-priority exam content with ★.':'';
 
-    const sys=`You are an expert university and high school tutor. Auto-detect the subject from the uploaded content.
-${fmtInstr} ${examExtra}
-Output everything in ${lang}.
-Return ONLY a JSON object — no markdown, no backticks:
-{
-  "subject": "detected subject name",
-  "summary": "HTML notes: ${depthMap[lecDepth]}. Use <h3> for topics, <p> or <ul><li> based on format instruction. Include all key definitions, concepts and examples.",
-  "flashcards": [{"front":"Term or concept","back":"Definition or explanation — 1-2 sentences"}],
-  "questions": [{"question":"Q","answer":"1-2 sentence answer","tag":"topic tag e.g. Differentiation"}],
-  "catchup": "HTML: everything a student who missed class needs to know. ${fmtInstr}",
-  "sections": [{"label":"Pages X-Y · Topic","content":"<p>What this section means, why it matters, the underlying idea. 3-4 sentences.</p>"}],
-  "formulas": [{"name":"Formula name","equation":"the formula","steps":["Step 1: what to do","Step 2: ..."],"example":"worked example"}],
-  "test": [{"question":"written Q","modelAnswer":"ideal answer","marks":2,"tag":"topic"}]
-}
-flashcards=8, questions=6 (with tags), sections=3-5, formulas=all relevant ones (0 if none), test=4 (1-3 marks each). Total under 2000 words.`;
+    const sys=`You are a tutor. Auto-detect the subject from the content. ${fmtInstr} ${examExtra} Output in ${lang}.
+Return ONLY JSON — no markdown, no backticks:
+{"subject":"name","summary":"HTML notes: ${depthMap[lecDepth]}. Use <h3>,<p>,<ul><li>.","flashcards":[{"front":"term","back":"definition"}],"questions":[{"question":"Q","answer":"answer","tag":"topic"}],"catchup":"HTML bullet points of key points","sections":[{"label":"Topic","content":"<p>What this means and why it matters. 3 sentences.</p>"}],"formulas":[{"name":"name","equation":"formula","steps":["step"],"example":"example"}],"test":[{"question":"Q","modelAnswer":"answer","marks":2,"tag":"topic"}]}
+flashcards=6, questions=5, sections=3-4, test=3, formulas=only if relevant. Be concise.`;
 
     let userMessages;
     if(inputMode==='text'){
@@ -924,7 +913,7 @@ flashcards=8, questions=6 (with tags), sections=3-5, formulas=all relevant ones 
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}];
     }
 
-    const raw=await apiSonnet(sys,userMessages,8000);
+    const raw=await apiHaiku(sys,userMessages,4000);
     clearInterval(iv);
     const p=exJSON(raw);
 
@@ -1071,7 +1060,7 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
       sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
       messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
     }
-    const raw = await apiSonnet(sys, messages, 8000);
+    const raw = await apiSonnet(sys, messages, 4000);
     clearInterval(iv);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
@@ -1252,8 +1241,8 @@ If a question is blank score 0. Mark per step — if they got the working right 
     const markStepEl = document.getElementById('markStep');
     let markChars = 0;
     const raw = await (isAssignment
-      ? apiSonnet(sysBase,[{role:'user',content:msgContent}],8000)
-      : apiHaiku(sysBase,[{role:'user',content:msgContent}],6000)
+      ? apiSonnet(sysBase,[{role:'user',content:msgContent}],4000)
+      : apiHaiku(sysBase,[{role:'user',content:msgContent}],3000)
     );
     clearInterval(iv);
 
