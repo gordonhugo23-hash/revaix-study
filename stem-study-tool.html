@@ -737,27 +737,41 @@ const apiHaiku=(sys,msgs,max)=>api(sys,msgs,max,'claude-haiku-4-5-20251001');
 const apiSonnet=(sys,msgs,max)=>api(sys,msgs,max,'claude-sonnet-4-20250514');
 
 // Streaming API — shows text appearing in real time
-async function apiStream(system,messages,max=6000,model='claude-sonnet-4-20250514',onChunk){
-  const r=await fetch('/api/messages/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:max,system,messages})});
-  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
-  const reader=r.body.getReader();const decoder=new TextDecoder();let full='';
+async function apiStream(system, messages, max=6000, model='claude-sonnet-4-20250514', onChunk){
+  const r = await fetch('/api/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, max_tokens: max, system, messages })
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.error?.message||'API error'); }
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
   while(true){
-    const{done,value}=await reader.read();if(done)break;
-    const chunk=decoder.decode(value);
-    const lines=chunk.split('\n');
+    const { done, value } = await reader.read();
+    if(done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
     for(const line of lines){
-      if(!line.startsWith('data:'))continue;
+      if(!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if(data === '[DONE]') return full;
       try{
-        const d=JSON.parse(line.slice(5));
-        if(d.type==='content_block_delta'&&d.delta?.text){
-          full+=d.delta.text;
-          if(onChunk)onChunk(full);
+        const evt = JSON.parse(data);
+        if(evt.text !== undefined){
+          full += evt.text;
+          if(onChunk) onChunk(full);
         }
-      }catch(e){}
+        if(evt.error) throw new Error(evt.error);
+      }catch(_){}
     }
   }
   return full;
 }
+const apiStreamSonnet=(sys,msgs,max,onChunk)=>apiStream(sys,msgs,max,'claude-sonnet-4-20250514',onChunk);
+const apiStreamHaiku=(sys,msgs,max,onChunk)=>apiStream(sys,msgs,max,'claude-haiku-4-5-20251001',onChunk);
 function wire(zoneId,inputId,pillId,fnId,fsId,rmId,onAdd,onRm){
   const zone=document.getElementById(zoneId),inp=document.getElementById(inputId),pill=document.getElementById(pillId),fn=document.getElementById(fnId),fs=document.getElementById(fsId),rm=document.getElementById(rmId);
   zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
@@ -910,8 +924,25 @@ flashcards=8, questions=6 (with tags), sections=3-5, formulas=all relevant ones 
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}];
     }
 
-    const raw=await apiSonnet(sys,userMessages,8000);
+    // Show live streaming progress
+    const loadingP = document.querySelector('#lecLoad p');
+    const originalHTML = loadingP.innerHTML;
+    const streamPreview = document.createElement('div');
+    streamPreview.style.cssText='font-size:0.68rem;color:var(--accent);margin-top:12px;max-height:80px;overflow:hidden;opacity:0.7;font-family:DM Mono,monospace;text-align:left;padding:0 20px;';
+    document.getElementById('lecLoad').appendChild(streamPreview);
+
+    let charCount = 0;
+    const raw = await apiStreamSonnet(sys, userMessages, 8000, (partial) => {
+      // Show how much has arrived + a teaser of content
+      charCount = partial.length;
+      const pct = Math.min(95, Math.round((charCount / 4000) * 100));
+      stepEl.textContent = `Building your pack... ${pct}%`;
+      // Show last 120 chars of raw stream as live preview
+      const preview = partial.slice(-120).replace(/[{}"]/g,'').replace(/\\n/g,' ').trim();
+      if(preview.length > 10) streamPreview.textContent = preview + '...';
+    });
     clearInterval(iv);
+    streamPreview.remove();
     const p=exJSON(raw);
 
     // Summary / Notes
@@ -1057,7 +1088,15 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
       sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
       messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
     }
-    const raw=await apiSonnet(sys,messages,8000);clearInterval(iv);
+    // Stream exam generation
+    const examStepEl = document.getElementById('examStep');
+    let examChars = 0;
+    const raw = await apiStreamSonnet(sys, messages, 8000, (partial) => {
+      examChars = partial.length;
+      const pct = Math.min(95, Math.round((examChars / 4000) * 100));
+      examStepEl.textContent = `Writing questions... ${pct}%`;
+    });
+    clearInterval(iv);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
   }catch(e){
@@ -1234,7 +1273,20 @@ If a question is blank score 0. Mark per step — if they got the working right 
       msgContent=buildContent(b64,markF,`This is a completed ${isAssignment?'assignment':'exam'}. Auto-detect subject, read questions and answers, mark everything. Return JSON only.`);
     }
 
-    const raw=await (isAssignment ? apiSonnet(sysBase,[{role:'user',content:msgContent}],8000) : apiHaiku(sysBase,[{role:'user',content:msgContent}],6000));
+    const markStepEl = document.getElementById('markStep');
+    let markChars = 0;
+    const raw = await (isAssignment
+      ? apiStreamSonnet(sysBase,[{role:'user',content:msgContent}],8000,(partial)=>{
+          markChars=partial.length;
+          const pct=Math.min(95,Math.round((markChars/5000)*100));
+          markStepEl.textContent=`Marking your work... ${pct}%`;
+        })
+      : apiStreamHaiku(sysBase,[{role:'user',content:msgContent}],6000,(partial)=>{
+          markChars=partial.length;
+          const pct=Math.min(95,Math.round((markChars/3000)*100));
+          markStepEl.textContent=`Marking your exam... ${pct}%`;
+        })
+    );
     clearInterval(iv);
 
     const fc=document.getElementById('markFeedbackQs');fc.innerHTML='';
