@@ -924,25 +924,8 @@ flashcards=8, questions=6 (with tags), sections=3-5, formulas=all relevant ones 
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}];
     }
 
-    // Show live streaming progress
-    const loadingP = document.querySelector('#lecLoad p');
-    const originalHTML = loadingP.innerHTML;
-    const streamPreview = document.createElement('div');
-    streamPreview.style.cssText='font-size:0.68rem;color:var(--accent);margin-top:12px;max-height:80px;overflow:hidden;opacity:0.7;font-family:DM Mono,monospace;text-align:left;padding:0 20px;';
-    document.getElementById('lecLoad').appendChild(streamPreview);
-
-    let charCount = 0;
-    const raw = await apiStreamSonnet(sys, userMessages, 8000, (partial) => {
-      // Show how much has arrived + a teaser of content
-      charCount = partial.length;
-      const pct = Math.min(95, Math.round((charCount / 4000) * 100));
-      stepEl.textContent = `Building your pack... ${pct}%`;
-      // Show last 120 chars of raw stream as live preview
-      const preview = partial.slice(-120).replace(/[{}"]/g,'').replace(/\\n/g,' ').trim();
-      if(preview.length > 10) streamPreview.textContent = preview + '...';
-    });
+    const raw=await apiSonnet(sys,userMessages,8000);
     clearInterval(iv);
-    streamPreview.remove();
     const p=exJSON(raw);
 
     // Summary / Notes
@@ -1088,14 +1071,7 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
       sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
       messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
     }
-    // Stream exam generation
-    const examStepEl = document.getElementById('examStep');
-    let examChars = 0;
-    const raw = await apiStreamSonnet(sys, messages, 8000, (partial) => {
-      examChars = partial.length;
-      const pct = Math.min(95, Math.round((examChars / 4000) * 100));
-      examStepEl.textContent = `Writing questions... ${pct}%`;
-    });
+    const raw = await apiSonnet(sys, messages, 8000);
     clearInterval(iv);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
@@ -1276,17 +1252,10 @@ If a question is blank score 0. Mark per step — if they got the working right 
     const markStepEl = document.getElementById('markStep');
     let markChars = 0;
     const raw = await (isAssignment
-      ? apiStreamSonnet(sysBase,[{role:'user',content:msgContent}],8000,(partial)=>{
-          markChars=partial.length;
-          const pct=Math.min(95,Math.round((markChars/5000)*100));
-          markStepEl.textContent=`Marking your work... ${pct}%`;
-        })
+      ? apiSonnet(sysBase,[{role:'user',content:msgContent}],8000)
       : apiHaiku(sysBase,[{role:'user',content:msgContent}],6000)
     );
     clearInterval(iv);
-    console.log('Raw response length:', raw.length);
-    console.log('Raw response preview:', raw.slice(0,200));
-    console.log('Raw response end:', raw.slice(-200));
 
     const fc=document.getElementById('markFeedbackQs');fc.innerHTML='';
 
