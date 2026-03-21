@@ -1060,7 +1060,7 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
       sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
       messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
     }
-    const raw = await apiSonnet(sys, messages, 4000);
+    const raw = await apiHaiku(sys, messages, 4000);
     clearInterval(iv);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
@@ -1241,7 +1241,7 @@ If a question is blank score 0. Mark per step — if they got the working right 
     const markStepEl = document.getElementById('markStep');
     let markChars = 0;
     const raw = await (isAssignment
-      ? apiSonnet(sysBase,[{role:'user',content:msgContent}],4000)
+      ? apiHaiku(sysBase,[{role:'user',content:msgContent}],4000)
       : apiHaiku(sysBase,[{role:'user',content:msgContent}],3000)
     );
     clearInterval(iv);
