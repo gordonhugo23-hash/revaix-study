@@ -1284,6 +1284,9 @@ If a question is blank score 0. Mark per step — if they got the working right 
       : apiHaiku(sysBase,[{role:'user',content:msgContent}],6000)
     );
     clearInterval(iv);
+    console.log('Raw response length:', raw.length);
+    console.log('Raw response preview:', raw.slice(0,200));
+    console.log('Raw response end:', raw.slice(-200));
 
     const fc=document.getElementById('markFeedbackQs');fc.innerHTML='';
 
