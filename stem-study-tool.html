@@ -1281,11 +1281,7 @@ If a question is blank score 0. Mark per step — if they got the working right 
           const pct=Math.min(95,Math.round((markChars/5000)*100));
           markStepEl.textContent=`Marking your work... ${pct}%`;
         })
-      : apiStreamHaiku(sysBase,[{role:'user',content:msgContent}],6000,(partial)=>{
-          markChars=partial.length;
-          const pct=Math.min(95,Math.round((markChars/3000)*100));
-          markStepEl.textContent=`Marking your exam... ${pct}%`;
-        })
+      : apiHaiku(sysBase,[{role:'user',content:msgContent}],6000)
     );
     clearInterval(iv);
 
