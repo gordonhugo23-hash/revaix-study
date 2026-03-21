@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Revaix Study — Free AI Study Notes, Practice Exams & Exam Marking Tool</title>
-<meta name="description" content="Revaix Study uses AI to instantly summarise your lecture slides, class notes or textbook into study notes, flashcards, practice exams and auto-marking. Free for high school and university students.">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Revaix Study — Free AI Study Notes, Flashcards, Practice Exams & Marking Tool</title>
+<meta name="description" content="Revaix Study uses AI to instantly turn your notes, lecture slides or textbook into summaries, flashcards, practice exams and detailed marking. 100% free for high school and university students.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c26; --border:#2a2a3a;
@@ -16,7 +16,7 @@
   body.light nav { background: rgba(244,244,248,0.92); }
   body.light::before { background-image: linear-gradient(rgba(110,231,183,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,183,0.06) 1px,transparent 1px); }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden;transition:background 0.2s,color 0.2s;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;transition:background 0.2s,color 0.2s;}
   body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(110,231,183,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,183,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
   /* NAV */
@@ -30,7 +30,9 @@
   .nav-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
   .nav-settings-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;border-radius:7px;font-size:0.95rem;transition:all 0.15s;}
   .nav-settings-btn:hover{color:var(--text);background:var(--surface2);}
-  .nav-badge{font-size:0.55rem;background:rgba(110,231,183,0.1);color:var(--accent);border:1px solid rgba(110,231,183,0.2);padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;}
+  .nav-badge{font-size:0.55rem;background:rgba(110,231,183,0.1);color:var(--accent);border:1px solid rgba(110,231,183,0.2);padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
+  .nav-badge:hover{background:rgba(110,231,183,0.2);}
+  .nav-free{font-size:0.55rem;background:rgba(251,191,36,0.1);color:var(--accent3);border:1px solid rgba(251,191,36,0.2);padding:2px 7px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;}
 
   /* SETTINGS */
   .settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;backdrop-filter:blur(4px);}
@@ -60,6 +62,42 @@
   .accent-dot.active{border-color:var(--text);transform:scale(1.15);}
   .font-sel{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-family:'DM Mono',monospace;font-size:0.76rem;cursor:pointer;appearance:none;}
 
+  /* WHAT'S NEW MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:90%;position:relative;animation:fu 0.25s ease;}
+  .modal h3{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:4px;}
+  .modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:18px;}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;}
+  .modal-close:hover{color:var(--text);}
+  .whats-new-item{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start;}
+  .wni-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+  .wni-text{font-size:0.79rem;color:var(--text);line-height:1.5;}
+  .wni-text strong{color:var(--accent);font-family:'Syne',sans-serif;}
+
+  /* STREAMING */
+  .stream-cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 0.8s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+  /* ADVANCED TOGGLE */
+  .advanced-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px;width:fit-content;}
+  .advanced-toggle-label{font-size:0.72rem;color:var(--muted);transition:color 0.15s;}
+  .advanced-toggle:hover .advanced-toggle-label{color:var(--text);}
+  .advanced-arrow{font-size:0.65rem;color:var(--muted);transition:transform 0.2s;}
+  .advanced-arrow.open{transform:rotate(180deg);}
+  .advanced-options{display:none;animation:fu 0.2s ease;}
+  .advanced-options.show{display:block;}
+
+  /* PLAIN TEXT INPUT */
+  .plain-text-area{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.82rem;padding:14px 16px;resize:vertical;min-height:140px;line-height:1.7;transition:border-color 0.15s;margin-bottom:10px;}
+  .plain-text-area:focus{outline:none;border-color:var(--accent);}
+  .plain-text-area::placeholder{color:var(--muted);}
+
+  /* INPUT MODE TOGGLE */
+  .input-mode-row{display:flex;gap:6px;margin-bottom:14px;}
+  .input-mode-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.71rem;cursor:pointer;transition:all 0.15s;}
+  .input-mode-btn.active{background:rgba(110,231,183,0.08);border-color:var(--accent);color:var(--accent);}
+
   /* PAGES */
   .page{display:none;} .page.active{display:block;}
   .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:32px 20px 80px;}
@@ -77,6 +115,57 @@
   .opt-btn.active{background:rgba(110,231,183,0.08);border-color:var(--accent);color:var(--accent);}
   .opt-btn.active-p{background:rgba(129,140,248,0.08);border-color:var(--accent2);color:var(--accent2);}
   .opt-btn.active-y{background:rgba(251,191,36,0.08);border-color:var(--accent3);color:var(--accent3);}
+
+  /* STREAMING */
+  .streaming-output{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;line-height:1.8;font-size:0.83rem;min-height:60px;white-space:pre-wrap;}
+  .streaming-cursor{display:inline-block;width:2px;height:1em;background:var(--accent);animation:blink 1s infinite;vertical-align:text-bottom;margin-left:2px;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+  /* ADVANCED OPTIONS TOGGLE */
+  .adv-toggle{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:0.73rem;cursor:pointer;margin-bottom:14px;user-select:none;width:fit-content;}
+  .adv-toggle:hover{color:var(--text);}
+  .adv-arrow{transition:transform 0.2s;font-size:0.7rem;}
+  .adv-arrow.open{transform:rotate(90deg);}
+  .adv-body{display:none;}
+  .adv-body.open{display:block;}
+
+  /* PLAIN TEXT INPUT */
+  .text-input-wrap{margin-bottom:10px;}
+  .text-input-area{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.83rem;padding:14px 16px;resize:vertical;min-height:120px;line-height:1.7;transition:border-color 0.15s;}
+  .text-input-area:focus{outline:none;border-color:var(--accent);}
+  .text-input-area::placeholder{color:var(--muted);}
+  .input-mode-row{display:flex;gap:6px;margin-bottom:12px;}
+  .input-mode-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.76rem;cursor:pointer;transition:all 0.15s;}
+  .input-mode-btn:hover{border-color:var(--accent);color:var(--text);}
+  .input-mode-btn.active{background:rgba(110,231,183,0.08);border-color:var(--accent);color:var(--accent);}
+
+  /* TOOLTIP */
+  .tooltip-wrap{position:relative;display:inline-block;}
+  .tooltip-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;font-size:0.6rem;color:var(--muted);cursor:help;margin-left:5px;flex-shrink:0;}
+  .tooltip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:0.72rem;color:var(--text);line-height:1.5;width:220px;z-index:50;pointer-events:none;}
+  .tooltip-wrap:hover .tooltip-box{display:block;}
+
+  /* SHUFFLE BUTTON */
+  .fc-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .fc-count{font-size:0.72rem;color:var(--muted);}
+  .btn-shuffle{background:none;border:1.5px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:7px;font-family:'Inter',sans-serif;font-size:0.72rem;cursor:pointer;transition:all 0.15s;}
+  .btn-shuffle:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  /* WHATS NEW MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .modal-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;}
+  .modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;}
+  .modal-close:hover{color:var(--text);}
+  .whats-new-item{display:flex;gap:10px;margin-bottom:14px;font-size:0.81rem;line-height:1.6;}
+  .whats-new-tag{font-size:0.58rem;background:rgba(110,231,183,0.1);color:var(--accent);border:1px solid rgba(110,231,183,0.2);padding:2px 7px;border-radius:100px;white-space:nowrap;height:fit-content;margin-top:2px;text-transform:uppercase;letter-spacing:0.06em;}
+  .whats-new-tag.purple{background:rgba(129,140,248,0.1);color:var(--accent2);border-color:rgba(129,140,248,0.2);}
+  .whats-new-tag.yellow{background:rgba(251,191,36,0.1);color:var(--accent3);border-color:rgba(251,191,36,0.2);}
+
+  /* FREE BANNER */
+  .free-banner{background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:0.78rem;color:var(--accent3);display:flex;align-items:center;gap:8px;}
 
   /* FIELD */
   .field-label{display:block;font-size:0.63rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
@@ -151,6 +240,8 @@
   .cc li{margin-bottom:3px;}
 
   /* FLASHCARDS */
+  .fc-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .fc-count{font-size:0.68rem;color:var(--muted);}
   .fc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   @media(max-width:500px){.fc-grid{grid-template-columns:1fr;}}
   .flashcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all 0.2s;position:relative;min-height:90px;}
@@ -262,6 +353,33 @@
   .para-good-label{font-size:0.58rem;font-weight:600;margin-bottom:3px;letter-spacing:0.05em;text-transform:uppercase;}
   .para-bad-label{font-size:0.58rem;font-weight:600;margin-bottom:3px;letter-spacing:0.05em;text-transform:uppercase;color:var(--danger);}
 
+  /* ADVANCED TOGGLE */
+  .adv-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:0.72rem;color:var(--muted);transition:color 0.15s;width:fit-content;user-select:none;}
+  .adv-toggle:hover{color:var(--text);}
+  .adv-arrow{font-size:0.6rem;transition:transform 0.2s;}
+  .adv-body{display:none;}
+  .adv-body.show{display:block;animation:fu 0.2s ease;}
+
+  /* PLAIN TEXT INPUT */
+  .text-input-area{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.82rem;padding:14px 16px;resize:vertical;min-height:140px;line-height:1.7;transition:border-color 0.15s;margin-bottom:10px;}
+  .text-input-area:focus{outline:none;border-color:var(--accent);}
+  .text-input-area::placeholder{color:var(--muted);}
+
+  /* INPUT MODE */
+  .input-mode-row{display:flex;gap:6px;margin-bottom:12px;}
+  .input-mode-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.71rem;cursor:pointer;transition:all 0.15s;}
+  .input-mode-btn.active{background:rgba(110,231,183,0.08);border-color:var(--accent);color:var(--accent);}
+
+  /* SHUFFLE BUTTON */
+  .shuffle-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:7px;font-family:'DM Mono',monospace;font-size:0.68rem;cursor:pointer;transition:all 0.15s;margin-bottom:12px;}
+  .shuffle-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  /* TOOLTIP */
+  .tooltip-wrap{position:relative;display:inline-block;}
+  .tooltip-icon{font-size:0.75rem;color:var(--muted);cursor:help;margin-left:5px;}
+  .tooltip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:0.72rem;color:var(--text);width:220px;line-height:1.5;z-index:50;white-space:normal;}
+  .tooltip-wrap:hover .tooltip-box{display:block;}
+
   /* ERR */
   .err{display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);padding:9px 13px;border-radius:8px;font-size:0.76rem;margin-bottom:12px;}
   .err.show{display:block;}
@@ -312,6 +430,22 @@
   </div>
 </div>
 
+<!-- WHAT'S NEW MODAL -->
+<div class="modal-overlay" id="whatsNewModal">
+  <div class="modal">
+    <button class="modal-close" id="whatsNewClose">✕</button>
+    <h3>What's New ✦</h3>
+    <div class="modal-sub">Latest updates to Revaix Study</div>
+    <div class="whats-new-item"><span class="wni-icon">⚡</span><div class="wni-text"><strong>Streaming output</strong> — results now appear in real time as they generate</div></div>
+    <div class="whats-new-item"><span class="wni-icon">🃏</span><div class="wni-text"><strong>Flashcards with shuffle</strong> — tap to flip, shuffle button to randomise order</div></div>
+    <div class="whats-new-item"><span class="wni-icon">📝</span><div class="wni-text"><strong>Plain text input</strong> — paste your notes directly without needing a PDF</div></div>
+    <div class="whats-new-item"><span class="wni-icon">🎯</span><div class="wni-text"><strong>Assignment marking</strong> — paragraph-by-paragraph feedback with side-by-side view</div></div>
+    <div class="whats-new-item"><span class="wni-icon">∑</span><div class="wni-text"><strong>Formula breakdowns</strong> — step-by-step formula guides for maths and science</div></div>
+    <div class="whats-new-item"><span class="wni-icon">🌍</span><div class="wni-text"><strong>11 languages</strong> — generate your study pack in any language</div></div>
+    <div class="whats-new-item"><span class="wni-icon">✦</span><div class="wni-text"><strong>100% free</strong> — no signup, no credit card, no limits right now</div></div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
@@ -320,8 +454,9 @@
     <button class="nav-link" data-page="exam">✏️ Practice Exam</button>
     <button class="nav-link" data-page="mark">🎯 Mark My Work</button>
     <div class="nav-right">
+      <div class="nav-free">✦ Free</div>
       <button class="nav-settings-btn" id="settingsBtn">⚙️</button>
-      <div class="nav-badge">v0.4</div>
+      <div class="nav-badge" id="whatsNewBtn">What's New</div>
     </div>
   </div>
 </nav>
@@ -331,63 +466,81 @@
 <div class="container">
   <div class="hero">
     <h1>Stop drowning in<br><span class="hl">notes.</span></h1>
-    <p>Upload any lecture slides, class notes, textbook pages, or PowerPoint — Revaix auto-detects your subject and instantly builds a full study pack. Works for high school and university students.</p>
+    <p>Upload any notes, slides, or textbook pages — Revaix instantly builds a full study pack. Works for high school and university students, any subject.</p>
   </div>
 
+  <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just upload and go</div>
+
   <div id="lec-form">
-    <!-- DEPTH -->
-    <label class="field-label">Notes depth</label>
-    <div class="opt-row" id="depthRow">
-      <button class="opt-btn active" data-depth="summarised">⚡ Summarised</button>
-      <button class="opt-btn" data-depth="indepth">📖 In-Depth</button>
-      <button class="opt-btn" data-depth="comprehensive">🔬 Comprehensive</button>
+
+    <!-- INPUT MODE -->
+    <div class="input-mode-row">
+      <button class="input-mode-btn active" id="inputModeFile">📄 Upload File</button>
+      <button class="input-mode-btn" id="inputModeText">✏️ Paste Text</button>
     </div>
 
-    <!-- FORMAT -->
-    <label class="field-label">Output format</label>
-    <div class="opt-row" id="formatRow">
-      <button class="opt-btn active" data-format="dotpoints">• Dot Points</button>
-      <button class="opt-btn" data-format="paragraphs">¶ Paragraphs</button>
-    </div>
-
-    <!-- LANGUAGE + EXAM MODE -->
-    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-      <div>
-        <label class="field-label">Output language</label>
-        <select class="lang-sel" id="lecLang">
-          <option value="English">English</option>
-          <option value="Spanish">Spanish</option>
-          <option value="French">French</option>
-          <option value="German">German</option>
-          <option value="Mandarin Chinese">Mandarin Chinese</option>
-          <option value="Japanese">Japanese</option>
-          <option value="Portuguese">Portuguese</option>
-          <option value="Arabic">Arabic</option>
-          <option value="Hindi">Hindi</option>
-          <option value="Korean">Korean</option>
-          <option value="Italian">Italian</option>
-        </select>
+    <!-- FILE UPLOAD -->
+    <div id="fileInputWrap">
+      <div class="upload-zone" id="lecZone">
+        <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
+        <span class="upload-icon">📄</span>
+        <h3>Drop your file here</h3>
+        <p>PDF or image · max 20MB · AI auto-detects subject</p>
       </div>
-      <div style="margin-top:auto;">
-        <label class="field-label">Mode</label>
-        <div class="opt-row" style="margin-bottom:0">
-          <button class="opt-btn active-y" data-mode-lec="normal" id="lecModeNormal" style="border-color:var(--accent3);color:var(--accent3);background:rgba(251,191,36,0.08)">📚 Normal</button>
-          <button class="opt-btn" data-mode-lec="exam" id="lecModeExam">🎯 Exam Focused</button>
+      <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
+    </div>
+
+    <!-- PLAIN TEXT INPUT -->
+    <div id="textInputWrap" style="display:none">
+      <textarea class="text-input-area" id="lecTextInput" placeholder="Paste your notes, lecture content, or any text here..."></textarea>
+    </div>
+
+    <!-- ADVANCED OPTIONS -->
+    <div class="adv-toggle" id="advToggle">
+      <span class="adv-arrow" id="advArrow">▶</span>
+      Advanced options
+    </div>
+    <div class="adv-body" id="advBody">
+      <label class="field-label">Notes depth</label>
+      <div class="opt-row" id="depthRow">
+        <button class="opt-btn active" data-depth="summarised">⚡ Summarised</button>
+        <button class="opt-btn" data-depth="indepth">📖 In-Depth</button>
+        <button class="opt-btn" data-depth="comprehensive">🔬 Comprehensive</button>
+      </div>
+      <label class="field-label">Output format</label>
+      <div class="opt-row" id="formatRow">
+        <button class="opt-btn active" data-format="dotpoints">• Dot Points</button>
+        <button class="opt-btn" data-format="paragraphs">¶ Paragraphs</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+        <div>
+          <label class="field-label">Output language</label>
+          <select class="lang-sel" id="lecLang">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Mandarin Chinese">Mandarin Chinese</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="Arabic">Arabic</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Korean">Korean</option>
+            <option value="Italian">Italian</option>
+          </select>
+        </div>
+        <div style="margin-top:auto;">
+          <label class="field-label">Mode</label>
+          <div class="opt-row" style="margin-bottom:0">
+            <button class="opt-btn active-y" data-mode-lec="normal" id="lecModeNormal" style="border-color:var(--accent3);color:var(--accent3);background:rgba(251,191,36,0.08)">📚 Normal</button>
+            <button class="opt-btn" data-mode-lec="exam" id="lecModeExam">🎯 Exam Focused</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- UPLOAD -->
-    <label class="field-label">Upload your content <span style="color:var(--muted);font-size:0.6rem">· PDF, PowerPoint (.pptx), or image (JPG/PNG) · max 20MB · AI auto-detects subject</span></label>
-    <div class="upload-zone" id="lecZone">
-      <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
-      <span class="upload-icon">📄</span>
-      <h3>Drop your file here</h3>
-      <p>PDF, PowerPoint, or image · click to browse</p>
-    </div>
-    <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
     <div class="err" id="lecErr"></div>
-    <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack</button>
+    <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack — Free</button>
   </div>
 
   <div class="loading" id="lecLoad"><div class="spinner"></div><p>Building your study pack...<span class="lstep" id="lecStep">Reading content</span></p></div>
@@ -476,7 +629,14 @@
 
     <!-- RUBRIC (shown for assignment) -->
     <div id="rubric-wrap" style="display:none;margin-bottom:10px">
-      <label class="field-label">📋 Rubric / Marking Criteria / Learning Guide <span style="color:var(--muted);font-size:0.6rem">(upload your school's grading criteria)</span></label>
+      <label class="field-label" style="display:flex;align-items:center">
+        📋 Rubric / Marking Criteria / Learning Guide
+        <div class="tooltip-wrap">
+          <span class="tooltip-icon">?</span>
+          <div class="tooltip-box">This is the document your school or teacher uses to grade your work. It lists the criteria and what each grade looks like. If you don't have one, skip this — the AI will use standard academic guidelines instead.</div>
+        </div>
+        <span style="color:var(--muted);font-size:0.6rem;margin-left:6px">(optional)</span>
+      </label>
       <div class="upload-zone v3" id="rubricZone"><input type="file" id="rubricFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"><span class="upload-icon">📋</span><h3>Rubric, marking criteria or learning guide</h3><p>PDF or image (Word: save as PDF first)</p></div>
       <div class="fp" id="rubricPill"><div class="fp-ic" style="background:rgba(251,191,36,0.1)">📋</div><div class="fp-info"><div class="fp-name" id="rubricFN">—</div><div class="fp-size" id="rubricFS">—</div></div><button class="fp-rm" id="rubricRM">✕</button></div>
     </div>
@@ -568,10 +728,35 @@ function buildContent(b64,f,text){
 }
 function exJSON(t){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<0)throw new Error('No JSON in response');return JSON.parse(t.slice(a,b+1));}
 function exArr(t){const a=t.indexOf('['),b=t.lastIndexOf(']');if(a<0||b<0)throw new Error('No array in response');return JSON.parse(t.slice(a,b+1));}
-async function api(system,messages,max=6000){
-  const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,system,messages})});
+async function api(system,messages,max=6000,model='claude-sonnet-4-20250514'){
+  const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:max,system,messages})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
   const d=await r.json();return d.content.map(i=>i.text||'').join('');
+}
+const apiHaiku=(sys,msgs,max)=>api(sys,msgs,max,'claude-haiku-4-5-20251001');
+const apiSonnet=(sys,msgs,max)=>api(sys,msgs,max,'claude-sonnet-4-20250514');
+
+// Streaming API — shows text appearing in real time
+async function apiStream(system,messages,max=6000,model='claude-sonnet-4-20250514',onChunk){
+  const r=await fetch('/api/messages/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:max,system,messages})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
+  const reader=r.body.getReader();const decoder=new TextDecoder();let full='';
+  while(true){
+    const{done,value}=await reader.read();if(done)break;
+    const chunk=decoder.decode(value);
+    const lines=chunk.split('\n');
+    for(const line of lines){
+      if(!line.startsWith('data:'))continue;
+      try{
+        const d=JSON.parse(line.slice(5));
+        if(d.type==='content_block_delta'&&d.delta?.text){
+          full+=d.delta.text;
+          if(onChunk)onChunk(full);
+        }
+      }catch(e){}
+    }
+  }
+  return full;
 }
 function wire(zoneId,inputId,pillId,fnId,fsId,rmId,onAdd,onRm){
   const zone=document.getElementById(zoneId),inp=document.getElementById(inputId),pill=document.getElementById(pillId),fn=document.getElementById(fnId),fs=document.getElementById(fsId),rm=document.getElementById(rmId);
@@ -606,6 +791,53 @@ function wireTabs(tabsId){
 }
 function markClass(s,m){const p=s/m;return p>=0.8?'ok':p>=0.4?'half':'no';}
 
+// ── WHATS NEW MODAL ──
+document.getElementById('whatsNewBtn').addEventListener('click',()=>{
+  document.getElementById('whatsNewModal').classList.add('show');
+});
+document.getElementById('whatsNewClose').addEventListener('click',()=>{
+  document.getElementById('whatsNewModal').classList.remove('show');
+});
+document.getElementById('whatsNewModal').addEventListener('click',(e)=>{
+  if(e.target===document.getElementById('whatsNewModal'))document.getElementById('whatsNewModal').classList.remove('show');
+});
+
+// ── ADVANCED OPTIONS TOGGLE ──
+document.getElementById('advToggle').addEventListener('click',()=>{
+  const body=document.getElementById('advBody');
+  const arrow=document.getElementById('advArrow');
+  body.classList.toggle('show');
+  arrow.style.transform=body.classList.contains('show')?'rotate(90deg)':'';
+});
+
+// ── INPUT MODE TOGGLE ──
+let inputMode='file';
+document.getElementById('inputModeFile').addEventListener('click',()=>{
+  inputMode='file';
+  document.getElementById('inputModeFile').classList.add('active');
+  document.getElementById('inputModeText').classList.remove('active');
+  document.getElementById('fileInputWrap').style.display='';
+  document.getElementById('textInputWrap').style.display='none';
+  // disable button if no file
+  const hasText=document.getElementById('lecTextInput').value.trim().length>0;
+  if(!lecF&&!hasText)document.getElementById('lecBtn').disabled=true;
+  if(lecF)document.getElementById('lecBtn').disabled=false;
+});
+document.getElementById('inputModeText').addEventListener('click',()=>{
+  inputMode='text';
+  document.getElementById('inputModeText').classList.add('active');
+  document.getElementById('inputModeFile').classList.remove('active');
+  document.getElementById('fileInputWrap').style.display='none';
+  document.getElementById('textInputWrap').style.display='';
+  const hasText=document.getElementById('lecTextInput').value.trim().length>0;
+  document.getElementById('lecBtn').disabled=!hasText;
+});
+document.getElementById('lecTextInput').addEventListener('input',()=>{
+  if(inputMode==='text'){
+    document.getElementById('lecBtn').disabled=document.getElementById('lecTextInput').value.trim().length===0;
+  }
+});
+
 // ── PAGE 1: NOTES REVIEW ──
 let lecF=null, lecDepth='summarised', lecFormat='dotpoints', lecModeVal='normal';
 
@@ -639,7 +871,9 @@ document.getElementById('lecReset').addEventListener('click',()=>{
 });
 
 document.getElementById('lecBtn').addEventListener('click',async()=>{
-  if(!lecF)return;
+  const textContent = document.getElementById('lecTextInput').value.trim();
+  if(inputMode==='file' && !lecF) return;
+  if(inputMode==='text' && !textContent) return;
   document.getElementById('lecErr').classList.remove('show');
   document.getElementById('lec-form').style.display='none';
   document.getElementById('lecLoad').classList.add('show');
@@ -647,7 +881,6 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
   let si=0;const stepEl=document.getElementById('lecStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
 
   try{
-    const b64=await toB64(lecF);
     const lang=document.getElementById('lecLang').value;
     const depthMap={summarised:'concise bullet points covering only the key concepts (max 250 words)',indepth:'thorough notes covering all major concepts with explanations (max 500 words)',comprehensive:'comprehensive and detailed notes covering every concept, definition, example and nuance (max 900 words)'};
     const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
@@ -669,22 +902,39 @@ Return ONLY a JSON object — no markdown, no backticks:
 }
 flashcards=8, questions=6 (with tags), sections=3-5, formulas=all relevant ones (0 if none), test=4 (1-3 marks each). Total under 2000 words.`;
 
-    const raw=await api(sys,[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}],8000);
+    let userMessages;
+    if(inputMode==='text'){
+      userMessages=[{role:'user',content:`Here is the study content to analyse:\n\n${textContent}\n\nAuto-detect the subject and generate the full study pack JSON.`}];
+    }else{
+      const b64=await toB64(lecF);
+      userMessages=[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}];
+    }
+
+    const raw=await apiSonnet(sys,userMessages,8000);
     clearInterval(iv);
     const p=exJSON(raw);
 
     // Summary / Notes
     document.getElementById('ls').innerHTML=`<div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">📌 Subject detected: <strong style="color:var(--accent)">${p.subject||'Auto-detected'}</strong></div>${p.summary}`;
 
-    // Flashcards
-    const fcc=document.getElementById('lfc');fcc.innerHTML='<div class="fc-grid" id="fc-grid"></div>';
-    const fcg=document.getElementById('fc-grid');
-    (p.flashcards||[]).forEach((fc,i)=>{
-      const d=document.createElement('div');d.className='flashcard';
-      d.innerHTML=`<div class="fc-front">${fc.front}</div><div class="fc-back" id="fcb-${i}">${fc.back}</div><div class="fc-hint">tap to reveal</div>`;
-      d.addEventListener('click',()=>{const b=document.getElementById(`fcb-${i}`);b.classList.toggle('show');d.querySelector('.fc-hint').textContent=b.classList.contains('show')?'tap to hide':'tap to reveal';});
-      fcg.appendChild(d);
-    });
+    // Flashcards with shuffle
+    let fcData=[...(p.flashcards||[])];
+    function renderFlashcards(cards){
+      const fcc=document.getElementById('lfc');
+      fcc.innerHTML=`<div class="fc-controls"><span class="fc-count">${cards.length} cards</span><button class="btn-shuffle" id="shuffleBtn">🔀 Shuffle</button></div><div class="fc-grid" id="fc-grid"></div>`;
+      const fcg=document.getElementById('fc-grid');
+      cards.forEach((fc,i)=>{
+        const d=document.createElement('div');d.className='flashcard';
+        d.innerHTML=`<div class="fc-front">${fc.front}</div><div class="fc-back" id="fcb-${i}">${fc.back}</div><div class="fc-hint">tap to reveal</div>`;
+        d.addEventListener('click',()=>{const b=document.getElementById(`fcb-${i}`);b.classList.toggle('show');d.querySelector('.fc-hint').textContent=b.classList.contains('show')?'tap to hide':'tap to reveal';});
+        fcg.appendChild(d);
+      });
+      document.getElementById('shuffleBtn').addEventListener('click',()=>{
+        fcData.sort(()=>Math.random()-0.5);
+        renderFlashcards(fcData);
+      });
+    }
+    renderFlashcards(fcData);
 
     // Questions with tags
     const qc=document.getElementById('lq');qc.innerHTML='';
@@ -748,7 +998,7 @@ function renderMiniTest(qs,container){
     btn.disabled=true;btn.textContent='Marking...';
     try{
       const sys=`You are a strict exam marker. Mark like a real teacher — no softness. Award marks per correct step/point, not just for the final answer. Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"feedback":"1-2 sentences of specific feedback — state what was right, what was wrong, and what the examiner wanted"}]`;
-      const raw=await api(sys,[{role:'user',content:ans.map((a,i)=>`Q${i+1} (${a.marks} marks): ${a.question}\nModel: ${a.modelAnswer}\nStudent: ${a.studentAnswer}`).join('\n\n')}],1200);
+      const raw=await apiHaiku(sys,[{role:'user',content:ans.map((a,i)=>`Q${i+1} (${a.marks} marks): ${a.question}\nModel: ${a.modelAnswer}\nStudent: ${a.studentAnswer}`).join('\n\n')}],1200);
       const res=exArr(raw);let tot=0,mx=0;
       res.forEach((r,i)=>{tot+=r.score;mx+=r.maxScore;const el=document.getElementById(`mr-${i}`);const pc=r.score/r.maxScore;el.className='mr '+(pc>=0.8?'ok':pc>=0.4?'half':'no');el.innerHTML=`<strong>${r.score}/${r.maxScore}</strong> — ${r.feedback}`;});
       const pc=Math.round((tot/mx)*100);
@@ -807,7 +1057,7 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
       sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
       messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
     }
-    const raw=await api(sys,messages,8000);clearInterval(iv);
+    const raw=await apiSonnet(sys,messages,8000);clearInterval(iv);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
   }catch(e){
@@ -873,7 +1123,7 @@ For each question return:
 - feedback: 2-3 sentences — what was right, what was wrong, what the examiner wanted, how to improve
 Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"stepFeedback":["Step 1: student did X — ✓/✗ (1 mark)"],"errorType":"string","feedback":"string"}]`;
     const payload=toMark.map((a,i)=>`Q${i+1} (${a.marks} marks):\nQuestion: ${a.question}\nMarking scheme: ${a.marksPerStep.join(', ')}\nModel answer: ${a.modelAnswer}\nStudent answer: ${a.studentAnswer}`).join('\n\n');
-    const raw=await api(sys,[{role:'user',content:payload}],3000);
+    const raw=await apiHaiku(sys,[{role:'user',content:payload}],3000);
     const res=exArr(raw);let tot=0,mx=0;
     res.forEach((r,i)=>{
       tot+=r.score;mx+=r.maxScore;
@@ -984,7 +1234,7 @@ If a question is blank score 0. Mark per step — if they got the working right 
       msgContent=buildContent(b64,markF,`This is a completed ${isAssignment?'assignment':'exam'}. Auto-detect subject, read questions and answers, mark everything. Return JSON only.`);
     }
 
-    const raw=await api(sysBase,[{role:'user',content:msgContent}],8000);
+    const raw=await (isAssignment ? apiSonnet(sysBase,[{role:'user',content:msgContent}],8000) : apiHaiku(sysBase,[{role:'user',content:msgContent}],6000));
     clearInterval(iv);
 
     const fc=document.getElementById('markFeedbackQs');fc.innerHTML='';
