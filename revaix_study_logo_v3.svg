@@ -1,0 +1,10 @@
+<svg width="680" height="680" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+<rect width="680" height="680" fill="#0a0a0f" rx="120"/>
+<circle cx="340" cy="340" r="280" fill="#13131a"/>
+<circle cx="340" cy="340" r="278" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.2"/>
+<circle cx="340" cy="340" r="250" fill="none" stroke="#6ee7b7" stroke-width="0.8" opacity="0.07"/>
+<text x="340" y="375" text-anchor="middle" font-family="'Arial Black', sans-serif" font-weight="900" font-size="120" fill="#6ee7b7" letter-spacing="-2">REVAIX</text>
+<line x1="210" y1="410" x2="258" y2="410" stroke="#6ee7b7" stroke-width="0.8" opacity="0.35"/>
+<line x1="422" y1="410" x2="470" y2="410" stroke="#6ee7b7" stroke-width="0.8" opacity="0.35"/>
+<text x="340" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-weight="400" font-size="28" fill="#64648a" letter-spacing="10">STUDY</text>
+</svg>

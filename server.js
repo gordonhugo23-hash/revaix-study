@@ -6,6 +6,24 @@ const path = require('path');
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.ico': 'image/x-icon',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+};
+
+function serveFile(res, filePath, contentType) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) { res.writeHead(404); res.end('Not found'); return; }
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
+  });
+}
+
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -19,23 +37,19 @@ const server = http.createServer((req, res) => {
 
   // Landing page at /
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-    const filePath = path.join(__dirname, 'landing.html');
-    fs.readFile(filePath, (err, data) => {
-      if (err) { res.writeHead(404); res.end('Not found'); return; }
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(data);
-    });
+    serveFile(res, path.join(__dirname, 'landing.html'), 'text/html');
     return;
   }
 
   // App at /app
   if (req.method === 'GET' && req.url === '/app') {
-    const filePath = path.join(__dirname, 'stem-study-tool.html');
-    fs.readFile(filePath, (err, data) => {
-      if (err) { res.writeHead(404); res.end('Not found'); return; }
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(data);
-    });
+    serveFile(res, path.join(__dirname, 'stem-study-tool.html'), 'text/html');
+    return;
+  }
+
+  // Logo
+  if (req.method === 'GET' && req.url === '/revaix_study_logo_v3.svg') {
+    serveFile(res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml');
     return;
   }
 
