@@ -127,7 +127,7 @@
   .adv-arrow{transition:transform 0.2s;font-size:0.7rem;}
   .adv-arrow.open{transform:rotate(90deg);}
   .adv-body{display:none;}
-  .adv-body.open{display:block;}
+  .adv-body.show{display:block;animation:fu 0.2s ease;}
 
   /* PLAIN TEXT INPUT */
   .text-input-wrap{margin-bottom:10px;}
@@ -167,7 +167,40 @@
   /* FREE BANNER */
   .free-banner{background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:0.78rem;color:var(--accent3);display:flex;align-items:center;gap:8px;}
 
-  /* FIELD */
+  /* ── MOBILE ── */
+  @media(max-width:640px){
+    .nav-inner{gap:0px;}
+    .nav-link{font-size:0.62rem;padding:4px 6px;}
+    .nav-free{display:none;}
+    .nav-logo{font-size:0.95rem;margin-right:4px;}
+    .container{padding:20px 14px 60px;}
+    .hero h1{font-size:1.6rem;}
+    .hero p{font-size:0.76rem;}
+    .tabs{gap:1px;}
+    .tab{font-size:0.58rem;padding:6px 2px;min-width:44px;}
+    .fc-grid{grid-template-columns:1fr;}
+    .mode-row{grid-template-columns:1fr;}
+    .opt-row{gap:5px;}
+    .opt-btn{font-size:0.68rem;padding:6px 10px;}
+    .input-mode-row{flex-wrap:wrap;}
+    .assignment-split{grid-template-columns:1fr;}
+    .assignment-panel-body{max-height:400px;}
+    .exam-score-big{font-size:1.8rem;}
+    .readiness-pct{font-size:1.3rem;}
+    .settings-panel{width:100%;}
+    .modal{padding:20px;width:95%;}
+    .adv-toggle{font-size:0.68rem;}
+    textarea{font-size:0.74rem;}
+    .btn{font-size:0.84rem;padding:11px;}
+    .res-hdr{flex-direction:column;align-items:flex-start;gap:6px;}
+    .res-hdr-actions{width:100%;justify-content:flex-end;}
+  }
+
+  @media(max-width:400px){
+    .nav-link span{display:none;}
+    .nav-link{padding:4px 5px;}
+    .hero h1{font-size:1.4rem;}
+  }
   .field-label{display:block;font-size:0.63rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
 
   /* UPLOAD */
@@ -900,10 +933,10 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
     const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
     const examExtra=lecModeVal==='exam'?'EXAM FOCUSED MODE: For each topic, also note common exam traps, mark-worthy phrases examiners look for, and high-frequency exam topics. Tag any high-priority exam content with ★.':'';
 
-    const sys=`You are a tutor. Auto-detect the subject from the content. ${fmtInstr} ${examExtra} Output in ${lang}.
+    const sys=`You are a tutor. Auto-detect the subject from the content. Output in ${lang}. ${examExtra}
 Return ONLY JSON — no markdown, no backticks:
-{"subject":"name","summary":"HTML notes: ${depthMap[lecDepth]}. Use <h3>,<p>,<ul><li>.","flashcards":[{"front":"term","back":"definition"}],"questions":[{"question":"Q","answer":"answer","tag":"topic"}],"catchup":"HTML bullet points of key points","sections":[{"label":"Topic","content":"<p>What this means and why it matters. 3 sentences.</p>"}],"formulas":[{"name":"name","equation":"formula","steps":["step"],"example":"example"}],"test":[{"question":"Q","modelAnswer":"answer","marks":2,"tag":"topic"}]}
-flashcards=6, questions=5, sections=3-4, test=3, formulas=only if relevant. Be concise.`;
+{"subject":"name","summary":"HTML notes using ${lecFormat==='paragraphs'?'<p> paragraphs':'<ul><li> bullets'} — cover main topics clearly. ${depthMap[lecDepth]}.","flashcards":[{"front":"term or concept","back":"clear 1-sentence definition"}],"questions":[{"question":"specific question","answer":"1-2 sentence answer","tag":"topic"}],"catchup":"<ul><li>key point to know</li></ul>","sections":[{"label":"Topic name","content":"<p>What this concept means and why it matters. 2-3 sentences.</p>"}],"formulas":[],"test":[{"question":"written question","modelAnswer":"model answer","marks":2,"tag":"topic"}]}
+flashcards=6, questions=5, sections=3, test=3, formulas only if subject needs them. Be helpful and clear.`;
 
     let userMessages;
     if(inputMode==='text'){
@@ -913,7 +946,7 @@ flashcards=6, questions=5, sections=3-4, test=3, formulas=only if relevant. Be c
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}];
     }
 
-    const raw=await apiHaiku(sys,userMessages,4000);
+    const raw=await apiHaiku(sys,userMessages,3000);
     clearInterval(iv);
     const p=exJSON(raw);
 
@@ -1046,21 +1079,21 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
   let si=0;const stepEl=document.getElementById('examStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},2000);
   try{
     let sys='',messages=[];
-    const FMT=`{"examTitle":"string","totalMarks":number,"timeAllowed":"string","instructions":"string","questions":[{"number":1,"marks":number,"text":"question","marksPerStep":["Step 1 (1 mark): what is needed","Step 2 (1 mark): ..."],"parts":[{"part":"a","marks":number,"text":"sub-q","modelAnswer":"ideal answer","marksPerStep":["Step 1 (1 mark): ..."]}],"modelAnswer":"only if no parts"}]}`;
+    const FMT=`{"examTitle":"string","totalMarks":number,"timeAllowed":"string","instructions":"string","questions":[{"number":1,"marks":number,"text":"question","modelAnswer":"brief ideal answer","parts":[{"part":"a","marks":number,"text":"sub-q","modelAnswer":"answer"}]}]}`;
     if(examMode==='both'){
       const[nb64,pb64]=await Promise.all([toB64(enF),toB64(epF)]);
-      sys=`You are an expert exam writer. Auto-detect the subject from the documents.\nTwo files: 1) Notes/content to test, 2) Past exam for structure/style reference only.\nGenerate a brand new practice exam on the notes content styled like the past exam.\nInclude marksPerStep for every question showing exactly how marks are awarded per step, like a real marking scheme.\nReturn ONLY JSON — no markdown: ${FMT}\nMatch question count and marks from past exam. Total under 2500 words.`;
-      messages=[{role:'user',content:[...buildContent(nb64,enF,'Notes/content file'),...buildContent(pb64,epF,'Past exam for structure')]}];
+      sys=`You are an exam writer. Auto-detect the subject. Use the past exam for style only, generate new questions from the notes. Return ONLY JSON: ${FMT}. Max 3 questions. Keep it short.`;
+      messages=[{role:'user',content:[...buildContent(nb64,enF,'Notes'),...buildContent(pb64,epF,'Past exam for style')]}];
     }else if(examMode==='notes'){
       const nb64=await toB64(enF);
-      sys=`You are an expert exam writer. Auto-detect the subject from the notes.\nGenerate a realistic practice exam from these notes. Include marksPerStep for every question.\nReturn ONLY JSON — no markdown: ${FMT}\nAim for 4-6 questions. Total under 2500 words.`;
-      messages=[{role:'user',content:buildContent(nb64,enF,'Generate practice exam. Return JSON only.')}];
+      sys=`You are an exam writer. Auto-detect the subject. Generate a short practice exam from these notes. Return ONLY JSON: ${FMT}. Max 3 questions.`;
+      messages=[{role:'user',content:buildContent(nb64,enF,'Generate exam. JSON only.')}];
     }else{
       const pb64=await toB64(epF);
-      sys=`You are an expert exam writer. Auto-detect the subject.\nReword every question — same content, difficulty and marks but different wording, numbers and examples.\nInclude marksPerStep. Return ONLY JSON — no markdown: ${FMT}\nPreserve structure and mark totals. Total under 2500 words.`;
-      messages=[{role:'user',content:buildContent(pb64,epF,'Reword every question. Return JSON only.')}];
+      sys=`You are an exam writer. Reword every question with different wording and numbers. Return ONLY JSON: ${FMT}. Keep same structure and marks.`;
+      messages=[{role:'user',content:buildContent(pb64,epF,'Reword questions. JSON only.')}];
     }
-    const raw = await apiHaiku(sys, messages, 4000);
+    const raw = await apiHaiku(sys, messages, 3000);
     clearInterval(iv);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
@@ -1186,45 +1219,18 @@ document.getElementById('markReadBtn').addEventListener('click',async()=>{
     const b64=await toB64(markF);
     const isAssignment=markType==='assignment';
 
-    let sysBase=`You are a strict, experienced teacher. Auto-detect the subject from the uploaded work. Mark like a real teacher — no softness, no rounding up.`;
+    let sysBase=`You are a teacher. Auto-detect the subject. Mark strictly, no softness.`;
 
     if(isAssignment){
-      const rubricExtra=rubricF?`The rubric/marking criteria has been provided — mark strictly against it.`:`No rubric provided — use professional academic standards.`;
-      sysBase+=` This is an ASSIGNMENT. ${rubricExtra}
-Read the full assignment carefully. Return ONLY a JSON object — no markdown:
-{
-  "subject":"detected subject",
-  "assignmentTitle":"title of the assignment",
-  "grade":"A/B/C/D/E/F",
-  "totalScore":number,
-  "totalMax":number,
-  "overallFeedback":"3-4 sentences of overall feedback on the assignment quality, structure, and argument",
-  "examReadiness":number,
-  "fullText":"reproduce the full assignment text exactly as written, paragraph by paragraph, separated by double newlines",
-  "paragraphs":[{
-    "number":1,
-    "quote":"first 10-15 words of this paragraph to identify it",
-    "good":"1-2 sentences on what this paragraph does well — specific, not generic",
-    "bad":"1-2 sentences on what is weak, missing, or could be improved — be direct"
-  }],
-  "sections":[{"criterion":"marking criterion","score":number,"max":number,"feedback":"specific feedback for this criterion"}]
-}`;
+      const rubricExtra=rubricF?`Mark against the provided rubric.`:`Use standard academic criteria.`;
+      sysBase+=` ${rubricExtra} Return ONLY JSON — no markdown:
+{"subject":"name","assignmentTitle":"title","grade":"A/B/C/D/E/F","totalScore":number,"totalMax":number,"overallFeedback":"2-3 sentences of feedback","examReadiness":number,"paragraphs":[{"number":1,"quote":"first 8 words...","good":"what worked","bad":"what to improve"}],"sections":[{"criterion":"criterion","score":number,"max":number,"feedback":"brief feedback"}]}
+Max 3 paragraphs, max 2 criteria. Keep responses short.`;
     }else{
-      sysBase+=` This is an EXAM.
-Read every question and the student's answer. Mark each one per step like a real exam board.
-Return ONLY a JSON array — no markdown:
-[{
-  "number":"1",
-  "marks":number,
-  "question":"full question text",
-  "studentAnswer":"what student wrote",
-  "score":number,
-  "stepFeedback":["Step 1: student did X — ✓/✗ (1 mark)","Step 2: ..."],
-  "errorType":"correct|conceptual|algebra|missing_step",
-  "feedback":"2-3 sentences: what was right, what was wrong, what examiner wanted, how to improve",
-  "examReadiness":number
-}]
-If a question is blank score 0. Mark per step — if they got the working right but final answer wrong, still award method marks.`;
+      sysBase+=` This is an EXAM. Read questions and answers, mark each one.
+Return ONLY JSON array — no markdown:
+[{"number":"1","marks":number,"question":"question text","studentAnswer":"student answer","score":number,"errorType":"correct|conceptual|algebra|missing_step","feedback":"1-2 sentences","examReadiness":number}]
+If blank score 0.`;
     }
 
     let msgContent;
@@ -1241,7 +1247,7 @@ If a question is blank score 0. Mark per step — if they got the working right 
     const markStepEl = document.getElementById('markStep');
     let markChars = 0;
     const raw = await (isAssignment
-      ? apiHaiku(sysBase,[{role:'user',content:msgContent}],4000)
+      ? apiHaiku(sysBase,[{role:'user',content:msgContent}],3000)
       : apiHaiku(sysBase,[{role:'user',content:msgContent}],3000)
     );
     clearInterval(iv);
