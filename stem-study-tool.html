@@ -933,20 +933,31 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
     const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
     const examExtra=lecModeVal==='exam'?'EXAM FOCUSED MODE: For each topic, also note common exam traps, mark-worthy phrases examiners look for, and high-frequency exam topics. Tag any high-priority exam content with ★.':'';
 
-    const sys=`You are a tutor. Auto-detect the subject from the content. Output in ${lang}. ${examExtra}
-Return ONLY JSON — no markdown, no backticks:
-{"subject":"name","summary":"HTML notes using ${lecFormat==='paragraphs'?'<p> paragraphs':'<ul><li> bullets'} — cover main topics clearly. ${depthMap[lecDepth]}.","flashcards":[{"front":"term or concept","back":"clear 1-sentence definition"}],"questions":[{"question":"specific question","answer":"1-2 sentence answer","tag":"topic"}],"catchup":"<ul><li>key point to know</li></ul>","sections":[{"label":"Topic name","content":"<p>What this concept means and why it matters. 2-3 sentences.</p>"}],"formulas":[],"test":[{"question":"written question","modelAnswer":"model answer","marks":2,"tag":"topic"}]}
-flashcards=6, questions=5, sections=3, test=3, formulas only if subject needs them. Be helpful and clear.`;
+    const sys=`You are an expert tutor at university and high school level. Auto-detect the subject from the uploaded content. ${examExtra}
+${fmtInstr}
+Output everything in ${lang}.
+Return ONLY a JSON object — no markdown, no backticks:
+{
+  "subject": "detected subject name",
+  "summary": "HTML notes: ${depthMap[lecDepth]}. Use <h3> for topics, ${lecFormat==='paragraphs'?'<p> for content':'<ul><li> for bullet points'}. Include key definitions, concepts and examples.",
+  "flashcards": [{"front":"Term or concept","back":"Clear 1-2 sentence definition"}],
+  "questions": [{"question":"Q","answer":"1-2 sentence answer","tag":"topic tag"}],
+  "catchup": "HTML: key points a student who missed class needs to know. Use <h3> and <ul><li>.",
+  "sections": [{"label":"Topic Name","content":"<p>What this means for a student, why it matters, the core idea. 3 sentences.</p>"}],
+  "formulas": [{"name":"Formula name","equation":"the formula","steps":["Step 1: ..."],"example":"worked example"}],
+  "test": [{"question":"written question","modelAnswer":"model answer","marks":2,"tag":"topic"}]
+}
+flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Total under 1200 words.`;
 
     let userMessages;
     if(inputMode==='text'){
-      userMessages=[{role:'user',content:`Here is the study content to analyse:\n\n${textContent}\n\nAuto-detect the subject and generate the full study pack JSON.`}];
+      userMessages=[{role:'user',content:`Study content to analyse:\n\n${textContent}\n\nGenerate the study pack JSON.`}];
     }else{
       const b64=await toB64(lecF);
-      userMessages=[{role:'user',content:buildContent(b64,lecF,'Auto-detect the subject and generate the full study pack JSON.')}];
+      userMessages=[{role:'user',content:buildContent(b64,lecF,'Generate the study pack JSON.')}];
     }
 
-    const raw=await apiHaiku(sys,userMessages,3000);
+    const raw=await apiSonnet(sys,userMessages,4000);
     clearInterval(iv);
     const p=exJSON(raw);
 
@@ -1012,7 +1023,10 @@ flashcards=6, questions=5, sections=3, test=3, formulas only if subject needs th
     clearInterval(iv);
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lec-form').style.display='';
-    document.getElementById('lecErr').textContent='Error: '+e.message;
+    const msg = e.message.includes('502') || e.message.includes('Failed to fetch')
+      ? 'Request timed out — try uploading a smaller PDF (fewer pages work best), or paste your notes as text instead.'
+      : 'Error: '+e.message;
+    document.getElementById('lecErr').textContent=msg;
     document.getElementById('lecErr').classList.add('show');
   }
 });
@@ -1275,45 +1289,20 @@ If blank score 0.`;
         fc.appendChild(crit);
       }
 
-      // Side-by-side: paragraph analysis (left) + assignment text (right)
+      // Paragraph analysis — full width, no right panel
       if(p.paragraphs&&p.paragraphs.length){
-        const split=document.createElement('div');split.className='assignment-split';
-
-        // LEFT — paragraph analysis
-        const leftPanel=document.createElement('div');leftPanel.className='assignment-panel';
-        leftPanel.innerHTML=`<div class="assignment-panel-header">🔍 Paragraph Analysis</div>`;
-        const leftBody=document.createElement('div');leftBody.className='assignment-panel-body';
+        const paraWrap=document.createElement('div');
+        paraWrap.innerHTML=`<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;margin-bottom:12px">🔍 Paragraph Analysis</div>`;
         p.paragraphs.forEach((para,i)=>{
           const d=document.createElement('div');d.className='para-analysis';
           d.innerHTML=`
-            <div class="para-label">Paragraph ${para.number||i+1}</div>
-            ${para.quote?`<div class="para-quote">"${para.quote}..."</div>`:''}
+            <div class="para-label">Paragraph ${para.number||i+1}${para.quote?` — "${para.quote}..."`:''}</div>
             <div class="para-good"><div class="para-good-label">✓ What's good</div>${para.good}</div>
             <div class="para-bad"><div class="para-bad-label">✗ What to improve</div>${para.bad}</div>
           `;
-          leftBody.appendChild(d);
+          paraWrap.appendChild(d);
         });
-        leftPanel.appendChild(leftBody);
-
-        // RIGHT — assignment text
-        const rightPanel=document.createElement('div');rightPanel.className='assignment-panel';
-        rightPanel.innerHTML=`<div class="assignment-panel-header">📄 Your Assignment</div>`;
-        const rightBody=document.createElement('div');rightBody.className='assignment-panel-body';
-        if(p.fullText){
-          p.fullText.split(/\n\n+/).forEach(para=>{
-            if(!para.trim())return;
-            const pd=document.createElement('p');
-            pd.style.cssText='margin-bottom:14px;font-size:0.8rem;line-height:1.8;color:var(--text)';
-            pd.textContent=para.trim();
-            rightBody.appendChild(pd);
-          });
-        }else{
-          rightBody.innerHTML=`<p style="color:var(--muted);font-size:0.78rem">Assignment text could not be extracted from this file type — refer to your original document alongside the feedback.</p>`;
-        }
-        rightPanel.appendChild(rightBody);
-        split.appendChild(leftPanel);
-        split.appendChild(rightPanel);
-        fc.appendChild(split);
+        fc.appendChild(paraWrap);
       }
 
       if(p.examReadiness){showReadiness(p.examReadiness);}
