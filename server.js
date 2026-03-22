@@ -17,7 +17,19 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Landing page at /
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
+    const filePath = path.join(__dirname, 'landing.html');
+    fs.readFile(filePath, (err, data) => {
+      if (err) { res.writeHead(404); res.end('Not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
+    });
+    return;
+  }
+
+  // App at /app
+  if (req.method === 'GET' && req.url === '/app') {
     const filePath = path.join(__dirname, 'stem-study-tool.html');
     fs.readFile(filePath, (err, data) => {
       if (err) { res.writeHead(404); res.end('Not found'); return; }
@@ -27,6 +39,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // API proxy
   if (req.method === 'POST' && req.url === '/api/messages') {
     let body = '';
     req.on('data', chunk => body += chunk);
@@ -65,7 +78,8 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`\n✅ Revaix Study running at http://localhost:${PORT}`);
-  console.log(`   Open your browser to http://localhost:${PORT}\n`);
+  console.log(`   Landing page: http://localhost:${PORT}`);
+  console.log(`   App: http://localhost:${PORT}/app\n`);
   if (!API_KEY) {
     console.warn('⚠️  No API key found. Set it with:');
     console.warn('   PowerShell: $env:ANTHROPIC_API_KEY="your_key_here"; node server.js\n');
