@@ -689,25 +689,44 @@ MathJax = {
     </div>
 
     <!-- INPUT MODE -->
-    <div class="input-mode-row">
-      <button class="input-mode-btn active" id="inputModeFile">📄 Upload File</button>
-      <button class="input-mode-btn" id="inputModeText">✏️ Paste Text</button>
-    </div>
-
-    <!-- FILE UPLOAD -->
-    <div id="fileInputWrap">
-      <div class="upload-zone" id="lecZone">
-        <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
-        <span class="upload-icon">📄</span>
-        <h3>Drop your file here</h3>
-        <p>PDF or image · max 20MB · best results with 1-15 pages</p>
+    <div id="lecUploadSection">
+      <div class="input-mode-row">
+        <button class="input-mode-btn active" id="inputModeFile">📄 Upload File</button>
+        <button class="input-mode-btn" id="inputModeText">✏️ Paste Text</button>
       </div>
-      <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
+
+      <!-- FILE UPLOAD -->
+      <div id="fileInputWrap">
+        <div class="upload-zone" id="lecZone">
+          <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
+          <span class="upload-icon">📄</span>
+          <h3>Drop your file here</h3>
+          <p>PDF or image · max 20MB · best results with 1-15 pages</p>
+        </div>
+        <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
+      </div>
+
+      <!-- PLAIN TEXT INPUT -->
+      <div id="textInputWrap" style="display:none">
+        <textarea class="text-input-area" id="lecTextInput" placeholder="Paste your notes, lecture content, or any text here..."></textarea>
+      </div>
     </div>
 
-    <!-- PLAIN TEXT INPUT -->
-    <div id="textInputWrap" style="display:none">
-      <textarea class="text-input-area" id="lecTextInput" placeholder="Paste your notes, lecture content, or any text here..."></textarea>
+    <!-- SCHOOL MODE NOTE (replaces upload) -->
+    <div id="lecSchoolNote" style="display:none;background:var(--surface2);border:1px solid rgba(110,231,183,0.2);border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:0.78rem;color:var(--muted);line-height:1.6;">
+      ✦ No upload needed — select your subject and unit above and Revaix will generate a full study pack based on your exact syllabus. You can still upload your own notes below if you want personalised content.
+      <div style="margin-top:10px">
+        <button class="input-mode-btn" id="lecSchoolUploadToggle" style="font-size:0.7rem;padding:5px 12px">📄 Upload my own notes too (optional)</button>
+      </div>
+      <div id="lecSchoolUploadWrap" style="display:none;margin-top:10px">
+        <div class="upload-zone" id="lecZone2">
+          <input type="file" id="lecFile2" accept=".pdf,.jpg,.jpeg,.png,.webp">
+          <span class="upload-icon">📄</span>
+          <h3>Optional: your own notes</h3>
+          <p>Adds your personal content to the syllabus-based pack</p>
+        </div>
+        <div class="fp" id="lecPill2"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN2">—</div><div class="fp-size" id="lecFS2">—</div></div><button class="fp-rm" id="lecRM2">✕</button></div>
+      </div>
     </div>
 
     <!-- ADVANCED OPTIONS -->
@@ -1290,9 +1309,31 @@ function wireStudentToggle(toggleId, schoolSelectorsId, onUni, onSchool){
 
 // ── PAGE 1 STUDENT MODE ──
 let lecStudentMode='uni';
+let lecOptionalFile=null;
 wireStudentToggle('lecStudentToggle','lecSchoolSelectors',
-  ()=>{lecStudentMode='uni';},
-  ()=>{lecStudentMode='school';populateSubjects('lecState','lecSubject','lecUnit','lecTopic');}
+  ()=>{
+    lecStudentMode='uni';
+    document.getElementById('lecUploadSection').style.display='';
+    document.getElementById('lecSchoolNote').style.display='none';
+    document.getElementById('lecBtn').disabled=!(lecF||(inputMode==='text'&&document.getElementById('lecTextInput').value.trim()));
+  },
+  ()=>{
+    lecStudentMode='school';
+    document.getElementById('lecUploadSection').style.display='none';
+    document.getElementById('lecSchoolNote').style.display='';
+    document.getElementById('lecBtn').disabled=false;
+    populateSubjects('lecState','lecSubject','lecUnit','lecTopic');
+  }
+);
+
+// Optional file upload for school mode
+document.getElementById('lecSchoolUploadToggle')?.addEventListener('click',()=>{
+  const wrap=document.getElementById('lecSchoolUploadWrap');
+  wrap.style.display=wrap.style.display==='none'?'':'none';
+});
+wire('lecZone2','lecFile2','lecPill2','lecFN2','lecFS2','lecRM2',
+  f=>{lecOptionalFile=f;},
+  ()=>{lecOptionalFile=null;}
 );
 document.getElementById('lecState')?.addEventListener('change',()=>populateSubjects('lecState','lecSubject','lecUnit','lecTopic'));
 document.getElementById('lecSubject')?.addEventListener('change',()=>populateUnits('lecState','lecSubject','lecUnit','lecTopic'));
@@ -1408,8 +1449,8 @@ document.getElementById('lecReset').addEventListener('click',()=>{
 
 document.getElementById('lecBtn').addEventListener('click',async()=>{
   const textContent = document.getElementById('lecTextInput').value.trim();
-  if(inputMode==='file' && !lecF) return;
-  if(inputMode==='text' && !textContent) return;
+  if(lecStudentMode==='uni' && inputMode==='file' && !lecF) return;
+  if(lecStudentMode==='uni' && inputMode==='text' && !textContent) return;
   document.getElementById('lecErr').classList.remove('show');
   document.getElementById('lec-form').style.display='none';
   document.getElementById('lecLoad').classList.add('show');
@@ -1449,7 +1490,15 @@ Return ONLY a JSON object — no markdown, no backticks:
 flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Total under 1200 words.`;
 
     let userMessages;
-    if(inputMode==='text'){
+    if(lecStudentMode==='school'){
+      // School mode — generate from syllabus, optionally with uploaded notes
+      if(lecOptionalFile){
+        const b64=await toB64(lecOptionalFile);
+        userMessages=[{role:'user',content:[...buildContent(b64,lecOptionalFile,'Student notes to incorporate'),{type:'text',text:'Generate the study pack JSON using the syllabus context above, incorporating any relevant content from these student notes.'}]}];
+      }else{
+        userMessages=[{role:'user',content:`Generate a comprehensive study pack for this student based on their syllabus. Return JSON only.`}];
+      }
+    }else if(inputMode==='text'){
       userMessages=[{role:'user',content:`Study content to analyse:\n\n${textContent}\n\nGenerate the study pack JSON.`}];
     }else{
       const b64=await toB64(lecF);
