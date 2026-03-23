@@ -1672,9 +1672,12 @@ function finishProgress(barId,iv){
   setTimeout(()=>{if(bar)bar.style.width='0%';},800);
 }
 function renderMath(){
-  if(window.MathJax&&MathJax.typesetPromise){
-    MathJax.typesetPromise().catch(e=>console.log('MathJax error:',e));
-  }
+  setTimeout(()=>{
+    if(window.MathJax&&MathJax.typesetPromise){
+      MathJax.typesetPromise(document.querySelectorAll('.cc,.formula-block,.ic-card,.tm-card,.mark-q'))
+        .catch(e=>console.log('MathJax:',e));
+    }
+  },100);
 }
 function markClass(s,m){const p=s/m;return p>=0.8?'ok':p>=0.4?'half':'no';}
 
@@ -1975,10 +1978,10 @@ Return ONLY a JSON object — no markdown, no backticks:
   "questions": [{"question":"Q","answer":"correct answer text","options":["correct answer","wrong option 1","wrong option 2","wrong option 3"],"tag":"topic"}],
   "catchup": "HTML: key points a student who missed class needs to know. Use <h3> and <ul><li>.",
   "sections": [{"label":"Topic Name","content":"<p>What this means for a student, why it matters, the core idea. 3 sentences.</p>"}],
-  "formulas": [{"name":"Formula name","equation":"use LaTeX notation e.g. $F = ma$ or $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$","steps":["Step 1: ..."],"example":"worked example"}],
+  "formulas": [{"name":"Formula name","equation":"use LaTeX notation e.g. \\(F = ma\\) or \\(x = \\frac{-b}{2a}\\)","steps":["Step 1: ..."],"example":"worked example"}],
   "test": [{"question":"written question","modelAnswer":"model answer","marks":2,"tag":"topic"}]
 }
-flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Total under 1200 words.`;
+flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be concise but complete. Always include the test array with exactly 3 questions.`;
 
     let userMessages;
     if(lecStudentMode==='school'){
@@ -2004,7 +2007,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Generate the study pack JSON.')}];
     }
 
-    const raw=await apiHaiku(sys,userMessages,4000);
+    const raw=await apiHaiku(sys,userMessages,5000);
     clearInterval(iv);
     finishProgress('lecProgressBar',lecProg);
     const p=exJSON(raw);
