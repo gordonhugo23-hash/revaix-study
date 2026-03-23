@@ -1412,6 +1412,7 @@ function renderExam(exam){
 
   let examIdx=0;
   const answered=new Array(items.length).fill('');
+  window._examAnswered=answered;
 
   // Progress bar
   const progWrap=document.createElement('div');
@@ -1485,7 +1486,10 @@ function renderExam(exam){
     if(examIdx<items.length-1){
       loadExamQ(examIdx+1);
     }else{
-      // Submit — trigger existing submit button
+      // Save current answer then submit
+      const ta=document.getElementById(items[examIdx].id);
+      if(ta)answered[examIdx]=ta.value;
+      window._examAnswered=answered;
       document.getElementById('examSubBtn').click();
     }
   });
@@ -1516,11 +1520,18 @@ document.getElementById('examDlBtn').addEventListener('click',()=>{
 document.getElementById('examSubBtn').addEventListener('click',async()=>{
   if(!examData)return;
   const toMark=[];
+  let itemIdx=0;
   examData.questions.forEach((q,qi)=>{
     if(q.parts&&q.parts.length>0){
-      q.parts.forEach((p,pi)=>{const ans=(document.getElementById(`ea-${qi}-${pi}`)?.value||'').trim();toMark.push({question:`${q.text} — Part (${p.part}): ${p.text}`,modelAnswer:p.modelAnswer,marks:p.marks,marksPerStep:p.marksPerStep||[],studentAnswer:ans,rid:`er-${qi}-${pi}`});});
+      q.parts.forEach((p,pi)=>{
+        const ans=(window._examAnswered&&window._examAnswered[itemIdx])||'';
+        toMark.push({question:`${q.text} — Part (${p.part}): ${p.text}`,modelAnswer:p.modelAnswer,marks:p.marks,marksPerStep:p.marksPerStep||[],studentAnswer:ans.trim(),rid:`er-${qi}-${pi}`});
+        itemIdx++;
+      });
     }else{
-      const ans=(document.getElementById(`ea-${qi}-0`)?.value||'').trim();toMark.push({question:q.text,modelAnswer:q.modelAnswer,marks:q.marks,marksPerStep:q.marksPerStep||[],studentAnswer:ans,rid:`er-${qi}-0`});
+      const ans=(window._examAnswered&&window._examAnswered[itemIdx])||'';
+      toMark.push({question:q.text,modelAnswer:q.modelAnswer,marks:q.marks,marksPerStep:q.marksPerStep||[],studentAnswer:ans.trim(),rid:`er-${qi}-0`});
+      itemIdx++;
     }
   });
   if(toMark.some(a=>!a.studentAnswer)){alert('Please answer all questions before submitting.');return;}
