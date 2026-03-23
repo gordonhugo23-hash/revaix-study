@@ -819,7 +819,20 @@ function buildContent(b64,f,text){
   if(isImage){return[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text}];}
   return[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text}];
 }
-function exJSON(t){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<0)throw new Error('No JSON in response');return JSON.parse(t.slice(a,b+1));}
+function exJSON(t){
+  const a=t.indexOf('{'),b=t.lastIndexOf('}');
+  if(a<0||b<0)throw new Error('No JSON in response');
+  let str=t.slice(a,b+1);
+  try{return JSON.parse(str);}
+  catch(e){
+    // Try to fix truncated JSON by removing incomplete last field
+    str=str.replace(/,\s*"[^"]*"\s*:\s*[^}]*$/,'');
+    str=str.replace(/,\s*"[^"]*"\s*:\s*\[[^\]]*$/,'');
+    if(!str.endsWith('}'))str+='}';
+    try{return JSON.parse(str);}
+    catch(e2){throw new Error('Could not parse response — try uploading a shorter document');}
+  }
+}
 function exArr(t){const a=t.indexOf('['),b=t.lastIndexOf(']');if(a<0||b<0)throw new Error('No array in response');return JSON.parse(t.slice(a,b+1));}
 async function api(system,messages,max=6000,model='claude-sonnet-4-20250514'){
   const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:max,system,messages})});
@@ -1017,7 +1030,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Generate the study pack JSON.')}];
     }
 
-    const raw=await apiHaiku(sys,userMessages,2500);
+    const raw=await apiHaiku(sys,userMessages,4000);
     clearInterval(iv);
     const p=exJSON(raw);
 
