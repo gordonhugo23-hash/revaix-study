@@ -1639,6 +1639,7 @@ function wireTabs(tabsId){
       let el=document.getElementById(tabsId).nextElementSibling;
       while(el&&el.classList.contains('cc')){el.classList.remove('active');el=el.nextElementSibling;}
       document.getElementById(t.dataset.tab).classList.add('active');
+      renderMath();
     });
   });
 }
@@ -2039,8 +2040,8 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
       // Card
       const card=document.createElement('div');card.className='ic-card';
       const label=document.createElement('div');label.className='ic-card-label';label.textContent='Flashcard';
-      const front=document.createElement('div');front.className='ic-front';front.textContent=cards[0].front;
-      const back=document.createElement('div');back.className='ic-back';back.textContent=cards[0].back;
+      const front=document.createElement('div');front.className='ic-front';front.innerHTML=cards[0].front;
+      const back=document.createElement('div');back.className='ic-back';back.innerHTML=cards[0].back;
       const hint=document.createElement('div');hint.className='ic-hint';hint.textContent='click to flip';
       card.appendChild(label);card.appendChild(front);card.appendChild(back);card.appendChild(hint);
       wrap.appendChild(card);
@@ -2067,8 +2068,8 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
         fcIndex=idx;
         card.classList.remove('flipped');
         label.textContent='Flashcard';label.className='ic-card-label';
-        front.textContent=cards[idx].front;
-        back.textContent=cards[idx].back;
+        front.innerHTML=cards[idx].front;
+        back.innerHTML=cards[idx].back;
         flipBtn.textContent='Reveal Answer';
         hint.textContent='click to flip';
         counterSpan.textContent=`${idx+1} / ${cards.length}`;
@@ -2131,7 +2132,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
       function loadQuestion(idx){
         qIndex=idx;
         const q=qs[idx];
-        document.getElementById('qText').textContent=q.question;
+        document.getElementById('qText').innerHTML=q.question;
         document.getElementById('qCounter').textContent=`Question ${idx+1} of ${qs.length}`;
         document.getElementById('qFill').style.width=`${((idx+1)/qs.length)*100}%`;
         document.getElementById('qPrev').disabled=idx===0;
@@ -2142,7 +2143,9 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
         const opts=q.options&&q.options.length>=2?[...q.options].sort(()=>Math.random()-0.5):[q.answer,'Incorrect option A','Incorrect option B','Incorrect option C'];
         const om=document.getElementById('mcOptions');om.innerHTML='';
         opts.forEach(opt=>{
-          const btn=document.createElement('button');btn.className='mc-option';btn.textContent=opt;
+          const btn=document.createElement('button');btn.className='mc-option';
+          btn.innerHTML=opt; // use innerHTML so HTML/math renders
+          btn.dataset.value=opt; // store raw value for comparison
           btn.addEventListener('click',()=>{
             if(qAnswered[idx])return;
             qAnswered[idx]=true;
@@ -2157,10 +2160,10 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
               btn.classList.add('wrong');
               btn.classList.add('shake');
               setTimeout(()=>btn.classList.remove('shake'),400);
-              // highlight correct
-              om.querySelectorAll('.mc-option').forEach(b=>{if(b.textContent===q.answer)b.classList.add('correct');});
+              // highlight correct by data-value
+              om.querySelectorAll('.mc-option').forEach(b=>{if(b.dataset.value===q.answer)b.classList.add('correct');});
               document.getElementById('mcResult').className='mc-result no';
-              document.getElementById('mcResult').textContent=`✗ The correct answer is: ${q.answer}`;
+              document.getElementById('mcResult').innerHTML=`✗ The correct answer is: ${q.answer}`;
             }
             document.getElementById('mcResult').style.display='block';
             om.querySelectorAll('.mc-option').forEach(b=>b.disabled=true);
