@@ -1083,12 +1083,13 @@ MathJax = {
 <!-- ══ PAGE 1: NOTES REVIEW ══ -->
 <div class="page active" id="page-lecture">
 <div class="container">
-  <div class="hero">
-    <h1>Study smarter.<br><span class="hl">No notes required.</span></h1>
-    <p>Enter your course and topic — or upload your notes — and get an instant study pack with summaries, flashcards, practice exams and marking. Built for high school and university students.</p>
+  <div id="lec-hero-area">
+    <div class="hero">
+      <h1>Study smarter.<br><span class="hl">No notes required.</span></h1>
+      <p>Enter your course and topic — or upload your notes — and get an instant study pack with summaries, flashcards, practice exams and marking. Built for high school and university students.</p>
+    </div>
+    <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just enter your subject and go</div>
   </div>
-
-  <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just enter your subject and go</div>
 
   <div id="lec-form">
 
@@ -1256,7 +1257,15 @@ MathJax = {
   </div>
 
   <div class="results" id="lecRes">
-    <div class="res-hdr"><h2>Your Study Pack</h2><button class="btn-reset" id="lecReset">↩ New Upload</button></div>
+    <div class="res-hdr">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-reset" id="lecReset" style="display:flex;align-items:center;gap:6px">← New Upload</button>
+        <div>
+          <h2>Your Study Pack</h2>
+          <div id="lecSubjectLabel" style="font-size:0.65rem;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace"></div>
+        </div>
+      </div>
+    </div>
     <div class="tabs" id="lecTabs">
       <button class="tab active" data-tab="ls">📋 Notes</button>
       <button class="tab" data-tab="lfc">🃏 Flashcards</button>
@@ -1280,9 +1289,11 @@ MathJax = {
 <!-- ══ PAGE 2: PRACTICE EXAM ══ -->
 <div class="page" id="page-exam">
 <div class="container">
+  <div id="exam-hero-area">
   <div class="hero">
     <h1>Practice exams,<br><span class="hl2">built from real ones.</span></h1>
     <p>Upload your notes, past exams, and textbook pages — the AI cross-merges everything into a new practice exam styled like the real thing, then auto-marks your answers. <span style="color:var(--muted);font-size:0.73rem">· text-based questions only · AI auto-detects subject</span></p>
+  </div>
   </div>
 
   <div id="exam-form">
@@ -1399,9 +1410,11 @@ MathJax = {
 <!-- ══ PAGE 3: MARK MY WORK ══ -->
 <div class="page" id="page-mark">
 <div class="container">
+  <div id="mark-hero-area">
   <div class="hero">
     <h1>Submit any work.<br><span class="hl3">Get real feedback.</span></h1>
     <p>Upload a completed exam or assignment. The AI marks like a teacher — step-by-step breakdown, error classification, and an exam readiness score. Works on any subject, any level.</p>
+  </div>
   </div>
 
   <div id="mark-form">
@@ -1940,10 +1953,21 @@ wire('lecZone','lecFile','lecPill','lecFN','lecFS','lecRM',
 );
 wireTabs('lecTabs');
 document.getElementById('lecReset').addEventListener('click',()=>{
-  document.getElementById('lecRes').classList.remove('show');document.getElementById('lec-form').style.display='';
-  lecF=null;document.getElementById('lecFile').value='';document.getElementById('lecPill').classList.remove('show');document.getElementById('lecZone').style.display='';document.getElementById('lecBtn').disabled=true;
+  document.getElementById('lecRes').classList.remove('show');
+  document.getElementById('lec-form').style.display='';
+  document.getElementById('lec-hero-area').style.display='';
+  lecF=null;lecOptionalFile=null;
+  document.getElementById('lecFile').value='';
+  document.getElementById('lecPill').classList.remove('show');
+  document.getElementById('lecZone').style.display='';
+  const p2=document.getElementById('lecPill2');if(p2)p2.classList.remove('show');
+  const sw=document.getElementById('lecSchoolUploadWrap');if(sw)sw.style.display='none';
+  const uw=document.getElementById('uniUploadWrap');if(uw)uw.style.display='none';
+  const ut=document.getElementById('uniUploadToggle');if(ut)ut.textContent='📄 Upload my notes too (optional)';
+  checkLecBtn();
   document.querySelectorAll('#lecTabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));
-  ['ls','lfc','lq','lc','lx','lf','lt'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===0));
+  ['ls','lfc','lq','lc','lx','lf','lt'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===0);});
+  window.scrollTo({top:0,behavior:'smooth'});
 });
 
 document.getElementById('lecBtn').addEventListener('click',async()=>{
@@ -1953,6 +1977,7 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
   if(lecStudentMode==='school') {} // always allowed
   document.getElementById('lecErr').classList.remove('show');
   document.getElementById('lec-form').style.display='none';
+  document.getElementById('lec-hero-area').style.display='none';
   document.getElementById('lecLoad').classList.add('show');
   const lecProg=startProgress('lecProgressBar');
   const steps=['Reading your content...','Detecting subject...','Building notes...','Generating flashcards...','Writing questions...'];
@@ -2219,6 +2244,12 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
 
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lecRes').classList.add('show');
+
+    // Show detected subject in header
+    const subjectLbl = document.getElementById('lecSubjectLabel');
+    if(subjectLbl) subjectLbl.textContent = p.subject ? `📌 ${p.subject}` : '';
+
+    window.scrollTo({top:0,behavior:'smooth'});
     renderMath();
 
   }catch(e){
@@ -2226,6 +2257,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
     finishProgress('lecProgressBar',lecProg);
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lec-form').style.display='';
+    document.getElementById('lec-hero-area').style.display='';
     document.getElementById('lecErr').textContent=friendlyErr(e);
     document.getElementById('lecErr').classList.add('show');
   }
@@ -2338,16 +2370,20 @@ document.getElementById('examUniSubject')?.addEventListener('input',checkExam);
 wire('enZone','enFile','enPill','enFN','enFS','enRM',f=>{enF=f;checkExam();},()=>{enF=null;checkExam();});
 wire('epZone','epFile','epPill','epFN','epFS','epRM',f=>{epF=f;checkExam();},()=>{epF=null;checkExam();});
 document.getElementById('examReset').addEventListener('click',()=>{
-  document.getElementById('examRes').classList.remove('show');document.getElementById('exam-form').style.display='';
+  document.getElementById('examRes').classList.remove('show');
+  document.getElementById('exam-form').style.display='';
+  document.getElementById('exam-hero-area').style.display='';
   enF=null;epF=null;examData=null;
   ['enFile','epFile'].forEach(id=>document.getElementById(id).value='');
   ['enPill','epPill'].forEach(id=>document.getElementById(id).classList.remove('show'));
   ['enZone','epZone'].forEach(id=>document.getElementById(id).style.display='');
-  document.getElementById('examBtn').disabled=true;document.getElementById('examScore').classList.remove('show');
+  document.getElementById('examScore').classList.remove('show');
+  checkExam();
+  window.scrollTo({top:0,behavior:'smooth'});
 });
 
 document.getElementById('examBtn').addEventListener('click',async()=>{
-  document.getElementById('examErr').classList.remove('show');document.getElementById('exam-form').style.display='none';document.getElementById('examLoad').classList.add('show');
+  document.getElementById('examErr').classList.remove('show');document.getElementById('exam-form').style.display='none';document.getElementById('exam-hero-area').style.display='none';document.getElementById('examLoad').classList.add('show');
   const examProg=startProgress('examProgressBar');
   const steps=['Analysing structure...','Reading your content...','Writing questions...','Finalising exam...'];
   let si=0;const stepEl=document.getElementById('examStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},2000);
@@ -2393,10 +2429,14 @@ Return ONLY JSON: ${FMT}`;
     clearInterval(iv);
     finishProgress('examProgressBar',examProg);
     examData=exJSON(raw);renderExam(examData);
-    document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
+    document.getElementById('examLoad').classList.remove('show');
+    document.getElementById('examRes').classList.add('show');
+    window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){
     clearInterval(iv);finishProgress('examProgressBar',examProg);
-    document.getElementById('examLoad').classList.remove('show');document.getElementById('exam-form').style.display='';
+    document.getElementById('examLoad').classList.remove('show');
+    document.getElementById('exam-form').style.display='';
+    document.getElementById('exam-hero-area').style.display='';
     document.getElementById('examErr').textContent=friendlyErr(e);document.getElementById('examErr').classList.add('show');
   }
 });
@@ -2627,17 +2667,24 @@ wire('rubricZone','rubricFile','rubricPill','rubricFN','rubricFS','rubricRM',
 );
 
 document.getElementById('markReset').addEventListener('click',()=>{
-  document.getElementById('markFeedbackSection').classList.remove('show');document.getElementById('mark-form').style.display='';
+  document.getElementById('markFeedbackSection').classList.remove('show');
+  document.getElementById('mark-form').style.display='';
+  document.getElementById('mark-hero-area').style.display='';
   markF=null;rubricF=null;
   ['markFile','rubricFile'].forEach(id=>document.getElementById(id).value='');
   ['markPill','rubricPill'].forEach(id=>document.getElementById(id).classList.remove('show'));
   ['markZone','rubricZone'].forEach(id=>document.getElementById(id).style.display='');
-  document.getElementById('markReadBtn').disabled=true;document.getElementById('markScore').classList.remove('show');document.getElementById('readinessWrap').style.display='none';
+  document.getElementById('markReadBtn').disabled=true;
+  document.getElementById('markScore').classList.remove('show');
+  document.getElementById('readinessWrap').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
 });
 
 document.getElementById('markReadBtn').addEventListener('click',async()=>{
-  if(!markF)return;
-  document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form').style.display='none';document.getElementById('markLoad').classList.add('show');
+  const markText=document.getElementById('markTextInput')?.value.trim()||'';
+  if(markInputMode==='file' && !markF)return;
+  if(markInputMode==='text' && !markText)return;
+  document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form').style.display='none';document.getElementById('mark-hero-area').style.display='none';document.getElementById('markLoad').classList.add('show');
   const markProg=startProgress('markProgressBar');
   const steps=['Reading your work...','Identifying questions and answers...','Marking step by step...','Classifying errors...','Writing feedback...'];
   let si=0;const stepEl=document.getElementById('markStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
@@ -2769,12 +2816,14 @@ If blank score 0.`;
 
     document.getElementById('markLoad').classList.remove('show');
     document.getElementById('markFeedbackSection').classList.add('show');
+    window.scrollTo({top:0,behavior:'smooth'});
 
   }catch(e){
     clearInterval(iv);
     finishProgress('markProgressBar',markProg);
     document.getElementById('markLoad').classList.remove('show');
     document.getElementById('mark-form').style.display='';
+    document.getElementById('mark-hero-area').style.display='';
     document.getElementById('markErr').textContent=friendlyErr(e);
     document.getElementById('markErr').classList.add('show');
   }
