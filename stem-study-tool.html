@@ -751,7 +751,7 @@
     <div class="exam-score" id="examScore"><div class="exam-score-big" id="examScoreBig">—</div><div class="exam-score-sub" id="examScoreSub">Submit your answers to see your score</div></div>
     <div class="exam-meta" id="examMeta"></div>
     <div id="examQs"></div>
-    <button class="btn btn-p" id="examSubBtn" style="margin-top:6px">Submit & Auto-Mark</button>
+    <button class="btn btn-p" id="examSubBtn" style="display:none">Submit & Auto-Mark</button>
   </div>
   <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
 </div></div>
@@ -1100,49 +1100,62 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
       // Counter + shuffle row
       const topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%';
-      topRow.innerHTML=`<span class="ic-counter" id="fcCounter">1 / ${cards.length}</span><button class="ic-shuffle" id="fcShuffle">🔀 Shuffle</button>`;
+      const counterSpan=document.createElement('span');counterSpan.className='ic-counter';counterSpan.textContent=`1 / ${cards.length}`;
+      const shuffleBtn=document.createElement('button');shuffleBtn.className='ic-shuffle';shuffleBtn.textContent='🔀 Shuffle';
+      topRow.appendChild(counterSpan);topRow.appendChild(shuffleBtn);
       wrap.appendChild(topRow);
 
       // Progress
-      const prog=document.createElement('div');prog.className='ic-progress-bg';prog.innerHTML=`<div class="ic-progress-fill" id="fcFill" style="width:${100/cards.length}%"></div>`;
-      wrap.appendChild(prog);
+      const progBg=document.createElement('div');progBg.className='ic-progress-bg';
+      const progFill=document.createElement('div');progFill.className='ic-progress-fill';progFill.style.width=`${100/cards.length}%`;
+      progBg.appendChild(progFill);wrap.appendChild(progBg);
 
       // Card
       const card=document.createElement('div');card.className='ic-card';
-      card.innerHTML=`<div class="ic-card-label" id="fcLabel">Flashcard</div><div class="ic-front" id="fcFront">${cards[0].front}</div><div class="ic-back" id="fcBack">${cards[0].back}</div><div class="ic-hint">click to flip</div>`;
-      card.addEventListener('click',()=>{
-        card.classList.toggle('flipped');
-        const fl=card.classList.contains('flipped');
-        document.getElementById('fcLabel').textContent=fl?'Answer':'Flashcard';
-        document.getElementById('fcLabel').className='ic-card-label'+(fl?' ans':'');
-        document.getElementById('fcFlipBtn').textContent=fl?'Show Term':'Reveal Answer';
-      });
+      const label=document.createElement('div');label.className='ic-card-label';label.textContent='Flashcard';
+      const front=document.createElement('div');front.className='ic-front';front.textContent=cards[0].front;
+      const back=document.createElement('div');back.className='ic-back';back.textContent=cards[0].back;
+      const hint=document.createElement('div');hint.className='ic-hint';hint.textContent='click to flip';
+      card.appendChild(label);card.appendChild(front);card.appendChild(back);card.appendChild(hint);
       wrap.appendChild(card);
 
       // Nav
       const nav=document.createElement('div');nav.className='ic-nav';
-      nav.innerHTML=`<button class="ic-nav-btn" id="fcPrev" disabled>←</button><button class="ic-flip-btn" id="fcFlipBtn">Reveal Answer</button><button class="ic-nav-btn" id="fcNext"${cards.length<=1?' disabled':''}>→</button>`;
+      const prevBtn=document.createElement('button');prevBtn.className='ic-nav-btn';prevBtn.textContent='←';prevBtn.disabled=true;
+      const flipBtn=document.createElement('button');flipBtn.className='ic-flip-btn';flipBtn.textContent='Reveal Answer';
+      const nextBtn=document.createElement('button');nextBtn.className='ic-nav-btn';nextBtn.textContent='→';nextBtn.disabled=cards.length<=1;
+      nav.appendChild(prevBtn);nav.appendChild(flipBtn);nav.appendChild(nextBtn);
       wrap.appendChild(nav);
       fcc.appendChild(wrap);
+
+      function flipCard(){
+        card.classList.toggle('flipped');
+        const fl=card.classList.contains('flipped');
+        label.textContent=fl?'Answer':'Flashcard';
+        label.className='ic-card-label'+(fl?' ans':'');
+        hint.textContent=fl?'click to see term':'click to flip';
+        flipBtn.textContent=fl?'Show Term':'Reveal Answer';
+      }
 
       function goTo(idx){
         fcIndex=idx;
         card.classList.remove('flipped');
-        document.getElementById('fcLabel').textContent='Flashcard';
-        document.getElementById('fcLabel').className='ic-card-label';
-        document.getElementById('fcFront').textContent=cards[idx].front;
-        document.getElementById('fcBack').textContent=cards[idx].back;
-        document.getElementById('fcFlipBtn').textContent='Reveal Answer';
-        document.getElementById('fcCounter').textContent=`${idx+1} / ${cards.length}`;
-        document.getElementById('fcFill').style.width=`${((idx+1)/cards.length)*100}%`;
-        document.getElementById('fcPrev').disabled=idx===0;
-        document.getElementById('fcNext').disabled=idx===cards.length-1;
+        label.textContent='Flashcard';label.className='ic-card-label';
+        front.textContent=cards[idx].front;
+        back.textContent=cards[idx].back;
+        flipBtn.textContent='Reveal Answer';
+        hint.textContent='click to flip';
+        counterSpan.textContent=`${idx+1} / ${cards.length}`;
+        progFill.style.width=`${((idx+1)/cards.length)*100}%`;
+        prevBtn.disabled=idx===0;
+        nextBtn.disabled=idx===cards.length-1;
       }
 
-      document.getElementById('fcFlipBtn').addEventListener('click',()=>card.click());
-      document.getElementById('fcPrev').addEventListener('click',()=>{if(fcIndex>0)goTo(fcIndex-1);});
-      document.getElementById('fcNext').addEventListener('click',()=>{if(fcIndex<cards.length-1)goTo(fcIndex+1);});
-      document.getElementById('fcShuffle').addEventListener('click',()=>{fcData.sort(()=>Math.random()-0.5);renderFlashcards(fcData);});
+      card.addEventListener('click',flipCard);
+      flipBtn.addEventListener('click',flipCard);
+      prevBtn.addEventListener('click',()=>{if(fcIndex>0)goTo(fcIndex-1);});
+      nextBtn.addEventListener('click',()=>{if(fcIndex<cards.length-1)goTo(fcIndex+1);});
+      shuffleBtn.addEventListener('click',()=>{fcData.sort(()=>Math.random()-0.5);fcIndex=0;renderFlashcards(fcData);});
     }
     renderFlashcards(fcData);
 
@@ -1384,22 +1397,105 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
 function renderExam(exam){
   document.getElementById('examMeta').innerHTML=`<strong>${exam.examTitle}</strong><br>Total marks: ${exam.totalMarks} &nbsp;·&nbsp; Time: ${exam.timeAllowed}<br><span style="color:var(--muted);font-size:0.73rem">${exam.instructions}</span>`;
   const c=document.getElementById('examQs');c.innerHTML='';
+
+  // Flatten all questions/parts into a list
+  const items=[];
   exam.questions.forEach((q,qi)=>{
-    const div=document.createElement('div');div.className='exam-q';
     if(q.parts&&q.parts.length>0){
-      div.innerHTML=`<div class="eq-hdr"><div class="eq-num">Question ${q.number}</div><div class="eq-marks">${q.marks} marks</div></div><div class="eq-text">${q.text}</div>`;
       q.parts.forEach((p,pi)=>{
-        const pd=document.createElement('div');
-        const stepsHtml=(p.marksPerStep||[]).map(s=>`<div style="font-size:0.68rem;color:var(--muted);padding-left:8px">· ${s}</div>`).join('');
-        pd.innerHTML=`<div class="eq-part eq-text"><strong>(${p.part})</strong> [${p.marks} mark${p.marks>1?'s':''}] ${p.text}${stepsHtml}</div><textarea placeholder="Your answer for part (${p.part})..." id="ea-${qi}-${pi}"></textarea><div class="emr" id="er-${qi}-${pi}"></div>`;
-        div.appendChild(pd);
+        items.push({label:`Q${q.number}(${p.part})`,marks:p.marks,text:`<strong>Q${q.number}:</strong> ${q.text}<br><strong>(${p.part})</strong> [${p.marks} mark${p.marks>1?'s':''}] ${p.text}`,modelAnswer:p.modelAnswer,marksPerStep:p.marksPerStep||[],rid:`er-${qi}-${pi}`,id:`ea-${qi}-${pi}`});
       });
     }else{
-      const stepsHtml=(q.marksPerStep||[]).map(s=>`<div style="font-size:0.68rem;color:var(--muted);padding-left:8px">· ${s}</div>`).join('');
-      div.innerHTML=`<div class="eq-hdr"><div class="eq-num">Question ${q.number}</div><div class="eq-marks">${q.marks} marks</div></div><div class="eq-text">${q.text}${stepsHtml}</div><textarea placeholder="Your answer..." id="ea-${qi}-0"></textarea><div class="emr" id="er-${qi}-0"></div>`;
+      items.push({label:`Q${q.number}`,marks:q.marks,text:`<strong>Q${q.number}:</strong> ${q.text}`,modelAnswer:q.modelAnswer,marksPerStep:q.marksPerStep||[],rid:`er-${qi}-0`,id:`ea-${qi}-0`});
     }
-    c.appendChild(div);
   });
+
+  let examIdx=0;
+  const answered=new Array(items.length).fill('');
+
+  // Progress bar
+  const progWrap=document.createElement('div');
+  progWrap.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:0.68rem;color:var(--muted)" id="examQCounter">Question 1 of ${items.length}</span>
+      <span style="font-size:0.68rem;color:var(--muted)" id="examMarksLeft">${exam.totalMarks} marks total</span>
+    </div>
+    <div class="ic-progress-bg" style="margin-bottom:20px"><div class="ic-progress-fill" id="examProgFill" style="width:${100/items.length}%;background:var(--accent2)"></div></div>`;
+  c.appendChild(progWrap);
+
+  // Question card
+  const qCard=document.createElement('div');
+  qCard.style.cssText='background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;padding:28px;margin-bottom:14px;animation:fu 0.3s ease;';
+  qCard.id='examQCard';
+  c.appendChild(qCard);
+
+  // Feedback area
+  const feedbackEl=document.createElement('div');feedbackEl.id='examFeedbackArea';feedbackEl.style.marginBottom='12px';
+  c.appendChild(feedbackEl);
+
+  // Nav buttons
+  const navRow=document.createElement('div');navRow.style.cssText='display:flex;gap:10px;';
+  const prevBtn=document.createElement('button');prevBtn.className='ic-nav-btn';prevBtn.textContent='←';prevBtn.disabled=true;prevBtn.style.flexShrink='0';
+  const nextBtn=document.createElement('button');nextBtn.textContent='Next Question →';nextBtn.style.cssText='flex:1;padding:12px;background:var(--accent2);color:#fff;border:none;border-radius:10px;font-family:Syne,sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;transition:all 0.2s;';
+  navRow.appendChild(prevBtn);navRow.appendChild(nextBtn);
+  c.appendChild(navRow);
+
+  function loadExamQ(idx){
+    examIdx=idx;
+    const item=items[idx];
+    const isLast=idx===items.length-1;
+    nextBtn.textContent=isLast?'Submit All Answers ✓':'Next Question →';
+    nextBtn.style.background=isLast?'var(--accent)':' var(--accent2)';
+    nextBtn.style.color=isLast?'#0a0a0f':'#fff';
+    prevBtn.disabled=idx===0;
+
+    document.getElementById('examQCounter').textContent=`Question ${idx+1} of ${items.length}`;
+    document.getElementById('examProgFill').style.width=`${((idx+1)/items.length)*100}%`;
+    feedbackEl.innerHTML='';
+
+    const marksHtml=item.marksPerStep.length?`<div style="margin:10px 0 14px;padding:10px 12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--accent2)">${item.marksPerStep.map(s=>`<div style="font-size:0.71rem;color:var(--muted);padding:2px 0">· ${s}</div>`).join('')}</div>`:'';
+
+    qCard.style.animation='none';qCard.offsetHeight;qCard.style.animation='fu 0.3s ease';
+    qCard.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="font-size:0.6rem;color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase">${item.label}</span>
+        <span style="font-size:0.6rem;color:var(--accent3);background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15);padding:2px 8px;border-radius:100px">${item.marks} mark${item.marks>1?'s':''}</span>
+      </div>
+      <div style="font-size:0.88rem;color:var(--text);line-height:1.7;margin-bottom:${item.marksPerStep.length?'0':'14px'}">${item.text}</div>
+      ${marksHtml}
+      <textarea id="${item.id}" placeholder="Type your answer here..." style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:DM Mono,monospace;font-size:0.78rem;padding:10px 12px;resize:vertical;min-height:100px;line-height:1.6;transition:border-color 0.15s;">${answered[idx]||''}</textarea>`;
+
+    const ta=document.getElementById(item.id);
+    ta.addEventListener('input',()=>answered[idx]=ta.value);
+    ta.focus();
+    ta.addEventListener('focus',()=>ta.style.borderColor='var(--accent2)');
+    ta.addEventListener('blur',()=>ta.style.borderColor='var(--border)');
+
+    // Show existing feedback if already marked
+    const existingFb=document.getElementById(item.rid);
+    if(existingFb&&existingFb.innerHTML){
+      feedbackEl.appendChild(existingFb.cloneNode(true));
+    }
+  }
+
+  prevBtn.addEventListener('click',()=>{if(examIdx>0)loadExamQ(examIdx-1);});
+  nextBtn.addEventListener('click',()=>{
+    const ta=document.getElementById(items[examIdx].id);
+    answered[examIdx]=ta?ta.value:'';
+    if(examIdx<items.length-1){
+      loadExamQ(examIdx+1);
+    }else{
+      // Submit — trigger existing submit button
+      document.getElementById('examSubBtn').click();
+    }
+  });
+
+  // Hidden result divs for marking
+  const hiddenRes=document.createElement('div');hiddenRes.style.display='none';
+  items.forEach(item=>{const d=document.createElement('div');d.id=item.rid;hiddenRes.appendChild(d);});
+  c.appendChild(hiddenRes);
+
+  loadExamQ(0);
 }
 
 document.getElementById('examDlBtn').addEventListener('click',()=>{
@@ -1430,14 +1526,9 @@ document.getElementById('examSubBtn').addEventListener('click',async()=>{
   if(toMark.some(a=>!a.studentAnswer)){alert('Please answer all questions before submitting.');return;}
   const btn=document.getElementById('examSubBtn');btn.disabled=true;btn.textContent='Marking your exam...';
   try{
-    const sys=`You are a strict exam marker. Mark like a real exam board — award marks per step, not just for the final answer. No softness.
-For each question return:
-- score and maxScore
-- stepFeedback: an array showing what the student did at each step and whether they got the mark
-- errorType: "correct", "conceptual", "algebra", or "missing_step"
-- feedback: 2-3 sentences — what was right, what was wrong, what the examiner wanted, how to improve
-Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"stepFeedback":["Step 1: student did X — ✓/✗ (1 mark)"],"errorType":"string","feedback":"string"}]`;
-    const payload=toMark.map((a,i)=>`Q${i+1} (${a.marks} marks):\nQuestion: ${a.question}\nMarking scheme: ${a.marksPerStep.join(', ')}\nModel answer: ${a.modelAnswer}\nStudent answer: ${a.studentAnswer}`).join('\n\n');
+    const sys=`You are a strict exam marker. Mark like a real exam board — award marks per step. No softness.
+Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"stepFeedback":["Step 1: did X — ✓/✗"],"errorType":"correct|conceptual|algebra|missing_step","feedback":"2 sentences"}]`;
+    const payload=toMark.map((a,i)=>`Q${i+1} (${a.marks} marks):\nQuestion: ${a.question}\nMarking scheme: ${a.marksPerStep.join(', ')}\nModel: ${a.modelAnswer}\nStudent: ${a.studentAnswer}`).join('\n\n');
     const raw=await apiHaiku(sys,[{role:'user',content:payload}],3000);
     const res=exArr(raw);let tot=0,mx=0;
     res.forEach((r,i)=>{
@@ -1449,14 +1540,29 @@ Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"stepFeedback":["S
       const tagLabel={correct:'✓ Correct',conceptual:'Conceptual Error',algebra:'Algebra Error',missing_step:'Missing Step'}[r.errorType]||r.errorType;
       const stepsHtml=(r.stepFeedback||[]).map(s=>`<div style="font-size:0.73rem;color:var(--text);padding:3px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('');
       el.className='emr '+(pc>=0.8?'ok':pc>=0.4?'half':'no');
+      el.style.display='block';
       el.innerHTML=`<div style="margin-bottom:6px"><span class="error-tag ${tagClass}">${tagLabel}</span> <strong>${r.score}/${r.maxScore}</strong></div>${stepsHtml?`<div class="step-breakdown"><div class="step-breakdown-title">Step by step</div>${stepsHtml}</div>`:''}<div style="margin-top:8px;font-size:0.76rem">${r.feedback}</div>`;
     });
     const pc=Math.round((tot/mx)*100);
     document.getElementById('examScoreBig').textContent=`${tot}/${mx} · ${pc}%`;
-    document.getElementById('examScoreSub').textContent=pc>=80?'🎉 Excellent work!':pc>=50?'📚 Good effort — review where you dropped marks':'💪 Keep studying — use the step breakdowns above';
+    document.getElementById('examScoreSub').textContent=pc>=80?'🎉 Excellent work!':pc>=50?'📚 Good effort — review where you dropped marks':'💪 Keep studying — use the step breakdowns';
     document.getElementById('examScore').classList.add('show');
     document.getElementById('examScore').scrollIntoView({behavior:'smooth',block:'nearest'});
-    btn.textContent='Re-submit Answers';btn.disabled=false;
+    // Go back to Q1 to show feedback
+    setTimeout(()=>{
+      const navBtn=document.querySelector('#examQs .ic-nav-btn');
+      if(navBtn){navBtn.click();navBtn.click();}// back to start
+      // reload Q1 with feedback
+      const subBtn=document.getElementById('examSubBtn');
+      subBtn.textContent='← Review Answers';
+      subBtn.disabled=false;
+      subBtn.onclick=()=>{
+        // Navigate to first question
+        const prevBtns=document.querySelectorAll('#examQs .ic-nav-btn');
+        if(prevBtns[0])prevBtns[0].disabled=false;
+      };
+    },500);
+    btn.textContent='✓ Marked — use ← → to review';btn.disabled=true;
   }catch(e){btn.textContent='Marking failed — try again';btn.disabled=false;}
 });
 
