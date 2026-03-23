@@ -1134,7 +1134,12 @@ MathJax = {
           </select>
         </div>
       </div>
+      <div style="margin-top:10px">
+        <label class="field-label">What specifically do you want to focus on? <span style="color:var(--muted);font-size:0.6rem">optional — e.g. "wind patterns", "mitosis", "market equilibrium"</span></label>
+        <input type="text" id="lecSchoolFocus" class="school-sel" placeholder="e.g. trade winds, the water cycle, osmosis..." style="font-family:'DM Mono',monospace;background-image:none;width:100%">
+      </div>
     </div>
+  </div>
 
     <!-- INPUT MODE -->
     <div id="lecUploadSection">
@@ -1323,6 +1328,10 @@ MathJax = {
           </select>
         </div>
       </div>
+      <div style="margin-top:10px">
+        <label class="field-label">What specifically do you want exam questions on? <span style="color:var(--muted);font-size:0.6rem">optional — e.g. "wind patterns", "mitosis", "market equilibrium"</span></label>
+        <input type="text" id="examSchoolFocus" class="school-sel" placeholder="e.g. trade winds, the water cycle, osmosis..." style="font-family:'DM Mono',monospace;background-image:none;width:100%">
+      </div>
     </div>
 
     <!-- UNI MODE OPTIONS -->
@@ -1425,6 +1434,10 @@ MathJax = {
             <option value="">Select subject...</option>
           </select>
         </div>
+      </div>
+      <div style="margin-top:10px">
+        <label class="field-label">Specific topic being assessed <span style="color:var(--muted);font-size:0.6rem">optional — helps AI mark against the right criteria</span></label>
+        <input type="text" id="markSchoolFocus" class="school-sel" placeholder="e.g. trade winds, the water cycle, osmosis..." style="font-family:'DM Mono',monospace;background-image:none;width:100%">
       </div>
     </div>
 
@@ -1965,7 +1978,9 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
           document.getElementById('lecSubject').value,
           document.getElementById('lecUnit').value,
           document.getElementById('lecTopic').value
-        )
+        ) + (document.getElementById('lecSchoolFocus')?.value.trim()
+          ? ` The student specifically wants to focus on: ${document.getElementById('lecSchoolFocus').value.trim()}. Tailor all content, examples, and questions to this specific focus.`
+          : '')
       : uniCtx;
 
     const sys=`You are an expert tutor at university and high school level. Auto-detect the subject from the uploaded content. ${examExtra} ${syllabusCtx}
@@ -2346,12 +2361,13 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
       const subject=document.getElementById('examSubject').value||'general';
       const unit=document.getElementById('examUnit').value;
       const topic=document.getElementById('examTopic').value;
-      const syllCtx=buildSyllabusPrompt(state,subject,unit,topic);
+      const examFocus=document.getElementById('examSchoolFocus')?.value.trim()||'';
+      const syllCtx=buildSyllabusPrompt(state,subject,unit,topic)+(examFocus?` Focus specifically on: ${examFocus}.`:'');
       sys=`You are an expert ${SYLLABUS[state]?.name||state} exam writer. ${syllCtx}
 Generate a realistic practice exam with 4-5 questions in the exact style and format used in ${SYLLABUS[state]?.authority||state} external assessments for ${subject}.
 Use the precise command verbs (explain, describe, evaluate, justify, calculate) typical of this assessment body.
 Return ONLY JSON: ${FMT}`;
-      messages=[{role:'user',content:`Generate a ${SYLLABUS[state]?.name} ${subject} practice exam${unit?' for '+unit:''}${topic?' on '+topic:''}. Return JSON only.`}];
+      messages=[{role:'user',content:`Generate a ${SYLLABUS[state]?.name} ${subject} practice exam${unit?' for '+unit:''}${topic?' on '+topic:''}${examFocus?' focusing specifically on '+examFocus:''}. Return JSON only.`}];
     } else if(examMode==='unionly'){
       // Uni course-only mode — no upload
       const course=document.getElementById('examUniCourse')?.value.trim()||'';
@@ -2653,7 +2669,9 @@ document.getElementById('markReadBtn').addEventListener('click',async()=>{
           document.getElementById('markState').value,
           document.getElementById('markSubject').value,
           null, null
-        )
+        ) + (document.getElementById('markSchoolFocus')?.value.trim()
+          ? ` The topic being assessed is: ${document.getElementById('markSchoolFocus').value.trim()}.`
+          : '')
       : '';
     let sysBase=`You are a teacher. Auto-detect the subject. Mark strictly, no softness. ${markSyllCtx}`;
 
