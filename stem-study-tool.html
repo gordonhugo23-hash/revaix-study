@@ -879,11 +879,23 @@ MathJax = {
 
     <!-- UNI MODE OPTIONS -->
     <div id="examUniOptions">
+      <div class="school-info-badge" style="background:rgba(129,140,248,0.08);border-color:rgba(129,140,248,0.2);color:var(--accent2);margin-bottom:14px">✦ Enter your course to generate without uploading, or upload your notes below</div>
+      <div class="school-sel-grid" style="margin-bottom:14px">
+        <div>
+          <label class="field-label">University / Degree <span style="color:var(--muted);font-size:0.6rem">(optional)</span></label>
+          <input class="school-sel" id="examUniCourse" type="text" placeholder="e.g. Engineering, Law, Medicine" style="font-family:'DM Mono',monospace;background-image:none">
+        </div>
+        <div>
+          <label class="field-label">Subject / Unit <span style="color:var(--muted);font-size:0.6rem">(optional)</span></label>
+          <input class="school-sel" id="examUniSubject" type="text" placeholder="e.g. Thermodynamics, Contracts" style="font-family:'DM Mono',monospace;background-image:none">
+        </div>
+      </div>
       <label class="field-label">Exam mode</label>
       <div class="mode-row">
         <button class="mode-btn active" data-mode="both"><span class="mode-icon">📄📝</span><span class="mode-title">Notes + Past Exam</span><span class="mode-desc">New questions from notes, styled like real exam</span></button>
         <button class="mode-btn" data-mode="notes"><span class="mode-icon">📄</span><span class="mode-title">Notes Only</span><span class="mode-desc">Realistic exam from your lecture content</span></button>
         <button class="mode-btn" data-mode="reword"><span class="mode-icon">📝</span><span class="mode-title">Reword Past Exam</span><span class="mode-desc">Same questions, different wording</span></button>
+        <button class="mode-btn" data-mode="unionly"><span class="mode-icon">🎓</span><span class="mode-title">Course Only</span><span class="mode-desc">Generate from your course — no upload needed</span></button>
       </div>
       <div id="en-wrap" style="margin-bottom:10px">
         <label class="field-label">📄 Lecture Notes / Study Material</label>
@@ -1725,7 +1737,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
     }
 
     // Mini test
-    renderMiniTest(p.test||[],document.getElementById('lt'));
+    renderMiniTest(p.test||[], document.getElementById('lt'), syllabusCtx);
 
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lecRes').classList.add('show');
@@ -1741,13 +1753,15 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
   }
 });
 
-function renderMiniTest(qs,container){
+function renderMiniTest(qs, container, syllabusContext){
   container.innerHTML='';
   if(!qs.length){container.innerHTML='<p style="color:var(--muted);font-size:0.8rem">No test questions generated.</p>';return;}
 
+  const uid=Date.now(); // unique prefix to avoid ID collisions
+
   // Score banner
-  const scoreEl=document.createElement('div');scoreEl.className='tm-score';scoreEl.id='tmScore';
-  scoreEl.innerHTML=`<div class="tm-score-big" id="tmScoreBig">—</div><div class="tm-score-sub" id="tmScoreSub">Answer all questions and submit to see your score</div>`;
+  const scoreEl=document.createElement('div');scoreEl.className='tm-score';
+  scoreEl.innerHTML=`<div class="tm-score-big" id="tmScoreBig-${uid}">—</div><div class="tm-score-sub" id="tmScoreSub-${uid}">Answer all questions and submit to see your score</div>`;
   container.appendChild(scoreEl);
 
   const wrap=document.createElement('div');wrap.className='tm-wrap';
@@ -1757,8 +1771,8 @@ function renderMiniTest(qs,container){
     card.innerHTML=`
       <div class="tm-qnum">Question ${i+1} of ${qs.length} · ${q.marks} mark${q.marks>1?'s':''}${q.tag?`<span class="qtag" style="margin-left:6px">${q.tag}</span>`:''}</div>
       <div class="tm-question">${q.question}</div>
-      <textarea class="tm-textarea" id="tma-${i}" placeholder="Type your answer here..."></textarea>
-      <div class="tm-feedback" id="tmf-${i}"></div>`;
+      <textarea class="tm-textarea" id="tma-${uid}-${i}" placeholder="Type your answer here..."></textarea>
+      <div class="tm-feedback" id="tmf-${uid}-${i}"></div>`;
     wrap.appendChild(card);
   });
 
@@ -1767,25 +1781,51 @@ function renderMiniTest(qs,container){
   container.appendChild(wrap);
 
   submitBtn.addEventListener('click',async()=>{
-    const ans=qs.map((q,i)=>({question:q.question,modelAnswer:q.modelAnswer,marks:q.marks,studentAnswer:(document.getElementById(`tma-${i}`)?.value||'').trim()}));
+    const ans=qs.map((q,i)=>({
+      question:q.question,
+      modelAnswer:q.modelAnswer,
+      marks:q.marks,
+      studentAnswer:(document.getElementById(`tma-${uid}-${i}`)?.value||'').trim()
+    }));
     if(ans.some(a=>!a.studentAnswer)){alert('Please answer all questions first.');return;}
-    submitBtn.disabled=true;submitBtn.textContent='Marking...';
+    submitBtn.disabled=true;
+    submitBtn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle"></span>Marking...';
     try{
       const sys=`You are a strict exam marker. Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"feedback":"1-2 sentences — what was right, what was wrong, what the examiner wanted"}]`;
       const raw=await apiHaiku(sys,[{role:'user',content:ans.map((a,i)=>`Q${i+1} (${a.marks} marks): ${a.question}\nModel: ${a.modelAnswer}\nStudent: ${a.studentAnswer}`).join('\n\n')}],1200);
       const res=exArr(raw);let tot=0,mx=0;
       res.forEach((r,i)=>{
         tot+=r.score;mx+=r.maxScore;
-        const el=document.getElementById(`tmf-${i}`);
+        const el=document.getElementById(`tmf-${uid}-${i}`);
+        if(!el)return;
         const pc=r.score/r.maxScore;
         el.className='tm-feedback '+(pc>=0.8?'ok':pc>=0.4?'half':'no');
         el.innerHTML=`<strong>${r.score}/${r.maxScore}</strong> — ${r.feedback}`;
       });
       const pc=Math.round((tot/mx)*100);
-      document.getElementById('tmScoreBig').textContent=`${tot}/${mx} · ${pc}%`;
-      document.getElementById('tmScoreSub').textContent=pc>=80?'🎉 Great work!':pc>=50?'📚 Good effort — review the feedback':'💪 Keep studying — use the feedback above';
-      document.getElementById('tmScore').classList.add('show');
+      document.getElementById(`tmScoreBig-${uid}`).textContent=`${tot}/${mx} · ${pc}%`;
+      document.getElementById(`tmScoreSub-${uid}`).textContent=pc>=80?'🎉 Great work!':pc>=50?'📚 Good effort — review the feedback':'💪 Keep studying — use the feedback above';
+      scoreEl.classList.add('show');
       submitBtn.textContent='Re-submit';submitBtn.disabled=false;
+
+      // Add regenerate button if not already there
+      if(!container.querySelector('.tm-regen')){
+        const regenBtn=document.createElement('button');
+        regenBtn.className='tm-submit tm-regen';
+        regenBtn.style.cssText='margin-top:8px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);';
+        regenBtn.textContent='🔄 Generate New Questions';
+        container.appendChild(regenBtn);
+        regenBtn.addEventListener('click',async()=>{
+          regenBtn.disabled=true;regenBtn.textContent='Generating...';
+          try{
+            const ctx=syllabusContext||'';
+            const newSys=`You are a tutor. ${ctx} Generate 3 new short-answer test questions different from these: ${qs.map(q=>q.question).join('; ')}. Return ONLY JSON array: [{"question":"Q","modelAnswer":"answer","marks":2,"tag":"topic"}]`;
+            const newRaw=await apiHaiku(newSys,[{role:'user',content:'Generate new test questions. Return JSON array only.'}],800);
+            const newQs=exArr(newRaw);
+            if(newQs.length)renderMiniTest(newQs,container,syllabusContext);
+          }catch(e){regenBtn.textContent='Failed — try again';regenBtn.disabled=false;}
+        });
+      }
     }catch(e){submitBtn.textContent='Marking failed — try again';submitBtn.disabled=false;}
   });
 }
@@ -1793,8 +1833,16 @@ function renderMiniTest(qs,container){
 // ── PAGE 2: PRACTICE EXAM ──
 let enF=null,epF=null,examData=null,examMode='both';
 const checkExam=()=>{
-  const nn=examMode==='both'||examMode==='notes',np=examMode==='both'||examMode==='reword';
-  document.getElementById('examBtn').disabled=!((!nn||enF)&&(!np||epF));
+  const nn=examMode==='both'||examMode==='notes';
+  const np=examMode==='both'||examMode==='reword';
+  const uniOnly=examMode==='unionly';
+  const schoolMode=examStudentMode==='school';
+  const uniCourseOk=document.getElementById('examUniCourse')?.value.trim()||document.getElementById('examUniSubject')?.value.trim();
+  if(schoolMode||uniOnly||(uniOnly&&uniCourseOk)){
+    document.getElementById('examBtn').disabled=false;
+  }else{
+    document.getElementById('examBtn').disabled=!((!nn||enF)&&(!np||epF));
+  }
 };
 document.querySelectorAll('.mode-btn').forEach(b=>{
   b.addEventListener('click',()=>{
@@ -1802,10 +1850,13 @@ document.querySelectorAll('.mode-btn').forEach(b=>{
     const en=document.getElementById('en-wrap'),ep=document.getElementById('ep-wrap');
     if(examMode==='both'){en.style.display='';ep.style.display='';}
     else if(examMode==='notes'){en.style.display='';ep.style.display='none';epF=null;}
-    else{en.style.display='none';ep.style.display='';enF=null;}
+    else if(examMode==='reword'){en.style.display='none';ep.style.display='';enF=null;}
+    else if(examMode==='unionly'){en.style.display='none';ep.style.display='none';}
     checkExam();
   });
 });
+document.getElementById('examUniCourse')?.addEventListener('input',checkExam);
+document.getElementById('examUniSubject')?.addEventListener('input',checkExam);
 wire('enZone','enFile','enPill','enFN','enFS','enRM',f=>{enF=f;checkExam();},()=>{enF=null;checkExam();});
 wire('epZone','epFile','epPill','epFN','epFS','epRM',f=>{epF=f;checkExam();},()=>{epF=null;checkExam();});
 document.getElementById('examReset').addEventListener('click',()=>{
@@ -1838,13 +1889,21 @@ Generate a realistic practice exam with 4-5 questions in the exact style and for
 Use the precise command verbs (explain, describe, evaluate, justify, calculate) typical of this assessment body.
 Return ONLY JSON: ${FMT}`;
       messages=[{role:'user',content:`Generate a ${SYLLABUS[state]?.name} ${subject} practice exam${unit?' for '+unit:''}${topic?' on '+topic:''}. Return JSON only.`}];
+    } else if(examMode==='unionly'){
+      // Uni course-only mode — no upload
+      const course=document.getElementById('examUniCourse')?.value.trim()||'';
+      const subject=document.getElementById('examUniSubject')?.value.trim()||'this subject';
+      sys=`You are a university exam writer. Generate a realistic university-level practice exam for ${course?course+' — ':''}${subject}. Use appropriate academic language and question styles. Return ONLY JSON: ${FMT}. 4-5 questions.`;
+      messages=[{role:'user',content:`Generate a university practice exam for ${course||subject}. Return JSON only.`}];
     } else if(examMode==='both'){
+      const uniCtxStr=document.getElementById('examUniCourse')?.value.trim()||document.getElementById('examUniSubject')?.value.trim()||'';
       const[nb64,pb64]=await Promise.all([toB64(enF),toB64(epF)]);
-      sys=`You are an exam writer. Auto-detect the subject. Use the past exam for style only, generate new questions from the notes. Return ONLY JSON: ${FMT}. Max 3 questions. Keep it short.`;
+      sys=`You are an exam writer.${uniCtxStr?' This is for a university student studying '+uniCtxStr+'.'  :' Auto-detect the subject.'} Use the past exam for style only, generate new questions from the notes. Return ONLY JSON: ${FMT}. Max 3 questions.`;
       messages=[{role:'user',content:[...buildContent(nb64,enF,'Notes'),...buildContent(pb64,epF,'Past exam for style')]}];
     }else if(examMode==='notes'){
       const nb64=await toB64(enF);
-      sys=`You are an exam writer. Auto-detect the subject. Generate a short practice exam from these notes. Return ONLY JSON: ${FMT}. Max 3 questions.`;
+      const uniCtxStr=document.getElementById('examUniCourse')?.value.trim()||document.getElementById('examUniSubject')?.value.trim()||'';
+      sys=`You are an exam writer.${uniCtxStr?' This is for a university student studying '+uniCtxStr+'.'  :' Auto-detect the subject.'} Generate a short practice exam from these notes. Return ONLY JSON: ${FMT}. Max 3 questions.`;
       messages=[{role:'user',content:buildContent(nb64,enF,'Generate exam. JSON only.')}];
     }else{
       const pb64=await toB64(epF);
