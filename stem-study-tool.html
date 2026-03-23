@@ -544,11 +544,16 @@ MathJax = {
   .wni-text{font-size:0.79rem;color:var(--text);line-height:1.5;}
   .wni-text strong{color:var(--accent);font-family:'Syne',sans-serif;}
 
+  /* CHATBOT */
+  .chat-msg{max-width:88%;padding:10px 14px;border-radius:14px;font-size:0.79rem;line-height:1.65;}
+  .chat-ai{background:var(--surface2);border:1px solid var(--border);color:var(--text);align-self:flex-start;border-radius:4px 14px 14px 14px;}
+  .chat-user{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;align-self:flex-end;border-radius:14px 4px 14px 14px;}
+  .chat-typing{background:var(--surface2);border:1px solid var(--border);color:var(--muted);align-self:flex-start;border-radius:4px 14px 14px 14px;font-size:0.75rem;padding:10px 14px;}
+  @media(max-width:640px){#chatPanel{width:100%!important;border-radius:20px 20px 0 0;}}
+
   /* STREAMING */
   .stream-cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;animation:blink 0.8s infinite;}
   @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
-
-  /* ADVANCED TOGGLE */
   .advanced-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px;width:fit-content;}
   .advanced-toggle-label{font-size:0.72rem;color:var(--muted);transition:color 0.15s;}
   .advanced-toggle:hover .advanced-toggle-label{color:var(--text);}
@@ -1271,6 +1276,9 @@ MathJax = {
           <div id="lecSubjectLabel" style="font-size:0.65rem;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace"></div>
         </div>
       </div>
+      <button id="chatToggleBtn" style="display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;padding:9px 18px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(129,140,248,0.3)">
+        💬 Ask AI
+      </button>
     </div>
     <div class="tabs" id="lecTabs">
       <button class="tab active" data-tab="ls">📋 Notes</button>
@@ -1290,6 +1298,25 @@ MathJax = {
     <div class="cc" id="lt"></div>
     <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
   </div><!-- end container -->
+
+  <!-- CHATBOT PANEL -->
+  <div id="chatPanel" style="display:none;position:fixed;bottom:0;right:0;width:380px;height:520px;background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;z-index:200;display:none;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,0.4)">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(129,140,248,0.1),rgba(129,140,248,0.05));border-radius:20px 20px 0 0">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem">Study Assistant</div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:2px">Ask anything about your study pack</div>
+      </div>
+      <button id="chatCloseBtn" style="background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s">✕</button>
+    </div>
+    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="chat-msg chat-ai">👋 Hi! I've read your study pack. Ask me anything — definitions, explanations, quiz questions, or how concepts connect.</div>
+    </div>
+    <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input id="chatInput" type="text" placeholder="Ask a question..." style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.76rem;padding:9px 13px;outline:none;transition:border-color 0.2s">
+      <button id="chatSendBtn" style="background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:1rem;flex-shrink:0;transition:all 0.2s;display:flex;align-items:center;justify-content:center">↑</button>
+    </div>
+  </div>
+
   </div><!-- end lecRes -->
 
 </div><!-- end page-lecture -->
@@ -1963,6 +1990,11 @@ wireTabs('lecTabs');
 document.getElementById('lecReset').addEventListener('click',()=>{
   document.getElementById('lecRes').classList.remove('show');
   document.getElementById('lec-form-page').style.display='';
+  // Reset chat
+  chatOpen=false;
+  document.getElementById('chatPanel').style.display='none';
+  document.getElementById('chatMessages').innerHTML='<div class="chat-msg chat-ai">👋 Hi! I\'ve read your study pack. Ask me anything — definitions, explanations, quiz questions, or how concepts connect.</div>';
+  chatHistory=[];
   lecF=null;lecOptionalFile=null;
   document.getElementById('lecFile').value='';
   document.getElementById('lecPill').classList.remove('show');
@@ -2254,6 +2286,9 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
     // Show detected subject in header
     const subjectLbl = document.getElementById('lecSubjectLabel');
     if(subjectLbl) subjectLbl.textContent = p.subject ? `📌 ${p.subject}` : '';
+
+    // Prime chatbot with pack content
+    setChatContext(p);
 
     window.scrollTo({top:0,behavior:'smooth'});
     renderMath();
@@ -2846,6 +2881,67 @@ function showReadiness(pct){
     clampedPct>=40?'More revision needed — work through the errors in your feedback.':
     'Significant revision needed — prioritise the conceptual errors above before your exam.';
 }
+
+// ── CHATBOT ──
+let chatContext='';
+let chatHistory=[];
+let chatOpen=false;
+
+function setChatContext(packData){
+  chatContext=`You are a friendly study assistant. The student has generated a study pack with this content:\n\nSubject: ${packData.subject||'unknown'}\n\nSummary:\n${(packData.summary||'').replace(/<[^>]+>/g,'')}\n\nSections:\n${(packData.sections||[]).map(s=>`${s.label}: ${(s.content||'').replace(/<[^>]+>/g,'')}`).join('\n')}\n\nFlashcard topics: ${(packData.flashcards||[]).map(f=>f.front).join(', ')}\n\nTest questions: ${(packData.test||[]).map(q=>q.question).join(', ')}\n\nAnswer the student's questions clearly based on this content. Be concise and helpful. If asked to quiz them, create a short question.`;
+  chatHistory=[];
+}
+
+function addChatMsg(text,role){
+  const msgs=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className=`chat-msg ${role==='user'?'chat-user':'chat-ai'}`;
+  div.innerHTML=text.replace(/\n/g,'<br>');
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+async function sendChatMessage(){
+  const input=document.getElementById('chatInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+  addChatMsg(msg,'user');
+  chatHistory.push({role:'user',content:msg});
+  const typing=document.createElement('div');
+  typing.className='chat-typing';
+  typing.innerHTML='<span style="display:inline-flex;gap:4px"><span style="animation:blink 0.8s 0s infinite">●</span><span style="animation:blink 0.8s 0.2s infinite">●</span><span style="animation:blink 0.8s 0.4s infinite">●</span></span>';
+  document.getElementById('chatMessages').appendChild(typing);
+  document.getElementById('chatMessages').scrollTop=99999;
+  document.getElementById('chatSendBtn').disabled=true;
+  try{
+    const raw=await apiHaiku(chatContext,chatHistory.map(m=>({role:m.role,content:m.content})),800);
+    typing.remove();
+    addChatMsg(raw,'ai');
+    chatHistory.push({role:'assistant',content:raw});
+  }catch(e){
+    typing.remove();
+    addChatMsg('Something went wrong — try again.','ai');
+  }
+  document.getElementById('chatSendBtn').disabled=false;
+  input.focus();
+}
+
+document.getElementById('chatToggleBtn')?.addEventListener('click',()=>{
+  const panel=document.getElementById('chatPanel');
+  chatOpen=!chatOpen;
+  panel.style.display=chatOpen?'flex':'none';
+  if(chatOpen)document.getElementById('chatInput').focus();
+});
+document.getElementById('chatCloseBtn')?.addEventListener('click',()=>{
+  document.getElementById('chatPanel').style.display='none';
+  chatOpen=false;
+});
+document.getElementById('chatSendBtn')?.addEventListener('click',sendChatMessage);
+document.getElementById('chatInput')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMessage();}
+});
 </script>
 </body>
 </html>
