@@ -50,7 +50,7 @@ h1 em{font-style:italic;font-family:'Lora',serif;color:var(--accent);}
 .section-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,3.5vw,2.9rem);letter-spacing:-0.03em;line-height:1.1;margin-bottom:14px;}
 .section-title em{font-style:italic;font-family:'Lora',serif;color:var(--accent);}
 .section-sub{color:var(--muted);font-size:0.88rem;max-width:540px;line-height:1.75;margin-bottom:52px;}
-@media(max-width:640px){.section{padding:60px 20px;}.hero{padding:80px 20px 60px;}}
+@media(max-width:640px){.section{padding:60px 20px;}.hero{padding:80px 20px 60px;}[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}}
 .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
 @media(max-width:860px){.feature-grid{grid-template-columns:1fr 1fr;}}
 @media(max-width:540px){.feature-grid{grid-template-columns:1fr;}}
@@ -164,9 +164,9 @@ hr{border:none;border-top:1px solid var(--border);}
 <nav>
   <div class="nav-logo">Revaix<span> Study</span></div>
   <div class="nav-links">
+    <a href="#who">High School & Uni</a>
     <a href="#features">Features</a>
     <a href="#school">QCE / VCE / HSC</a>
-    <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
   </div>
@@ -176,27 +176,64 @@ hr{border:none;border-top:1px solid var(--border);}
 <!-- HERO -->
 <section class="hero">
   <div class="hero-inner">
-    <div class="hero-badge"><div class="badge-dot"></div>Free for students · No signup needed</div>
-    <h1>The AI study tool<br>built for <em>Australian students.</em></h1>
-    <p class="hero-sub">Upload your notes or just pick your subject — Revaix instantly builds summaries, flashcards, practice exams and marks your work. Syllabus-matched for QCE, VCE, HSC and university.</p>
+    <div class="hero-badge"><div class="badge-dot"></div>Free · No signup · High school & university</div>
+    <h1>Stop wasting hours<br>on <em>study notes.</em></h1>
+    <p class="hero-sub">Whether you're in Year 12 or first year uni — upload your notes, pick your subject, and get instant summaries, flashcards, practice exams and assignment marking. Built for Australian students.</p>
     <div class="hero-actions">
       <a href="/app" class="btn-primary">Generate my study pack →</a>
-      <a href="#how" class="btn-secondary">See how it works</a>
+      <a href="#who" class="btn-secondary">Who it's for</a>
     </div>
-    <p class="hero-note">✦ <span>100% free</span> to start · No account needed · Works on any subject</p>
+    <p class="hero-note">✦ <span>100% free</span> to start · No account needed · QCE, VCE, HSC & university</p>
   </div>
 </section>
 
 <!-- PROOF BAR -->
 <div class="proof-bar">
-  <div class="proof-item">🎓 Built for <strong>QCE, VCE, HSC</strong> & uni</div>
+  <div class="proof-item">🏫 <strong>QCE, VCE, HSC</strong> students</div>
+  <div class="proof-item">🎓 <strong>University</strong> students</div>
   <div class="proof-item">⚡ Results in <strong>under 30 seconds</strong></div>
   <div class="proof-item">📚 <strong>Any subject</strong>, any level</div>
-  <div class="proof-item">🌍 Outputs in <strong>11 languages</strong></div>
   <div class="proof-item">✦ <strong>100% free</strong> to start</div>
 </div>
 
-<!-- FEATURES -->
+<!-- WHO IT'S FOR -->
+<section class="section" id="who">
+  <div class="reveal">
+    <div class="section-label">Who it's for</div>
+    <h2 class="section-title">Built for every<br><em>type of student.</em></h2>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="reveal">
+    <div style="background:var(--surface);border:1px solid rgba(110,231,183,0.2);border-radius:16px;padding:28px 24px;background:linear-gradient(135deg,rgba(110,231,183,0.04),var(--surface))">
+      <div style="font-size:1.8rem;margin-bottom:12px">🏫</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:8px">High School Students</div>
+      <div style="font-size:0.62rem;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px">QCE · VCE · HSC · WACE · SACE</div>
+      <p style="font-size:0.79rem;color:var(--muted);line-height:1.7;margin-bottom:16px">Just pick your state, subject and unit — no upload needed. Revaix generates study packs, practice exams and assignment marking matched exactly to your syllabus. Uses the same command verbs and question styles as your real external exams.</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent);flex-shrink:0">✓</span>No upload needed — pick your subject and go</div>
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent);flex-shrink:0">✓</span>Syllabus-matched to QCAA, VCAA, NESA and more</div>
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent);flex-shrink:0">✓</span>Assignments marked against your school's rubric</div>
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent);flex-shrink:0">✓</span>Practice exams in the exact style of your real ones</div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:28px 24px;background:linear-gradient(135deg,rgba(129,140,248,0.04),var(--surface))">
+      <div style="font-size:1.8rem;margin-bottom:12px">🎓</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:8px">University Students</div>
+      <div style="font-size:0.62rem;color:var(--accent2);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px">Any degree · Any subject · Any university</div>
+      <p style="font-size:0.79rem;color:var(--muted);line-height:1.7;margin-bottom:16px">Upload your lecture slides, textbook pages or class notes and get a full study pack in seconds. Stop spending hours making notes and flashcards — spend that time actually studying. Works for engineering, law, medicine, commerce and everything in between.</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent2);flex-shrink:0">✓</span>Upload PDF, image or paste text directly</div>
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent2);flex-shrink:0">✓</span>AI auto-detects your subject — no setup needed</div>
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent2);flex-shrink:0">✓</span>Generate practice exams from your own notes</div>
+        <div style="font-size:0.76rem;color:var(--text);display:flex;gap:8px;align-items:flex-start"><span style="color:var(--accent2);flex-shrink:0">✓</span>Outputs in 11 languages</div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:28px" class="reveal">
+    <a href="/app" class="btn-primary">Try it free →</a>
+  </div>
+</section>
+
+<hr>
 <section class="section" id="features">
   <div class="reveal">
     <div class="section-label">What you get</div>
