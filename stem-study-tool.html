@@ -8,6 +8,18 @@
 <link rel="icon" type="image/svg+xml" href="/revaix_study_logo_v3.svg">
 <link rel="apple-touch-icon" href="/revaix_study_logo_v3.svg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea'] },
+  startup: { typeset: false }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <style>
   :root {
     --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c26; --border:#2a2a3a;
@@ -971,6 +983,11 @@ function friendlyErr(e){
     return '⚠️ Something went wrong reading the response — please try again.';
   return '⚠️ Error: '+m;
 }
+function renderMath(){
+  if(window.MathJax&&MathJax.typesetPromise){
+    MathJax.typesetPromise().catch(e=>console.log('MathJax error:',e));
+  }
+}
 function markClass(s,m){const p=s/m;return p>=0.8?'ok':p>=0.4?'half':'no';}
 
 // ── WHATS NEW MODAL ──
@@ -1079,7 +1096,7 @@ Return ONLY a JSON object — no markdown, no backticks:
   "questions": [{"question":"Q","answer":"correct answer text","options":["correct answer","wrong option 1","wrong option 2","wrong option 3"],"tag":"topic"}],
   "catchup": "HTML: key points a student who missed class needs to know. Use <h3> and <ul><li>.",
   "sections": [{"label":"Topic Name","content":"<p>What this means for a student, why it matters, the core idea. 3 sentences.</p>"}],
-  "formulas": [{"name":"Formula name","equation":"the formula","steps":["Step 1: ..."],"example":"worked example"}],
+  "formulas": [{"name":"Formula name","equation":"use LaTeX notation e.g. $F = ma$ or $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$","steps":["Step 1: ..."],"example":"worked example"}],
   "test": [{"question":"written question","modelAnswer":"model answer","marks":2,"tag":"topic"}]
 }
 flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Total under 1200 words.`;
@@ -1285,6 +1302,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lecRes').classList.add('show');
+    renderMath();
 
   }catch(e){
     clearInterval(iv);
