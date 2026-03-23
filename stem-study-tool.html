@@ -636,11 +636,11 @@ MathJax = {
 <div class="page active" id="page-lecture">
 <div class="container">
   <div class="hero">
-    <h1>Stop drowning in<br><span class="hl">notes.</span></h1>
-    <p>Upload any notes, slides, or textbook pages — Revaix instantly builds a full study pack. Works for high school and university students, any subject.</p>
+    <h1>Study smarter.<br><span class="hl">No notes required.</span></h1>
+    <p>Enter your course and topic — or upload your notes — and get an instant study pack with summaries, flashcards, practice exams and marking. Built for high school and university students.</p>
   </div>
 
-  <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just upload and go</div>
+  <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just enter your subject and go</div>
 
   <div id="lec-form">
 
@@ -690,23 +690,37 @@ MathJax = {
 
     <!-- INPUT MODE -->
     <div id="lecUploadSection">
-      <div class="input-mode-row">
-        <button class="input-mode-btn active" id="inputModeFile">📄 Upload File</button>
-        <button class="input-mode-btn" id="inputModeText">✏️ Paste Text</button>
-      </div>
 
-      <!-- FILE UPLOAD -->
-      <div id="fileInputWrap">
-        <div class="upload-zone" id="lecZone">
-          <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
-          <span class="upload-icon">📄</span>
-          <h3>Drop your file here</h3>
-          <p>PDF or image · max 20MB · best results with 1-15 pages</p>
+      <!-- UNI MODE — course selector as primary -->
+      <div id="lecUniInputs">
+        <div class="school-info-badge" style="background:rgba(129,140,248,0.08);border-color:rgba(129,140,248,0.2);color:var(--accent2)">✦ No upload needed — just enter your course and topic</div>
+        <div class="school-sel-grid" style="margin-bottom:12px">
+          <div>
+            <label class="field-label">University / Degree</label>
+            <input class="school-sel" id="uniCourse" type="text" placeholder="e.g. Engineering, Law, Medicine" style="font-family:'DM Mono',monospace;background-image:none">
+          </div>
+          <div>
+            <label class="field-label">Subject / Unit</label>
+            <input class="school-sel" id="uniSubject" type="text" placeholder="e.g. Thermodynamics, Contracts, Anatomy" style="font-family:'DM Mono',monospace;background-image:none">
+          </div>
         </div>
-        <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
+        <label class="field-label">What do you want to review? <span style="color:var(--muted);font-size:0.6rem">(optional — leave blank for full subject overview)</span></label>
+        <textarea class="text-input-area" id="uniTopic" placeholder="e.g. Newton's laws of motion, the rules of offer and acceptance, the cardiac cycle..." style="min-height:80px;margin-bottom:12px"></textarea>
+        <div style="margin-bottom:12px">
+          <button class="input-mode-btn" id="uniUploadToggle">📄 Upload my notes too (optional)</button>
+        </div>
+        <div id="uniUploadWrap" style="display:none;margin-bottom:10px">
+          <div class="upload-zone" id="lecZone">
+            <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
+            <span class="upload-icon">📄</span>
+            <h3>Upload your notes (optional)</h3>
+            <p>PDF or image · adds your content to the AI-generated pack</p>
+          </div>
+          <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
+        </div>
       </div>
 
-      <!-- PLAIN TEXT INPUT -->
+      <!-- PLAIN TEXT INPUT (kept for paste mode) -->
       <div id="textInputWrap" style="display:none">
         <textarea class="text-input-area" id="lecTextInput" placeholder="Paste your notes, lecture content, or any text here..."></textarea>
       </div>
@@ -774,7 +788,7 @@ MathJax = {
     </div>
 
     <div class="err" id="lecErr"></div>
-    <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack — Free</button>
+    <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack — Free ✦</button>
   </div>
 
   <div class="loading" id="lecLoad">
@@ -1310,12 +1324,35 @@ function wireStudentToggle(toggleId, schoolSelectorsId, onUni, onSchool){
 // ── PAGE 1 STUDENT MODE ──
 let lecStudentMode='uni';
 let lecOptionalFile=null;
+let lecF=null, lecDepth='summarised', lecFormat='dotpoints', lecModeVal='normal';
+
+// Enable button when uni course field has content
+function checkLecBtn(){
+  const uniReady = lecStudentMode==='uni' && (document.getElementById('uniCourse')?.value.trim()||document.getElementById('uniSubject')?.value.trim());
+  const schoolReady = lecStudentMode==='school';
+  const uniFileReady = lecStudentMode==='uni' && lecF;
+  document.getElementById('lecBtn').disabled = !(uniReady||schoolReady||uniFileReady);
+}
+
+document.getElementById('uniCourse')?.addEventListener('input', checkLecBtn);
+document.getElementById('uniSubject')?.addEventListener('input', checkLecBtn);
+document.getElementById('uniTopic')?.addEventListener('input', checkLecBtn);
+
+// Upload toggle for uni mode
+document.getElementById('uniUploadToggle')?.addEventListener('click',()=>{
+  const wrap=document.getElementById('uniUploadWrap');
+  const isOpen=wrap.style.display!=='none';
+  wrap.style.display=isOpen?'none':'';
+  document.getElementById('uniUploadToggle').textContent=isOpen?'📄 Upload my notes too (optional)':'✕ Remove upload';
+});
+
 wireStudentToggle('lecStudentToggle','lecSchoolSelectors',
   ()=>{
     lecStudentMode='uni';
     document.getElementById('lecUploadSection').style.display='';
     document.getElementById('lecSchoolNote').style.display='none';
-    document.getElementById('lecBtn').disabled=!(lecF||(inputMode==='text'&&document.getElementById('lecTextInput').value.trim()));
+    document.getElementById('lecUniInputs').style.display='';
+    checkLecBtn();
   },
   ()=>{
     lecStudentMode='school';
@@ -1389,35 +1426,11 @@ document.getElementById('advToggle').addEventListener('click',()=>{
 
 // ── INPUT MODE TOGGLE ──
 let inputMode='file';
-document.getElementById('inputModeFile').addEventListener('click',()=>{
-  inputMode='file';
-  document.getElementById('inputModeFile').classList.add('active');
-  document.getElementById('inputModeText').classList.remove('active');
-  document.getElementById('fileInputWrap').style.display='';
-  document.getElementById('textInputWrap').style.display='none';
-  // disable button if no file
-  const hasText=document.getElementById('lecTextInput').value.trim().length>0;
-  if(!lecF&&!hasText)document.getElementById('lecBtn').disabled=true;
-  if(lecF)document.getElementById('lecBtn').disabled=false;
-});
-document.getElementById('inputModeText').addEventListener('click',()=>{
-  inputMode='text';
-  document.getElementById('inputModeText').classList.add('active');
-  document.getElementById('inputModeFile').classList.remove('active');
-  document.getElementById('fileInputWrap').style.display='none';
-  document.getElementById('textInputWrap').style.display='';
-  const hasText=document.getElementById('lecTextInput').value.trim().length>0;
-  document.getElementById('lecBtn').disabled=!hasText;
-});
-document.getElementById('lecTextInput').addEventListener('input',()=>{
-  if(inputMode==='text'){
-    document.getElementById('lecBtn').disabled=document.getElementById('lecTextInput').value.trim().length===0;
-  }
+document.getElementById('lecTextInput')?.addEventListener('input',()=>{
+  checkLecBtn();
 });
 
 // ── PAGE 1: NOTES REVIEW ──
-let lecF=null, lecDepth='summarised', lecFormat='dotpoints', lecModeVal='normal';
-
 document.querySelectorAll('#depthRow .opt-btn').forEach(b=>{
   b.addEventListener('click',()=>{document.querySelectorAll('#depthRow .opt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');lecDepth=b.dataset.depth;});
 });
@@ -1436,8 +1449,8 @@ document.getElementById('lecModeExam').addEventListener('click',()=>{
 });
 
 wire('lecZone','lecFile','lecPill','lecFN','lecFS','lecRM',
-  f=>{lecF=f;document.getElementById('lecBtn').disabled=false;document.getElementById('lecErr').classList.remove('show');},
-  ()=>{lecF=null;document.getElementById('lecBtn').disabled=true;}
+  f=>{lecF=f;checkLecBtn();document.getElementById('lecErr').classList.remove('show');},
+  ()=>{lecF=null;checkLecBtn();}
 );
 wireTabs('lecTabs');
 document.getElementById('lecReset').addEventListener('click',()=>{
@@ -1449,8 +1462,9 @@ document.getElementById('lecReset').addEventListener('click',()=>{
 
 document.getElementById('lecBtn').addEventListener('click',async()=>{
   const textContent = document.getElementById('lecTextInput').value.trim();
-  if(lecStudentMode==='uni' && inputMode==='file' && !lecF) return;
-  if(lecStudentMode==='uni' && inputMode==='text' && !textContent) return;
+  const uniReady = lecStudentMode==='uni' && (document.getElementById('uniCourse')?.value.trim()||document.getElementById('uniSubject')?.value.trim()||lecF);
+  if(lecStudentMode==='uni' && !uniReady) return;
+  if(lecStudentMode==='school') {} // always allowed
   document.getElementById('lecErr').classList.remove('show');
   document.getElementById('lec-form').style.display='none';
   document.getElementById('lecLoad').classList.add('show');
@@ -1464,6 +1478,14 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
     const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
     const examExtra=lecModeVal==='exam'?'EXAM FOCUSED MODE: For each topic, also note common exam traps, mark-worthy phrases examiners look for, and high-frequency exam topics. Tag any high-priority exam content with ★.':'';
 
+    const uniCourse = document.getElementById('uniCourse')?.value.trim()||'';
+    const uniSubject = document.getElementById('uniSubject')?.value.trim()||'';
+    const uniTopicVal = document.getElementById('uniTopic')?.value.trim()||'';
+
+    const uniCtx = lecStudentMode==='uni' && (uniCourse||uniSubject)
+      ? `This is a university student studying ${uniCourse?uniCourse+' — ':''}${uniSubject}${uniTopicVal?' focusing on: '+uniTopicVal:''}. Generate content tailored to university level for this specific subject.`
+      : '';
+
     const syllabusCtx = lecStudentMode==='school'
       ? buildSyllabusPrompt(
           document.getElementById('lecState').value,
@@ -1471,7 +1493,7 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
           document.getElementById('lecUnit').value,
           document.getElementById('lecTopic').value
         )
-      : '';
+      : uniCtx;
 
     const sys=`You are an expert tutor at university and high school level. Auto-detect the subject from the uploaded content. ${examExtra} ${syllabusCtx}
 ${fmtInstr}
@@ -1491,13 +1513,21 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
     let userMessages;
     if(lecStudentMode==='school'){
-      // School mode — generate from syllabus, optionally with uploaded notes
       if(lecOptionalFile){
         const b64=await toB64(lecOptionalFile);
-        userMessages=[{role:'user',content:[...buildContent(b64,lecOptionalFile,'Student notes to incorporate'),{type:'text',text:'Generate the study pack JSON using the syllabus context above, incorporating any relevant content from these student notes.'}]}];
+        userMessages=[{role:'user',content:[...buildContent(b64,lecOptionalFile,'Student notes to incorporate'),{type:'text',text:'Generate the study pack JSON using the syllabus context above, incorporating content from these student notes.'}]}];
       }else{
         userMessages=[{role:'user',content:`Generate a comprehensive study pack for this student based on their syllabus. Return JSON only.`}];
       }
+    }else if(lecStudentMode==='uni' && !lecF){
+      // Uni mode — text only, no file
+      const topicStr = uniTopicVal ? `focusing specifically on: ${uniTopicVal}` : 'covering the key concepts of this subject';
+      userMessages=[{role:'user',content:`Generate a comprehensive university-level study pack for ${uniCourse?uniCourse+', ':''} ${uniSubject||'this subject'} — ${topicStr}. Return JSON only.`}];
+    }else if(lecStudentMode==='uni' && lecF){
+      // Uni mode — with file
+      const b64=await toB64(lecF);
+      const extraCtx = uniTopicVal ? ` Focus especially on: ${uniTopicVal}` : '';
+      userMessages=[{role:'user',content:[...buildContent(b64,lecF,`Generate the study pack JSON.${extraCtx}`)]}];
     }else if(inputMode==='text'){
       userMessages=[{role:'user',content:`Study content to analyse:\n\n${textContent}\n\nGenerate the study pack JSON.`}];
     }else{
