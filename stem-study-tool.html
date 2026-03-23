@@ -961,6 +961,16 @@ function wireTabs(tabsId){
     });
   });
 }
+function friendlyErr(e){
+  const m=e.message||'';
+  if(m.includes('502')||m.includes('Failed to fetch')||m.includes('timeout')||m.includes('NetworkError'))
+    return '⚠️ The request timed out — your document may be too large. Try uploading fewer pages, or paste your notes as text instead.';
+  if(m.includes('500'))
+    return '⚠️ Server error — please try again in a moment.';
+  if(m.includes('parse')||m.includes('JSON'))
+    return '⚠️ Something went wrong reading the response — please try again.';
+  return '⚠️ Error: '+m;
+}
 function markClass(s,m){const p=s/m;return p>=0.8?'ok':p>=0.4?'half':'no';}
 
 // ── WHATS NEW MODAL ──
@@ -1280,10 +1290,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
     clearInterval(iv);
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lec-form').style.display='';
-    const msg = e.message.includes('502') || e.message.includes('Failed to fetch')
-      ? 'Request timed out — try uploading a smaller PDF (fewer pages work best), or paste your notes as text instead.'
-      : 'Error: '+e.message;
-    document.getElementById('lecErr').textContent=msg;
+    document.getElementById('lecErr').textContent=friendlyErr(e);
     document.getElementById('lecErr').classList.add('show');
   }
 });
@@ -1390,7 +1397,7 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
   }catch(e){
     clearInterval(iv);document.getElementById('examLoad').classList.remove('show');document.getElementById('exam-form').style.display='';
-    document.getElementById('examErr').textContent='Error: '+e.message;document.getElementById('examErr').classList.add('show');
+    document.getElementById('examErr').textContent=friendlyErr(e);document.getElementById('examErr').classList.add('show');
   }
 });
 
@@ -1491,9 +1498,9 @@ function renderExam(exam){
       if(ta)answered[examIdx]=ta.value;
       window._examAnswered=answered;
       nextBtn.disabled=true;
-      nextBtn.textContent='Marking your exam...';
-      nextBtn.style.background='var(--border)';
-      nextBtn.style.color='var(--muted)';
+      nextBtn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#0a0a0f;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle"></span>Marking your exam...';
+      nextBtn.style.background='var(--accent)';
+      nextBtn.style.color='#0a0a0f';
       document.getElementById('examSubBtn').click();
     }
   });
@@ -1729,7 +1736,7 @@ If blank score 0.`;
     clearInterval(iv);
     document.getElementById('markLoad').classList.remove('show');
     document.getElementById('mark-form').style.display='';
-    document.getElementById('markErr').textContent='Error: '+e.message;
+    document.getElementById('markErr').textContent=friendlyErr(e);
     document.getElementById('markErr').classList.add('show');
   }
 });
