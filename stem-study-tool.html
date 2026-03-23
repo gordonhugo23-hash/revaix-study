@@ -304,11 +304,63 @@
   .fc-shuffle-overlay{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.15s;}
   .fc-shuffle-overlay:hover{border-color:var(--accent2);color:var(--accent2);}
 
-  /* FLASHCARDS */
-  .fc-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .fc-count{font-size:0.68rem;color:var(--muted);}
-  .fc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  @media(max-width:500px){.fc-grid{grid-template-columns:1fr;}}
+  /* INTERACTIVE CARD UI (shared) */
+  .ic-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .ic-card{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;padding:36px 28px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ic-card:hover{border-color:var(--accent2);transform:translateY(-1px);}
+  .ic-card.flipped{border-color:var(--accent);background:linear-gradient(135deg,rgba(110,231,183,0.06),var(--surface2));}
+  .ic-card-label{font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
+  .ic-card-label.ans{color:var(--accent);}
+  .ic-front{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);line-height:1.4;}
+  .ic-back{display:none;font-size:0.92rem;color:var(--accent);line-height:1.6;}
+  .ic-card.flipped .ic-front{display:none;}
+  .ic-card.flipped .ic-back{display:block;}
+  .ic-hint{font-size:0.6rem;color:var(--muted);margin-top:12px;letter-spacing:0.06em;}
+  .ic-nav{display:flex;align-items:center;gap:10px;width:100%;}
+  .ic-nav-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--text);width:42px;height:42px;border-radius:10px;font-size:1rem;cursor:pointer;transition:all 0.15s;flex-shrink:0;}
+  .ic-nav-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .ic-nav-btn:disabled{opacity:0.25;cursor:not-allowed;}
+  .ic-flip-btn{flex:1;padding:11px;background:var(--accent2);color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;}
+  .ic-flip-btn:hover{opacity:0.85;}
+  .ic-progress-bg{width:100%;background:var(--border);border-radius:100px;height:3px;overflow:hidden;}
+  .ic-progress-fill{height:100%;background:var(--accent2);border-radius:100px;transition:width 0.3s ease;}
+  .ic-counter{font-size:0.68rem;color:var(--muted);text-align:center;}
+  .ic-shuffle{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:7px;font-family:'DM Mono',monospace;font-size:0.67rem;cursor:pointer;transition:all 0.15s;}
+  .ic-shuffle:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  /* MULTIPLE CHOICE */
+  .mc-option{width:100%;padding:12px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:0.83rem;color:var(--text);cursor:pointer;transition:all 0.2s;text-align:left;font-family:'DM Mono',monospace;}
+  .mc-option:hover:not(:disabled){border-color:var(--accent2);background:rgba(129,140,248,0.06);}
+  .mc-option.correct{border-color:var(--accent)!important;background:rgba(110,231,183,0.1)!important;color:var(--accent)!important;}
+  .mc-option.wrong{border-color:var(--danger)!important;background:rgba(248,113,113,0.08)!important;color:var(--danger)!important;}
+  .mc-options{display:flex;flex-direction:column;gap:8px;width:100%;}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+  .shake{animation:shake 0.4s ease;}
+  .mc-result{font-size:0.78rem;padding:10px 14px;border-radius:8px;text-align:center;margin-top:4px;}
+  .mc-result.ok{background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.2);color:var(--accent);}
+  .mc-result.no{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);}
+  .mc-score{text-align:center;padding:16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;}
+  .mc-score-big{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);}
+
+  /* TEST ME */
+  .tm-wrap{display:flex;flex-direction:column;gap:16px;}
+  .tm-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;padding:28px;position:relative;}
+  .tm-qnum{font-size:0.58rem;color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+  .tm-question{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:14px;line-height:1.4;}
+  .tm-textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:10px 12px;resize:vertical;min-height:80px;line-height:1.6;transition:border-color 0.15s;}
+  .tm-textarea:focus{outline:none;border-color:var(--accent2);}
+  .tm-textarea::placeholder{color:var(--muted);}
+  .tm-feedback{display:none;margin-top:10px;padding:10px 13px;border-radius:8px;font-size:0.78rem;line-height:1.6;}
+  .tm-feedback.ok{background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.2);color:var(--accent);display:block;}
+  .tm-feedback.half{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:var(--accent3);display:block;}
+  .tm-feedback.no{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--danger);display:block;}
+  .tm-submit{width:100%;padding:13px;background:var(--accent2);color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+  .tm-submit:hover{opacity:0.85;transform:translateY(-1px);}
+  .tm-submit:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .tm-score{display:none;text-align:center;padding:18px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;}
+  .tm-score.show{display:block;}
+  .tm-score-big{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);}
+  .tm-score-sub{font-size:0.68rem;color:var(--muted);margin-top:3px;}
   .btn-launch-fc{background:var(--accent2);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer;transition:all 0.2s;}
   .btn-launch-fc:hover{opacity:0.85;transform:translateY(-1px);}
   .flashcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all 0.2s;position:relative;min-height:90px;}
@@ -1014,7 +1066,7 @@ Return ONLY a JSON object — no markdown, no backticks:
   "subject": "detected subject name",
   "summary": "HTML notes: ${depthMap[lecDepth]}. Use <h3> for topics, ${lecFormat==='paragraphs'?'<p> for content':'<ul><li> for bullet points'}. Include key definitions, concepts and examples.",
   "flashcards": [{"front":"Term or concept","back":"Clear 1-2 sentence definition"}],
-  "questions": [{"question":"Q","answer":"1-2 sentence answer","tag":"topic tag"}],
+  "questions": [{"question":"Q","answer":"correct answer text","options":["correct answer","wrong option 1","wrong option 2","wrong option 3"],"tag":"topic"}],
   "catchup": "HTML: key points a student who missed class needs to know. Use <h3> and <ul><li>.",
   "sections": [{"label":"Topic Name","content":"<p>What this means for a student, why it matters, the core idea. 3 sentences.</p>"}],
   "formulas": [{"name":"Formula name","equation":"the formula","steps":["Step 1: ..."],"example":"worked example"}],
@@ -1043,103 +1095,146 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
     function renderFlashcards(cards){
       const fcc=document.getElementById('lfc');
-      fcc.innerHTML=`
-        <div class="fc-controls">
-          <span class="fc-count">${cards.length} cards</span>
-          <div style="display:flex;gap:8px">
-            <button class="btn-shuffle" id="shuffleBtn">🔀 Shuffle</button>
-            <button class="btn-launch-fc" id="launchFcBtn">⚡ Flashcard Mode</button>
-          </div>
-        </div>
-        <div class="fc-grid" id="fc-grid"></div>`;
-      const fcg=document.getElementById('fc-grid');
-      cards.forEach((fc,i)=>{
-        const d=document.createElement('div');d.className='flashcard';
-        d.innerHTML=`<div class="fc-front">${fc.front}</div><div class="fc-back" id="fcb-${i}">${fc.back}</div><div class="fc-hint">tap to reveal</div>`;
-        d.addEventListener('click',()=>{const b=document.getElementById(`fcb-${i}`);b.classList.toggle('show');d.querySelector('.fc-hint').textContent=b.classList.contains('show')?'tap to hide':'tap to reveal';});
-        fcg.appendChild(d);
+      fcc.innerHTML='';
+      const wrap=document.createElement('div');wrap.className='ic-wrap';
+
+      // Counter + shuffle row
+      const topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%';
+      topRow.innerHTML=`<span class="ic-counter" id="fcCounter">1 / ${cards.length}</span><button class="ic-shuffle" id="fcShuffle">🔀 Shuffle</button>`;
+      wrap.appendChild(topRow);
+
+      // Progress
+      const prog=document.createElement('div');prog.className='ic-progress-bg';prog.innerHTML=`<div class="ic-progress-fill" id="fcFill" style="width:${100/cards.length}%"></div>`;
+      wrap.appendChild(prog);
+
+      // Card
+      const card=document.createElement('div');card.className='ic-card';
+      card.innerHTML=`<div class="ic-card-label" id="fcLabel">Flashcard</div><div class="ic-front" id="fcFront">${cards[0].front}</div><div class="ic-back" id="fcBack">${cards[0].back}</div><div class="ic-hint">click to flip</div>`;
+      card.addEventListener('click',()=>{
+        card.classList.toggle('flipped');
+        const fl=card.classList.contains('flipped');
+        document.getElementById('fcLabel').textContent=fl?'Answer':'Flashcard';
+        document.getElementById('fcLabel').className='ic-card-label'+(fl?' ans':'');
+        document.getElementById('fcFlipBtn').textContent=fl?'Show Term':'Reveal Answer';
       });
-      document.getElementById('shuffleBtn').addEventListener('click',()=>{
-        fcData.sort(()=>Math.random()-0.5);
-        renderFlashcards(fcData);
-      });
-      document.getElementById('launchFcBtn').addEventListener('click',()=>{
-        fcIndex=0;
-        loadFcCard(fcData, fcIndex);
-        document.getElementById('fcOverlay').classList.add('show');
-        document.body.style.overflow='hidden';
-      });
+      wrap.appendChild(card);
+
+      // Nav
+      const nav=document.createElement('div');nav.className='ic-nav';
+      nav.innerHTML=`<button class="ic-nav-btn" id="fcPrev" disabled>←</button><button class="ic-flip-btn" id="fcFlipBtn">Reveal Answer</button><button class="ic-nav-btn" id="fcNext"${cards.length<=1?' disabled':''}>→</button>`;
+      wrap.appendChild(nav);
+      fcc.appendChild(wrap);
+
+      function goTo(idx){
+        fcIndex=idx;
+        card.classList.remove('flipped');
+        document.getElementById('fcLabel').textContent='Flashcard';
+        document.getElementById('fcLabel').className='ic-card-label';
+        document.getElementById('fcFront').textContent=cards[idx].front;
+        document.getElementById('fcBack').textContent=cards[idx].back;
+        document.getElementById('fcFlipBtn').textContent='Reveal Answer';
+        document.getElementById('fcCounter').textContent=`${idx+1} / ${cards.length}`;
+        document.getElementById('fcFill').style.width=`${((idx+1)/cards.length)*100}%`;
+        document.getElementById('fcPrev').disabled=idx===0;
+        document.getElementById('fcNext').disabled=idx===cards.length-1;
+      }
+
+      document.getElementById('fcFlipBtn').addEventListener('click',()=>card.click());
+      document.getElementById('fcPrev').addEventListener('click',()=>{if(fcIndex>0)goTo(fcIndex-1);});
+      document.getElementById('fcNext').addEventListener('click',()=>{if(fcIndex<cards.length-1)goTo(fcIndex+1);});
+      document.getElementById('fcShuffle').addEventListener('click',()=>{fcData.sort(()=>Math.random()-0.5);renderFlashcards(fcData);});
     }
-
-    function loadFcCard(cards, idx){
-      const card=cards[idx];
-      const bigCard=document.getElementById('fcBigCard');
-      bigCard.classList.remove('flipped');
-      document.getElementById('fcBigFront').textContent=card.front;
-      document.getElementById('fcBigBack').textContent=card.back;
-      document.getElementById('fcBigLabel').textContent='Question';
-      document.getElementById('fcBigLabel').className='fc-big-label';
-      document.getElementById('fcBigHint').textContent='click to reveal answer';
-      document.getElementById('fcFlipBtn').textContent='Reveal Answer';
-      document.getElementById('fcOverlayCounter').textContent=`${idx+1} / ${cards.length}`;
-      document.getElementById('fcProgressBar').style.width=`${((idx+1)/cards.length)*100}%`;
-      document.getElementById('fcPrevBtn').disabled=idx===0;
-      document.getElementById('fcNextBtn').disabled=idx===cards.length-1;
-    }
-
-    document.getElementById('fcBigCard').addEventListener('click',()=>{
-      const bigCard=document.getElementById('fcBigCard');
-      bigCard.classList.toggle('flipped');
-      const flipped=bigCard.classList.contains('flipped');
-      document.getElementById('fcBigLabel').textContent=flipped?'Answer':'Question';
-      document.getElementById('fcBigLabel').className='fc-big-label'+(flipped?' answer':'');
-      document.getElementById('fcBigHint').textContent=flipped?'click to see question':'click to reveal answer';
-      document.getElementById('fcFlipBtn').textContent=flipped?'Show Question':'Reveal Answer';
-    });
-
-    document.getElementById('fcFlipBtn').addEventListener('click',()=>{
-      document.getElementById('fcBigCard').click();
-    });
-
-    document.getElementById('fcPrevBtn').addEventListener('click',()=>{
-      if(fcIndex>0){fcIndex--;loadFcCard(fcData,fcIndex);}
-    });
-
-    document.getElementById('fcNextBtn').addEventListener('click',()=>{
-      if(fcIndex<fcData.length-1){fcIndex++;loadFcCard(fcData,fcIndex);}
-    });
-
-    document.getElementById('fcOverlayClose').addEventListener('click',()=>{
-      document.getElementById('fcOverlay').classList.remove('show');
-      document.body.style.overflow='';
-    });
-
-    document.getElementById('fcShuffleOverlay').addEventListener('click',()=>{
-      fcData.sort(()=>Math.random()-0.5);
-      fcIndex=0;
-      loadFcCard(fcData,fcIndex);
-      renderFlashcards(fcData);
-    });
-
-    // Arrow key navigation
-    document.addEventListener('keydown',(e)=>{
-      if(!document.getElementById('fcOverlay').classList.contains('show'))return;
-      if(e.key==='ArrowRight'&&fcIndex<fcData.length-1){fcIndex++;loadFcCard(fcData,fcIndex);}
-      if(e.key==='ArrowLeft'&&fcIndex>0){fcIndex--;loadFcCard(fcData,fcIndex);}
-      if(e.key===' '){e.preventDefault();document.getElementById('fcBigCard').click();}
-      if(e.key==='Escape'){document.getElementById('fcOverlayClose').click();}
-    });
-
     renderFlashcards(fcData);
 
-    // Questions with tags
-    const qc=document.getElementById('lq');qc.innerHTML='';
-    (p.questions||[]).forEach((q,i)=>{
-      const d=document.createElement('div');d.className='qi';
-      d.innerHTML=`<div class="qnum">Question ${i+1} of ${p.questions.length}${q.tag?`<span class="qtag">${q.tag}</span>`:''}</div><div class="qtext">${q.question}</div><button class="show-ans">Show Answer</button><div class="ans-text">${q.answer}</div>`;
-      d.querySelector('.show-ans').addEventListener('click',function(){const a=d.querySelector('.ans-text');a.classList.toggle('show');this.textContent=a.classList.contains('show')?'Hide Answer':'Show Answer';});
-      qc.appendChild(d);
-    });
+    // Questions — multiple choice
+    const questions=p.questions||[];
+    let qIndex=0, qScore=0, qAnswered=new Array(questions.length).fill(false);
+
+    function renderQuestions(qs){
+      const qc=document.getElementById('lq');qc.innerHTML='';
+      if(!qs.length){qc.innerHTML='<p style="color:var(--muted);font-size:0.8rem">No questions generated.</p>';return;}
+
+      // Score banner
+      const scoreBanner=document.createElement('div');scoreBanner.className='mc-score';scoreBanner.id='mcScore';
+      scoreBanner.innerHTML=`<div class="mc-score-big" id="mcScoreBig">0 / ${qs.length}</div><div style="font-size:0.68rem;color:var(--muted);margin-top:3px">correct so far</div>`;
+      qc.appendChild(scoreBanner);
+
+      const wrap=document.createElement('div');wrap.className='ic-wrap';
+
+      // Counter
+      const topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%';
+      topRow.innerHTML=`<span class="ic-counter" id="qCounter">Question 1 of ${qs.length}</span>${qs[0].tag?`<span class="qtag">${qs[0].tag}</span>`:''}`;
+      wrap.appendChild(topRow);
+
+      // Progress
+      const prog=document.createElement('div');prog.className='ic-progress-bg';prog.innerHTML=`<div class="ic-progress-fill" id="qFill" style="width:${100/qs.length}%"></div>`;
+      wrap.appendChild(prog);
+
+      // Question card
+      const card=document.createElement('div');card.className='ic-card';card.style.cursor='default';
+      card.innerHTML=`<div class="ic-card-label">Question</div><div class="ic-front" id="qText" style="font-size:1rem">${qs[0].question}</div>`;
+      wrap.appendChild(card);
+
+      // Options
+      const optWrap=document.createElement('div');optWrap.className='mc-options';optWrap.id='mcOptions';
+      wrap.appendChild(optWrap);
+
+      // Result
+      const result=document.createElement('div');result.className='mc-result';result.id='mcResult';result.style.display='none';
+      wrap.appendChild(result);
+
+      // Nav
+      const nav=document.createElement('div');nav.className='ic-nav';nav.style.marginTop='4px';
+      nav.innerHTML=`<button class="ic-nav-btn" id="qPrev" disabled>←</button><button class="ic-nav-btn" id="qNext"${qs.length<=1?' disabled':''}>→</button>`;
+      wrap.appendChild(nav);
+      qc.appendChild(wrap);
+
+      function loadQuestion(idx){
+        qIndex=idx;
+        const q=qs[idx];
+        document.getElementById('qText').textContent=q.question;
+        document.getElementById('qCounter').textContent=`Question ${idx+1} of ${qs.length}`;
+        document.getElementById('qFill').style.width=`${((idx+1)/qs.length)*100}%`;
+        document.getElementById('qPrev').disabled=idx===0;
+        document.getElementById('qNext').disabled=idx===qs.length-1;
+        document.getElementById('mcResult').style.display='none';
+
+        // Shuffle options
+        const opts=q.options&&q.options.length>=2?[...q.options].sort(()=>Math.random()-0.5):[q.answer,'Incorrect option A','Incorrect option B','Incorrect option C'];
+        const om=document.getElementById('mcOptions');om.innerHTML='';
+        opts.forEach(opt=>{
+          const btn=document.createElement('button');btn.className='mc-option';btn.textContent=opt;
+          btn.addEventListener('click',()=>{
+            if(qAnswered[idx])return;
+            qAnswered[idx]=true;
+            const correct=opt===q.answer;
+            if(correct){
+              btn.classList.add('correct');
+              qScore++;
+              document.getElementById('mcScoreBig').textContent=`${qScore} / ${qs.length}`;
+              document.getElementById('mcResult').className='mc-result ok';
+              document.getElementById('mcResult').textContent='✓ Correct!';
+            }else{
+              btn.classList.add('wrong');
+              btn.classList.add('shake');
+              setTimeout(()=>btn.classList.remove('shake'),400);
+              // highlight correct
+              om.querySelectorAll('.mc-option').forEach(b=>{if(b.textContent===q.answer)b.classList.add('correct');});
+              document.getElementById('mcResult').className='mc-result no';
+              document.getElementById('mcResult').textContent=`✗ The correct answer is: ${q.answer}`;
+            }
+            document.getElementById('mcResult').style.display='block';
+            om.querySelectorAll('.mc-option').forEach(b=>b.disabled=true);
+          });
+          om.appendChild(btn);
+        });
+      }
+
+      loadQuestion(0);
+      document.getElementById('qPrev').addEventListener('click',()=>{if(qIndex>0)loadQuestion(qIndex-1);});
+      document.getElementById('qNext').addEventListener('click',()=>{if(qIndex<qs.length-1)loadQuestion(qIndex+1);});
+    }
+    renderQuestions(questions);
 
     // Catch-up
     document.getElementById('lc').innerHTML=p.catchup;
@@ -1182,30 +1277,50 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
 function renderMiniTest(qs,container){
   container.innerHTML='';
-  const banner=document.createElement('div');banner.className='score-banner';
-  banner.innerHTML=`<div class="score-big" id="mScore">—</div><div class="score-sub">Submit your answers to see your score</div>`;
-  container.appendChild(banner);
+  if(!qs.length){container.innerHTML='<p style="color:var(--muted);font-size:0.8rem">No test questions generated.</p>';return;}
+
+  // Score banner
+  const scoreEl=document.createElement('div');scoreEl.className='tm-score';scoreEl.id='tmScore';
+  scoreEl.innerHTML=`<div class="tm-score-big" id="tmScoreBig">—</div><div class="tm-score-sub" id="tmScoreSub">Answer all questions and submit to see your score</div>`;
+  container.appendChild(scoreEl);
+
+  const wrap=document.createElement('div');wrap.className='tm-wrap';
+
   qs.forEach((q,i)=>{
-    const d=document.createElement('div');d.className='tq';
-    d.innerHTML=`<div class="qnum">Q${i+1} · ${q.marks} mark${q.marks>1?'s':''}${q.tag?`<span class="qtag">${q.tag}</span>`:''}</div><div class="qtext">${q.question}</div><textarea placeholder="Type your answer..." id="ma-${i}"></textarea><div class="mr" id="mr-${i}"></div>`;
-    container.appendChild(d);
+    const card=document.createElement('div');card.className='tm-card';
+    card.innerHTML=`
+      <div class="tm-qnum">Question ${i+1} of ${qs.length} · ${q.marks} mark${q.marks>1?'s':''}${q.tag?`<span class="qtag" style="margin-left:6px">${q.tag}</span>`:''}</div>
+      <div class="tm-question">${q.question}</div>
+      <textarea class="tm-textarea" id="tma-${i}" placeholder="Type your answer here..."></textarea>
+      <div class="tm-feedback" id="tmf-${i}"></div>`;
+    wrap.appendChild(card);
   });
-  const btn=document.createElement('button');btn.className='btn-sub';btn.textContent='Submit & Auto-Mark';container.appendChild(btn);
-  btn.addEventListener('click',async()=>{
-    const ans=qs.map((q,i)=>({question:q.question,modelAnswer:q.modelAnswer,marks:q.marks,studentAnswer:(document.getElementById(`ma-${i}`)?.value||'').trim()}));
+
+  const submitBtn=document.createElement('button');submitBtn.className='tm-submit';submitBtn.textContent='Submit & Auto-Mark';
+  wrap.appendChild(submitBtn);
+  container.appendChild(wrap);
+
+  submitBtn.addEventListener('click',async()=>{
+    const ans=qs.map((q,i)=>({question:q.question,modelAnswer:q.modelAnswer,marks:q.marks,studentAnswer:(document.getElementById(`tma-${i}`)?.value||'').trim()}));
     if(ans.some(a=>!a.studentAnswer)){alert('Please answer all questions first.');return;}
-    btn.disabled=true;btn.textContent='Marking...';
+    submitBtn.disabled=true;submitBtn.textContent='Marking...';
     try{
-      const sys=`You are a strict exam marker. Mark like a real teacher — no softness. Award marks per correct step/point, not just for the final answer. Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"feedback":"1-2 sentences of specific feedback — state what was right, what was wrong, and what the examiner wanted"}]`;
+      const sys=`You are a strict exam marker. Return ONLY a JSON array:\n[{"score":number,"maxScore":number,"feedback":"1-2 sentences — what was right, what was wrong, what the examiner wanted"}]`;
       const raw=await apiHaiku(sys,[{role:'user',content:ans.map((a,i)=>`Q${i+1} (${a.marks} marks): ${a.question}\nModel: ${a.modelAnswer}\nStudent: ${a.studentAnswer}`).join('\n\n')}],1200);
       const res=exArr(raw);let tot=0,mx=0;
-      res.forEach((r,i)=>{tot+=r.score;mx+=r.maxScore;const el=document.getElementById(`mr-${i}`);const pc=r.score/r.maxScore;el.className='mr '+(pc>=0.8?'ok':pc>=0.4?'half':'no');el.innerHTML=`<strong>${r.score}/${r.maxScore}</strong> — ${r.feedback}`;});
+      res.forEach((r,i)=>{
+        tot+=r.score;mx+=r.maxScore;
+        const el=document.getElementById(`tmf-${i}`);
+        const pc=r.score/r.maxScore;
+        el.className='tm-feedback '+(pc>=0.8?'ok':pc>=0.4?'half':'no');
+        el.innerHTML=`<strong>${r.score}/${r.maxScore}</strong> — ${r.feedback}`;
+      });
       const pc=Math.round((tot/mx)*100);
-      document.getElementById('mScore').textContent=`${tot}/${mx} · ${pc}%`;
-      banner.classList.add('show');
-      banner.querySelector('.score-sub').textContent=pc>=80?'🎉 Great work!':pc>=50?'📚 Good effort — review weak areas':'💪 Keep studying — use the feedback above';
-      btn.textContent='Re-submit';btn.disabled=false;
-    }catch(e){btn.textContent='Marking failed — try again';btn.disabled=false;}
+      document.getElementById('tmScoreBig').textContent=`${tot}/${mx} · ${pc}%`;
+      document.getElementById('tmScoreSub').textContent=pc>=80?'🎉 Great work!':pc>=50?'📚 Good effort — review the feedback':'💪 Keep studying — use the feedback above';
+      document.getElementById('tmScore').classList.add('show');
+      submitBtn.textContent='Re-submit';submitBtn.disabled=false;
+    }catch(e){submitBtn.textContent='Marking failed — try again';submitBtn.disabled=false;}
   });
 }
 
