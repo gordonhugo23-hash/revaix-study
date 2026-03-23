@@ -208,7 +208,8 @@ MathJax = {
   .btn-launch-fc:hover{background:rgba(129,140,248,0.2);transform:translateY(-1px);}
 
   /* LOADING */
-  .loading{display:none;text-align:center;padding:60px 20px;} .loading.show{display:block;}
+  .loading{display:none;text-align:center;padding:60px 20px;} 
+  .loading.show{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;}
   .spinner{width:44px;height:44px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 16px;box-shadow:0 0 24px rgba(110,231,183,0.15);}
   .spinner.p{border-top-color:var(--accent2);box-shadow:0 0 24px rgba(129,140,248,0.15);}
   .spinner.y{border-top-color:var(--accent3);box-shadow:0 0 24px rgba(251,191,36,0.15);}
@@ -1082,16 +1083,16 @@ MathJax = {
 
 <!-- ══ PAGE 1: NOTES REVIEW ══ -->
 <div class="page active" id="page-lecture">
-<div class="container">
-  <div id="lec-hero-area">
+
+  <!-- STATE 1: FORM (default visible) -->
+  <div id="lec-form-page">
+  <div class="container">
     <div class="hero">
       <h1>Study smarter.<br><span class="hl">No notes required.</span></h1>
       <p>Enter your course and topic — or upload your notes — and get an instant study pack with summaries, flashcards, practice exams and marking. Built for high school and university students.</p>
     </div>
     <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just enter your subject and go</div>
-  </div>
-
-  <div id="lec-form">
+    <div id="lec-form">
 
     <!-- STUDENT MODE TOGGLE -->
     <label class="field-label">I am a</label>
@@ -1243,8 +1244,11 @@ MathJax = {
 
     <div class="err" id="lecErr"></div>
     <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack — Free ✦</button>
-  </div>
+    </div><!-- end lec-form -->
+  </div><!-- end container -->
+  </div><!-- end lec-form-page -->
 
+  <!-- STATE 2: LOADING -->
   <div class="loading" id="lecLoad">
     <div class="spinner"></div>
     <p>Building your study pack...<span class="lstep" id="lecStep">Reading content</span></p>
@@ -1256,7 +1260,9 @@ MathJax = {
     </div>
   </div>
 
+  <!-- STATE 3: RESULTS -->
   <div class="results" id="lecRes">
+  <div class="container">
     <div class="res-hdr">
       <div style="display:flex;align-items:center;gap:12px">
         <button class="btn-reset" id="lecReset" style="display:flex;align-items:center;gap:6px">← New Upload</button>
@@ -1282,9 +1288,11 @@ MathJax = {
     <div class="cc" id="lx"></div>
     <div class="cc" id="lf"></div>
     <div class="cc" id="lt"></div>
-  </div>
-  <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
-</div></div>
+    <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
+  </div><!-- end container -->
+  </div><!-- end lecRes -->
+
+</div><!-- end page-lecture -->
 
 <!-- ══ PAGE 2: PRACTICE EXAM ══ -->
 <div class="page" id="page-exam">
@@ -1954,8 +1962,7 @@ wire('lecZone','lecFile','lecPill','lecFN','lecFS','lecRM',
 wireTabs('lecTabs');
 document.getElementById('lecReset').addEventListener('click',()=>{
   document.getElementById('lecRes').classList.remove('show');
-  document.getElementById('lec-form').style.display='';
-  document.getElementById('lec-hero-area').style.display='';
+  document.getElementById('lec-form-page').style.display='';
   lecF=null;lecOptionalFile=null;
   document.getElementById('lecFile').value='';
   document.getElementById('lecPill').classList.remove('show');
@@ -1976,8 +1983,7 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
   if(lecStudentMode==='uni' && !uniReady) return;
   if(lecStudentMode==='school') {} // always allowed
   document.getElementById('lecErr').classList.remove('show');
-  document.getElementById('lec-form').style.display='none';
-  document.getElementById('lec-hero-area').style.display='none';
+  document.getElementById('lec-form-page').style.display='none';
   document.getElementById('lecLoad').classList.add('show');
   const lecProg=startProgress('lecProgressBar');
   const steps=['Reading your content...','Detecting subject...','Building notes...','Generating flashcards...','Writing questions...'];
@@ -2256,8 +2262,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
     clearInterval(iv);
     finishProgress('lecProgressBar',lecProg);
     document.getElementById('lecLoad').classList.remove('show');
-    document.getElementById('lec-form').style.display='';
-    document.getElementById('lec-hero-area').style.display='';
+    document.getElementById('lec-form-page').style.display='';
     document.getElementById('lecErr').textContent=friendlyErr(e);
     document.getElementById('lecErr').classList.add('show');
   }
