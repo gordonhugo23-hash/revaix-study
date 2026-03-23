@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/svg+xml" href="/revaix_study_logo_v3.svg">
-<link rel="apple-touch-icon" href="/revaix_study_logo_v3.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Revaix Study — Free AI Study Notes, Flashcards, Practice Exams & Marking Tool</title>
 <meta name="description" content="Revaix Study uses AI to instantly turn your notes, lecture slides or textbook into summaries, flashcards, practice exams and detailed marking. 100% free for high school and university students.">
+<link rel="icon" type="image/svg+xml" href="/revaix_study_logo_v3.svg">
+<link rel="apple-touch-icon" href="/revaix_study_logo_v3.svg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -274,11 +274,43 @@
   .cc ul,.cc ol{padding-left:16px;color:var(--text);}
   .cc li{margin-bottom:3px;}
 
+  /* FULLSCREEN FLASHCARD MODE */
+  .fc-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  .fc-overlay.show{display:flex;}
+  .fc-overlay-nav{position:absolute;top:0;left:0;right:0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+  .fc-overlay-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;}
+  .fc-overlay-close{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.15s;}
+  .fc-overlay-close:hover{border-color:var(--text);color:var(--text);}
+  .fc-overlay-counter{font-size:0.75rem;color:var(--muted);}
+  .fc-big-card{width:100%;max-width:680px;min-height:320px;background:var(--surface);border:1.5px solid var(--border);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 40px;cursor:pointer;transition:all 0.2s;position:relative;text-align:center;}
+  .fc-big-card:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+  .fc-big-card.flipped{border-color:var(--accent);background:linear-gradient(135deg,rgba(110,231,183,0.05),var(--surface));}
+  .fc-big-front{font-family:'Syne',sans-serif;font-weight:700;font-size:1.4rem;color:var(--text);line-height:1.4;}
+  .fc-big-back{display:none;font-size:1rem;color:var(--accent);line-height:1.7;}
+  .fc-big-card.flipped .fc-big-front{display:none;}
+  .fc-big-card.flipped .fc-big-back{display:block;}
+  .fc-big-hint{position:absolute;bottom:16px;font-size:0.62rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+  .fc-big-label{position:absolute;top:16px;left:20px;font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+  .fc-big-label.answer{color:var(--accent);}
+  .fc-overlay-btns{display:flex;gap:12px;margin-top:28px;align-items:center;}
+  .fc-nav-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--text);width:48px;height:48px;border-radius:12px;font-size:1.2rem;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+  .fc-nav-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .fc-nav-btn:disabled{opacity:0.3;cursor:not-allowed;}
+  .fc-flip-btn{background:var(--accent2);color:#fff;border:none;padding:12px 28px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;transition:all 0.2s;}
+  .fc-flip-btn:hover{opacity:0.85;transform:translateY(-1px);}
+  .fc-progress{width:100%;max-width:680px;margin-top:20px;}
+  .fc-progress-bar-bg{background:var(--border);border-radius:100px;height:4px;overflow:hidden;}
+  .fc-progress-bar{height:100%;background:var(--accent2);border-radius:100px;transition:width 0.3s ease;}
+  .fc-shuffle-overlay{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.15s;}
+  .fc-shuffle-overlay:hover{border-color:var(--accent2);color:var(--accent2);}
+
   /* FLASHCARDS */
   .fc-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .fc-count{font-size:0.68rem;color:var(--muted);}
   .fc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   @media(max-width:500px){.fc-grid{grid-template-columns:1fr;}}
+  .btn-launch-fc{background:var(--accent2);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer;transition:all 0.2s;}
+  .btn-launch-fc:hover{opacity:0.85;transform:translateY(-1px);}
   .flashcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all 0.2s;position:relative;min-height:90px;}
   .flashcard:hover{border-color:var(--accent2);}
   .fc-front{font-size:0.81rem;color:var(--text);line-height:1.5;font-weight:600;}
@@ -481,6 +513,32 @@
   </div>
 </div>
 
+<!-- FULLSCREEN FLASHCARD MODE -->
+<div class="fc-overlay" id="fcOverlay">
+  <div class="fc-overlay-nav">
+    <div class="fc-overlay-title">🃏 Flashcard Mode</div>
+    <div class="fc-overlay-counter" id="fcOverlayCounter">1 / 6</div>
+    <button class="fc-overlay-close" id="fcOverlayClose">✕ Exit</button>
+  </div>
+  <div class="fc-big-card" id="fcBigCard">
+    <div class="fc-big-label" id="fcBigLabel">Question</div>
+    <div class="fc-big-front" id="fcBigFront">—</div>
+    <div class="fc-big-back" id="fcBigBack">—</div>
+    <div class="fc-big-hint" id="fcBigHint">click to reveal answer</div>
+  </div>
+  <div class="fc-overlay-btns">
+    <button class="fc-nav-btn" id="fcPrevBtn">←</button>
+    <button class="fc-flip-btn" id="fcFlipBtn">Reveal Answer</button>
+    <button class="fc-nav-btn" id="fcNextBtn">→</button>
+  </div>
+  <div class="fc-progress" id="fcProgress">
+    <div class="fc-progress-bar-bg"><div class="fc-progress-bar" id="fcProgressBar" style="width:0%"></div></div>
+  </div>
+  <div style="margin-top:14px">
+    <button class="fc-shuffle-overlay" id="fcShuffleOverlay">🔀 Shuffle</button>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
@@ -520,7 +578,7 @@
         <input type="file" id="lecFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
         <span class="upload-icon">📄</span>
         <h3>Drop your file here</h3>
-        <p>PDF or image · max 20MB · AI auto-detects subject</p>
+        <p>PDF or image · max 20MB · best results with 1-15 pages</p>
       </div>
       <div class="fp" id="lecPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="lecFN">—</div><div class="fp-size" id="lecFS">—</div></div><button class="fp-rm" id="lecRM">✕</button></div>
     </div>
@@ -959,7 +1017,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
       userMessages=[{role:'user',content:buildContent(b64,lecF,'Generate the study pack JSON.')}];
     }
 
-    const raw=await apiSonnet(sys,userMessages,4000);
+    const raw=await apiHaiku(sys,userMessages,2500);
     clearInterval(iv);
     const p=exJSON(raw);
 
@@ -968,9 +1026,19 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
     // Flashcards with shuffle
     let fcData=[...(p.flashcards||[])];
+    let fcIndex=0;
+
     function renderFlashcards(cards){
       const fcc=document.getElementById('lfc');
-      fcc.innerHTML=`<div class="fc-controls"><span class="fc-count">${cards.length} cards</span><button class="btn-shuffle" id="shuffleBtn">🔀 Shuffle</button></div><div class="fc-grid" id="fc-grid"></div>`;
+      fcc.innerHTML=`
+        <div class="fc-controls">
+          <span class="fc-count">${cards.length} cards</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-shuffle" id="shuffleBtn">🔀 Shuffle</button>
+            <button class="btn-launch-fc" id="launchFcBtn">⚡ Flashcard Mode</button>
+          </div>
+        </div>
+        <div class="fc-grid" id="fc-grid"></div>`;
       const fcg=document.getElementById('fc-grid');
       cards.forEach((fc,i)=>{
         const d=document.createElement('div');d.className='flashcard';
@@ -982,7 +1050,73 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
         fcData.sort(()=>Math.random()-0.5);
         renderFlashcards(fcData);
       });
+      document.getElementById('launchFcBtn').addEventListener('click',()=>{
+        fcIndex=0;
+        loadFcCard(fcData, fcIndex);
+        document.getElementById('fcOverlay').classList.add('show');
+        document.body.style.overflow='hidden';
+      });
     }
+
+    function loadFcCard(cards, idx){
+      const card=cards[idx];
+      const bigCard=document.getElementById('fcBigCard');
+      bigCard.classList.remove('flipped');
+      document.getElementById('fcBigFront').textContent=card.front;
+      document.getElementById('fcBigBack').textContent=card.back;
+      document.getElementById('fcBigLabel').textContent='Question';
+      document.getElementById('fcBigLabel').className='fc-big-label';
+      document.getElementById('fcBigHint').textContent='click to reveal answer';
+      document.getElementById('fcFlipBtn').textContent='Reveal Answer';
+      document.getElementById('fcOverlayCounter').textContent=`${idx+1} / ${cards.length}`;
+      document.getElementById('fcProgressBar').style.width=`${((idx+1)/cards.length)*100}%`;
+      document.getElementById('fcPrevBtn').disabled=idx===0;
+      document.getElementById('fcNextBtn').disabled=idx===cards.length-1;
+    }
+
+    document.getElementById('fcBigCard').addEventListener('click',()=>{
+      const bigCard=document.getElementById('fcBigCard');
+      bigCard.classList.toggle('flipped');
+      const flipped=bigCard.classList.contains('flipped');
+      document.getElementById('fcBigLabel').textContent=flipped?'Answer':'Question';
+      document.getElementById('fcBigLabel').className='fc-big-label'+(flipped?' answer':'');
+      document.getElementById('fcBigHint').textContent=flipped?'click to see question':'click to reveal answer';
+      document.getElementById('fcFlipBtn').textContent=flipped?'Show Question':'Reveal Answer';
+    });
+
+    document.getElementById('fcFlipBtn').addEventListener('click',()=>{
+      document.getElementById('fcBigCard').click();
+    });
+
+    document.getElementById('fcPrevBtn').addEventListener('click',()=>{
+      if(fcIndex>0){fcIndex--;loadFcCard(fcData,fcIndex);}
+    });
+
+    document.getElementById('fcNextBtn').addEventListener('click',()=>{
+      if(fcIndex<fcData.length-1){fcIndex++;loadFcCard(fcData,fcIndex);}
+    });
+
+    document.getElementById('fcOverlayClose').addEventListener('click',()=>{
+      document.getElementById('fcOverlay').classList.remove('show');
+      document.body.style.overflow='';
+    });
+
+    document.getElementById('fcShuffleOverlay').addEventListener('click',()=>{
+      fcData.sort(()=>Math.random()-0.5);
+      fcIndex=0;
+      loadFcCard(fcData,fcIndex);
+      renderFlashcards(fcData);
+    });
+
+    // Arrow key navigation
+    document.addEventListener('keydown',(e)=>{
+      if(!document.getElementById('fcOverlay').classList.contains('show'))return;
+      if(e.key==='ArrowRight'&&fcIndex<fcData.length-1){fcIndex++;loadFcCard(fcData,fcIndex);}
+      if(e.key==='ArrowLeft'&&fcIndex>0){fcIndex--;loadFcCard(fcData,fcIndex);}
+      if(e.key===' '){e.preventDefault();document.getElementById('fcBigCard').click();}
+      if(e.key==='Escape'){document.getElementById('fcOverlayClose').click();}
+    });
+
     renderFlashcards(fcData);
 
     // Questions with tags
