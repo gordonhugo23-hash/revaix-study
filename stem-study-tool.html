@@ -700,7 +700,16 @@ MathJax = {
     <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack — Free</button>
   </div>
 
-  <div class="loading" id="lecLoad"><div class="spinner"></div><p>Building your study pack...<span class="lstep" id="lecStep">Reading content</span></p></div>
+  <div class="loading" id="lecLoad">
+    <div class="spinner"></div>
+    <p>Building your study pack...<span class="lstep" id="lecStep">Reading content</span></p>
+    <div style="width:100%;max-width:360px;margin:18px auto 0">
+      <div style="background:var(--border);border-radius:100px;height:4px;overflow:hidden">
+        <div id="lecProgressBar" style="height:100%;width:0%;background:var(--accent);border-radius:100px;transition:width 0.4s ease"></div>
+      </div>
+      <p style="font-size:0.65rem;color:var(--muted);margin-top:10px;text-align:center">⏱ Larger files may take 20–40 seconds — hang tight!</p>
+    </div>
+  </div>
 
   <div class="results" id="lecRes">
     <div class="res-hdr"><h2>Your Study Pack</h2><button class="btn-reset" id="lecReset">↩ New Upload</button></div>
@@ -756,7 +765,16 @@ MathJax = {
     <button class="btn btn-p" id="examBtn" disabled>Generate Practice Exam</button>
   </div>
 
-  <div class="loading" id="examLoad"><div class="spinner p"></div><p>Building your practice exam...<span class="lstep p" id="examStep">Analysing structure</span></p></div>
+  <div class="loading" id="examLoad">
+    <div class="spinner p"></div>
+    <p>Building your practice exam...<span class="lstep p" id="examStep">Analysing structure</span></p>
+    <div style="width:100%;max-width:360px;margin:18px auto 0">
+      <div style="background:var(--border);border-radius:100px;height:4px;overflow:hidden">
+        <div id="examProgressBar" style="height:100%;width:0%;background:var(--accent2);border-radius:100px;transition:width 0.4s ease"></div>
+      </div>
+      <p style="font-size:0.65rem;color:var(--muted);margin-top:10px;text-align:center">⏱ Larger files may take 20–40 seconds — hang tight!</p>
+    </div>
+  </div>
 
   <div class="results" id="examRes">
     <div class="res-hdr"><h2>Practice Exam</h2><div class="res-hdr-actions"><button class="btn-dl" id="examDlBtn">⬇ Download</button><button class="btn-reset" id="examReset">↩ New Exam</button></div></div>
@@ -806,7 +824,16 @@ MathJax = {
     <button class="btn btn-y" id="markReadBtn" disabled>Mark My Work</button>
   </div>
 
-  <div class="loading" id="markLoad"><div class="spinner y"></div><p>Marking your work...<span class="lstep y" id="markStep">Reading questions and answers</span></p></div>
+  <div class="loading" id="markLoad">
+    <div class="spinner y"></div>
+    <p>Marking your work...<span class="lstep y" id="markStep">Reading questions and answers</span></p>
+    <div style="width:100%;max-width:360px;margin:18px auto 0">
+      <div style="background:var(--border);border-radius:100px;height:4px;overflow:hidden">
+        <div id="markProgressBar" style="height:100%;width:0%;background:var(--accent3);border-radius:100px;transition:width 0.4s ease"></div>
+      </div>
+      <p style="font-size:0.65rem;color:var(--muted);margin-top:10px;text-align:center">⏱ Larger files may take 20–40 seconds — hang tight!</p>
+    </div>
+  </div>
 
   <div class="results" id="markFeedbackSection">
     <div class="res-hdr"><h2>Your Results</h2><button class="btn-reset" id="markReset">↩ New Upload</button></div>
@@ -983,6 +1010,25 @@ function friendlyErr(e){
     return '⚠️ Something went wrong reading the response — please try again.';
   return '⚠️ Error: '+m;
 }
+function startProgress(barId){
+  const bar=document.getElementById(barId);
+  if(!bar)return null;
+  bar.style.width='0%';
+  let pct=0;
+  const iv=setInterval(()=>{
+    if(pct<70)pct+=Math.random()*6;
+    else if(pct<85)pct+=Math.random()*1.5;
+    else if(pct<92)pct+=0.3;
+    bar.style.width=Math.min(pct,92)+'%';
+  },600);
+  return iv;
+}
+function finishProgress(barId,iv){
+  if(iv)clearInterval(iv);
+  const bar=document.getElementById(barId);
+  if(bar){bar.style.transition='width 0.6s ease';bar.style.width='100%';}
+  setTimeout(()=>{if(bar)bar.style.width='0%';},800);
+}
 function renderMath(){
   if(window.MathJax&&MathJax.typesetPromise){
     MathJax.typesetPromise().catch(e=>console.log('MathJax error:',e));
@@ -1076,6 +1122,7 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
   document.getElementById('lecErr').classList.remove('show');
   document.getElementById('lec-form').style.display='none';
   document.getElementById('lecLoad').classList.add('show');
+  const lecProg=startProgress('lecProgressBar');
   const steps=['Reading your content...','Detecting subject...','Building notes...','Generating flashcards...','Writing questions...'];
   let si=0;const stepEl=document.getElementById('lecStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
 
@@ -1111,6 +1158,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
     const raw=await apiHaiku(sys,userMessages,4000);
     clearInterval(iv);
+    finishProgress('lecProgressBar',lecProg);
     const p=exJSON(raw);
 
     // Summary / Notes
@@ -1306,6 +1354,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Tota
 
   }catch(e){
     clearInterval(iv);
+    finishProgress('lecProgressBar',lecProg);
     document.getElementById('lecLoad').classList.remove('show');
     document.getElementById('lec-form').style.display='';
     document.getElementById('lecErr').textContent=friendlyErr(e);
@@ -1391,6 +1440,7 @@ document.getElementById('examReset').addEventListener('click',()=>{
 
 document.getElementById('examBtn').addEventListener('click',async()=>{
   document.getElementById('examErr').classList.remove('show');document.getElementById('exam-form').style.display='none';document.getElementById('examLoad').classList.add('show');
+  const examProg=startProgress('examProgressBar');
   const steps=['Analysing structure...','Reading your content...','Writing questions...','Finalising exam...'];
   let si=0;const stepEl=document.getElementById('examStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},2000);
   try{
@@ -1411,10 +1461,12 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
     }
     const raw = await apiHaiku(sys, messages, 3000);
     clearInterval(iv);
+    finishProgress('examProgressBar',examProg);
     examData=exJSON(raw);renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');document.getElementById('examRes').classList.add('show');
   }catch(e){
-    clearInterval(iv);document.getElementById('examLoad').classList.remove('show');document.getElementById('exam-form').style.display='';
+    clearInterval(iv);finishProgress('examProgressBar',examProg);
+    document.getElementById('examLoad').classList.remove('show');document.getElementById('exam-form').style.display='';
     document.getElementById('examErr').textContent=friendlyErr(e);document.getElementById('examErr').classList.add('show');
   }
 });
@@ -1636,6 +1688,7 @@ document.getElementById('markReset').addEventListener('click',()=>{
 document.getElementById('markReadBtn').addEventListener('click',async()=>{
   if(!markF)return;
   document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form').style.display='none';document.getElementById('markLoad').classList.add('show');
+  const markProg=startProgress('markProgressBar');
   const steps=['Reading your work...','Identifying questions and answers...','Marking step by step...','Classifying errors...','Writing feedback...'];
   let si=0;const stepEl=document.getElementById('markStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
 
@@ -1675,6 +1728,7 @@ If blank score 0.`;
       : apiHaiku(sysBase,[{role:'user',content:msgContent}],3000)
     );
     clearInterval(iv);
+    finishProgress('markProgressBar',markProg);
 
     const fc=document.getElementById('markFeedbackQs');fc.innerHTML='';
 
@@ -1752,6 +1806,7 @@ If blank score 0.`;
 
   }catch(e){
     clearInterval(iv);
+    finishProgress('markProgressBar',markProg);
     document.getElementById('markLoad').classList.remove('show');
     document.getElementById('mark-form').style.display='';
     document.getElementById('markErr').textContent=friendlyErr(e);
