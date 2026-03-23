@@ -112,6 +112,20 @@ MathJax = {
   .input-mode-btn{background:var(--surface);border:1.5px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.71rem;cursor:pointer;transition:all 0.15s;}
   .input-mode-btn.active{background:rgba(110,231,183,0.08);border-color:var(--accent);color:var(--accent);}
 
+  /* STUDENT MODE TOGGLE */
+  .mode-toggle{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:20px;}
+  .mode-toggle-btn{flex:1;padding:8px 12px;border:none;border-radius:7px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;transition:all 0.15s;background:none;color:var(--muted);}
+  .mode-toggle-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.2);}
+
+  /* SCHOOL SELECTORS */
+  .school-selectors{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;animation:fu 0.2s ease;}
+  .school-sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  @media(max-width:500px){.school-sel-grid{grid-template-columns:1fr;}}
+  .school-sel{width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.76rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b80' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color 0.15s;}
+  .school-sel:focus{outline:none;border-color:var(--accent);}
+  .school-sel option{background:#13131a;}
+  .school-info-badge{display:inline-flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--accent);background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.15);padding:5px 10px;border-radius:7px;margin-bottom:12px;}
+
   /* PAGES */
   .page{display:none;} .page.active{display:block;}
   .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:32px 20px 80px;}
@@ -630,6 +644,50 @@ MathJax = {
 
   <div id="lec-form">
 
+    <!-- STUDENT MODE TOGGLE -->
+    <label class="field-label">I am a</label>
+    <div class="mode-toggle" id="lecStudentToggle">
+      <button class="mode-toggle-btn active" data-student="uni">🎓 University Student</button>
+      <button class="mode-toggle-btn" data-student="school">🏫 High School Student</button>
+    </div>
+
+    <!-- SCHOOL SELECTORS (hidden by default) -->
+    <div class="school-selectors" id="lecSchoolSelectors" style="display:none">
+      <div class="school-info-badge">✦ Syllabus-matched content for your exact subject and topic</div>
+      <div class="school-sel-grid">
+        <div>
+          <label class="field-label">State</label>
+          <select class="school-sel" id="lecState">
+            <option value="QLD">Queensland (QCE)</option>
+            <option value="VIC">Victoria (VCE)</option>
+            <option value="NSW">New South Wales (HSC)</option>
+            <option value="WA">Western Australia (WACE)</option>
+            <option value="SA">South Australia (SACE)</option>
+            <option value="TAS">Tasmania (TCE)</option>
+            <option value="ACT">ACT (BSSS)</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Subject</label>
+          <select class="school-sel" id="lecSubject">
+            <option value="">Select subject...</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Unit / Year</label>
+          <select class="school-sel" id="lecUnit">
+            <option value="">Select unit...</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Topic (optional)</label>
+          <select class="school-sel" id="lecTopic">
+            <option value="">All topics</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- INPUT MODE -->
     <div class="input-mode-row">
       <button class="input-mode-btn active" id="inputModeFile">📄 Upload File</button>
@@ -742,23 +800,73 @@ MathJax = {
   </div>
 
   <div id="exam-form">
-    <label class="field-label">Exam mode</label>
-    <div class="mode-row">
-      <button class="mode-btn active" data-mode="both"><span class="mode-icon">📄📝</span><span class="mode-title">Notes + Past Exam</span><span class="mode-desc">New questions from notes, styled like real exam</span></button>
-      <button class="mode-btn" data-mode="notes"><span class="mode-icon">📄</span><span class="mode-title">Notes Only</span><span class="mode-desc">Realistic exam from your lecture content</span></button>
-      <button class="mode-btn" data-mode="reword"><span class="mode-icon">📝</span><span class="mode-title">Reword Past Exam</span><span class="mode-desc">Same questions, different wording</span></button>
+    <!-- STUDENT MODE TOGGLE -->
+    <label class="field-label">I am a</label>
+    <div class="mode-toggle" id="examStudentToggle">
+      <button class="mode-toggle-btn active" data-student="uni">🎓 University Student</button>
+      <button class="mode-toggle-btn" data-student="school">🏫 High School Student</button>
     </div>
 
-    <!-- CROSS MERGE UPLOADS -->
-    <div id="en-wrap" style="margin-bottom:10px">
-      <label class="field-label">📄 Lecture Notes / Study Material</label>
-      <div class="upload-zone" id="enZone"><input type="file" id="enFile" accept=".pdf,.jpg,.jpeg,.png,.webp"><span class="upload-icon">📄</span><h3>Lecture notes, textbook pages, or slides</h3><p>PDF or image (Word/PPT: save as PDF first)</p></div>
-      <div class="fp" id="enPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="enFN">—</div><div class="fp-size" id="enFS">—</div></div><button class="fp-rm" id="enRM">✕</button></div>
+    <!-- SCHOOL SELECTORS FOR EXAM -->
+    <div class="school-selectors" id="examSchoolSelectors" style="display:none">
+      <div class="school-info-badge">✦ Generates exam questions matched to your syllabus and assessment style</div>
+      <div class="school-sel-grid">
+        <div>
+          <label class="field-label">State</label>
+          <select class="school-sel" id="examState">
+            <option value="QLD">Queensland (QCE)</option>
+            <option value="VIC">Victoria (VCE)</option>
+            <option value="NSW">New South Wales (HSC)</option>
+            <option value="WA">Western Australia (WACE)</option>
+            <option value="SA">South Australia (SACE)</option>
+            <option value="TAS">Tasmania (TCE)</option>
+            <option value="ACT">ACT (BSSS)</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Subject</label>
+          <select class="school-sel" id="examSubject">
+            <option value="">Select subject...</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Unit / Year</label>
+          <select class="school-sel" id="examUnit">
+            <option value="">Select unit...</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Topic</label>
+          <select class="school-sel" id="examTopic">
+            <option value="">All topics</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <div id="ep-wrap" style="margin-bottom:10px">
-      <label class="field-label">📝 Past Exam PDF <span style="color:var(--muted);font-size:0.6rem">(optional — used for style/structure only)</span></label>
-      <div class="upload-zone v2" id="epZone"><input type="file" id="epFile" accept=".pdf"><span class="upload-icon">📝</span><h3>Past exam PDF</h3><p>Teaches the AI your exam style</p></div>
-      <div class="fp" id="epPill"><div class="fp-ic p">📝</div><div class="fp-info"><div class="fp-name" id="epFN">—</div><div class="fp-size" id="epFS">—</div></div><button class="fp-rm" id="epRM">✕</button></div>
+
+    <!-- UNI MODE OPTIONS -->
+    <div id="examUniOptions">
+      <label class="field-label">Exam mode</label>
+      <div class="mode-row">
+        <button class="mode-btn active" data-mode="both"><span class="mode-icon">📄📝</span><span class="mode-title">Notes + Past Exam</span><span class="mode-desc">New questions from notes, styled like real exam</span></button>
+        <button class="mode-btn" data-mode="notes"><span class="mode-icon">📄</span><span class="mode-title">Notes Only</span><span class="mode-desc">Realistic exam from your lecture content</span></button>
+        <button class="mode-btn" data-mode="reword"><span class="mode-icon">📝</span><span class="mode-title">Reword Past Exam</span><span class="mode-desc">Same questions, different wording</span></button>
+      </div>
+      <div id="en-wrap" style="margin-bottom:10px">
+        <label class="field-label">📄 Lecture Notes / Study Material</label>
+        <div class="upload-zone" id="enZone"><input type="file" id="enFile" accept=".pdf,.jpg,.jpeg,.png,.webp"><span class="upload-icon">📄</span><h3>Lecture notes, textbook pages, or slides</h3><p>PDF or image (Word/PPT: save as PDF first)</p></div>
+        <div class="fp" id="enPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="enFN">—</div><div class="fp-size" id="enFS">—</div></div><button class="fp-rm" id="enRM">✕</button></div>
+      </div>
+      <div id="ep-wrap" style="margin-bottom:10px">
+        <label class="field-label">📝 Past Exam PDF <span style="color:var(--muted);font-size:0.6rem">(optional)</span></label>
+        <div class="upload-zone v2" id="epZone"><input type="file" id="epFile" accept=".pdf"><span class="upload-icon">📝</span><h3>Past exam PDF</h3><p>Teaches the AI your exam style</p></div>
+        <div class="fp" id="epPill"><div class="fp-ic p">📝</div><div class="fp-info"><div class="fp-name" id="epFN">—</div><div class="fp-size" id="epFS">—</div></div><button class="fp-rm" id="epRM">✕</button></div>
+      </div>
+    </div>
+
+    <!-- SCHOOL MODE — just pick selectors, no upload needed -->
+    <div id="examSchoolNote" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:var(--muted);line-height:1.6;">
+      📝 Select your subject and topic above — the AI will generate a full practice exam in the style of your state's external assessment. No upload needed.
     </div>
 
     <div class="err" id="examErr"></div>
@@ -795,6 +903,38 @@ MathJax = {
   </div>
 
   <div id="mark-form">
+    <!-- STUDENT MODE TOGGLE -->
+    <label class="field-label">I am a</label>
+    <div class="mode-toggle" id="markStudentToggle">
+      <button class="mode-toggle-btn active" data-student="uni">🎓 University Student</button>
+      <button class="mode-toggle-btn" data-student="school">🏫 High School Student</button>
+    </div>
+
+    <!-- SCHOOL SELECTORS FOR MARK -->
+    <div class="school-selectors" id="markSchoolSelectors" style="display:none">
+      <div class="school-info-badge">✦ Marked against your state's actual assessment criteria</div>
+      <div class="school-sel-grid">
+        <div>
+          <label class="field-label">State</label>
+          <select class="school-sel" id="markState">
+            <option value="QLD">Queensland (QCE)</option>
+            <option value="VIC">Victoria (VCE)</option>
+            <option value="NSW">New South Wales (HSC)</option>
+            <option value="WA">Western Australia (WACE)</option>
+            <option value="SA">South Australia (SACE)</option>
+            <option value="TAS">Tasmania (TCE)</option>
+            <option value="ACT">ACT (BSSS)</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Subject</label>
+          <select class="school-sel" id="markSubject">
+            <option value="">Select subject...</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- EXAM or ASSIGNMENT -->
     <label class="field-label">What are you submitting?</label>
     <div class="opt-row" id="markTypeRow">
@@ -1036,6 +1176,157 @@ function renderMath(){
 }
 function markClass(s,m){const p=s/m;return p>=0.8?'ok':p>=0.4?'half':'no';}
 
+// ── SYLLABUS DATA ──
+const SYLLABUS = {
+  QLD: {
+    name: 'QCE', authority: 'QCAA',
+    subjects: {
+      'Biology': { units: ['Unit 1 — Cells and multicellular organisms','Unit 2 — Maintaining the internal environment','Unit 3 — Biodiversity and the interconnectedness of life','Unit 4 — Heredity and continuity of life'], topics: { 'Unit 3': ['Describing biodiversity','Ecosystems','Maintaining biodiversity'], 'Unit 4': ['DNA, genes and the continuity of life','Continuity of life on Earth'] } },
+      'Chemistry': { units: ['Unit 1 — Chemical fundamentals','Unit 2 — Molecular interactions and reactions','Unit 3 — Equilibrium, acids and redox reactions','Unit 4 — Structure, synthesis and design'], topics: { 'Unit 3': ['Chemical equilibrium systems','Oxidation and reduction','Organic chemistry'], 'Unit 4': ['Properties and structure of organic materials','Chemical synthesis and design'] } },
+      'Physics': { units: ['Unit 1 — Thermal, nuclear and electrical physics','Unit 2 — Linear motion and waves','Unit 3 — Gravity and electromagnetism','Unit 4 — Revolutions in modern physics'], topics: { 'Unit 3': ['Gravity and motion','Electromagnetism'], 'Unit 4': ['Special relativity','Quantum theory','The Standard Model'] } },
+      'Mathematics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Mathematical Methods': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: { 'Unit 3': ['Further calculus','Integrals','Discrete random variables'], 'Unit 4': ['Further calculus','Continuous random variables','Interval estimates'] } },
+      'Specialist Mathematics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'English': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Modern History': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Economics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Legal Studies': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Psychology': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Business': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Geography': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+    }
+  },
+  VIC: {
+    name: 'VCE', authority: 'VCAA',
+    subjects: {
+      'Biology': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: { 'Unit 3': ['Regulation of biological systems','Cellular signalling'], 'Unit 4': ['Heredity','Evolutionary change'] } },
+      'Chemistry': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Physics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Mathematical Methods': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Specialist Mathematics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Further Mathematics': { units: ['Unit 3','Unit 4'], topics: {} },
+      'English': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Psychology': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Legal Studies': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+      'Economics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} },
+    }
+  },
+  NSW: {
+    name: 'HSC', authority: 'NESA',
+    subjects: {
+      'Biology': { units: ['Preliminary','HSC'], topics: { 'HSC': ['Heredity','Immune system','Non-infectious disease'] } },
+      'Chemistry': { units: ['Preliminary','HSC'], topics: { 'HSC': ['Equilibrium and acid reactions','Organic chemistry','Applying chemical ideas'] } },
+      'Physics': { units: ['Preliminary','HSC'], topics: { 'HSC': ['Kinematics','Dynamics','Waves and thermodynamics','Electricity and magnetism','Nature of light','Origins of the elements'] } },
+      'Mathematics Advanced': { units: ['Preliminary','HSC'], topics: {} },
+      'Mathematics Extension 1': { units: ['Preliminary','HSC'], topics: {} },
+      'Mathematics Extension 2': { units: ['HSC'], topics: {} },
+      'English Advanced': { units: ['Preliminary','HSC'], topics: {} },
+      'Modern History': { units: ['Preliminary','HSC'], topics: {} },
+      'Economics': { units: ['Preliminary','HSC'], topics: {} },
+      'Legal Studies': { units: ['Preliminary','HSC'], topics: {} },
+    }
+  },
+  WA: { name: 'WACE', authority: 'SCSA', subjects: { 'Biology': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'Chemistry': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'Physics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'Mathematics Methods': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'English': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} } } },
+  SA: { name: 'SACE', authority: 'SACE Board', subjects: { 'Biology': { units: ['Stage 1','Stage 2'], topics: {} }, 'Chemistry': { units: ['Stage 1','Stage 2'], topics: {} }, 'Physics': { units: ['Stage 1','Stage 2'], topics: {} }, 'Mathematical Methods': { units: ['Stage 1','Stage 2'], topics: {} }, 'English': { units: ['Stage 1','Stage 2'], topics: {} } } },
+  TAS: { name: 'TCE', authority: 'TASC', subjects: { 'Biology': { units: ['Level 2','Level 3','Level 4'], topics: {} }, 'Chemistry': { units: ['Level 2','Level 3','Level 4'], topics: {} }, 'Physics': { units: ['Level 2','Level 3','Level 4'], topics: {} }, 'Mathematics Methods': { units: ['Level 2','Level 3','Level 4'], topics: {} } } },
+  ACT: { name: 'BSSS', authority: 'BSSS', subjects: { 'Biology': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'Chemistry': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'Physics': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} }, 'Mathematical Methods': { units: ['Unit 1','Unit 2','Unit 3','Unit 4'], topics: {} } } }
+};
+
+function buildSyllabusPrompt(state, subject, unit, topic){
+  const s=SYLLABUS[state];
+  if(!s||!subject)return '';
+  const unitStr=unit?` studying ${unit}`:'';
+  const topicStr=topic?`, specifically the topic "${topic}"`:'';
+  return `This student is a ${s.name} ${subject} student in ${state}${unitStr}${topicStr}. Generate content that is specifically aligned to the ${s.authority} ${s.name} ${subject} syllabus. Use the exact terminology, concepts, assessment objectives and question styles used in ${s.authority} ${s.name} external assessments. Focus on what is examinable.`;
+}
+
+function populateSubjects(stateId, subjectId, unitId, topicId){
+  const state=document.getElementById(stateId)?.value;
+  const subSel=document.getElementById(subjectId);
+  const unitSel=document.getElementById(unitId);
+  const topicSel=document.getElementById(topicId);
+  if(!subSel)return;
+  const data=SYLLABUS[state];
+  subSel.innerHTML='<option value="">Select subject...</option>';
+  if(data){Object.keys(data.subjects).forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;subSel.appendChild(o);});}
+  if(unitSel)unitSel.innerHTML='<option value="">Select unit...</option>';
+  if(topicSel)topicSel.innerHTML='<option value="">All topics</option>';
+}
+
+function populateUnits(stateId, subjectId, unitId, topicId){
+  const state=document.getElementById(stateId)?.value;
+  const subject=document.getElementById(subjectId)?.value;
+  const unitSel=document.getElementById(unitId);
+  const topicSel=document.getElementById(topicId);
+  if(!unitSel)return;
+  unitSel.innerHTML='<option value="">Select unit...</option>';
+  if(topicSel)topicSel.innerHTML='<option value="">All topics</option>';
+  const data=SYLLABUS[state]?.subjects[subject];
+  if(data){data.units.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;unitSel.appendChild(o);});}
+}
+
+function populateTopics(stateId, subjectId, unitId, topicId){
+  const state=document.getElementById(stateId)?.value;
+  const subject=document.getElementById(subjectId)?.value;
+  const unit=document.getElementById(unitId)?.value;
+  const topicSel=document.getElementById(topicId);
+  if(!topicSel)return;
+  topicSel.innerHTML='<option value="">All topics</option>';
+  const topics=SYLLABUS[state]?.subjects[subject]?.topics[unit]||[];
+  topics.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;topicSel.appendChild(o);});
+}
+
+function wireStudentToggle(toggleId, schoolSelectorsId, onUni, onSchool){
+  document.querySelectorAll(`#${toggleId} .mode-toggle-btn`).forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll(`#${toggleId} .mode-toggle-btn`).forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const isSchool=btn.dataset.student==='school';
+      document.getElementById(schoolSelectorsId).style.display=isSchool?'':'none';
+      if(isSchool)onSchool();else onUni();
+    });
+  });
+}
+
+// ── PAGE 1 STUDENT MODE ──
+let lecStudentMode='uni';
+wireStudentToggle('lecStudentToggle','lecSchoolSelectors',
+  ()=>{lecStudentMode='uni';},
+  ()=>{lecStudentMode='school';populateSubjects('lecState','lecSubject','lecUnit','lecTopic');}
+);
+document.getElementById('lecState')?.addEventListener('change',()=>populateSubjects('lecState','lecSubject','lecUnit','lecTopic'));
+document.getElementById('lecSubject')?.addEventListener('change',()=>populateUnits('lecState','lecSubject','lecUnit','lecTopic'));
+document.getElementById('lecUnit')?.addEventListener('change',()=>populateTopics('lecState','lecSubject','lecUnit','lecTopic'));
+
+// ── PAGE 2 STUDENT MODE ──
+let examStudentMode='uni';
+wireStudentToggle('examStudentToggle','examSchoolSelectors',
+  ()=>{
+    examStudentMode='uni';
+    document.getElementById('examUniOptions').style.display='';
+    document.getElementById('examSchoolNote').style.display='none';
+    document.getElementById('examBtn').disabled=!(enF||epF);
+  },
+  ()=>{
+    examStudentMode='school';
+    document.getElementById('examUniOptions').style.display='none';
+    document.getElementById('examSchoolNote').style.display='';
+    document.getElementById('examBtn').disabled=false;
+    populateSubjects('examState','examSubject','examUnit','examTopic');
+  }
+);
+document.getElementById('examState')?.addEventListener('change',()=>populateSubjects('examState','examSubject','examUnit','examTopic'));
+document.getElementById('examSubject')?.addEventListener('change',()=>populateUnits('examState','examSubject','examUnit','examTopic'));
+document.getElementById('examUnit')?.addEventListener('change',()=>populateTopics('examState','examSubject','examUnit','examTopic'));
+
+// ── PAGE 3 STUDENT MODE ──
+let markStudentMode='uni';
+wireStudentToggle('markStudentToggle','markSchoolSelectors',
+  ()=>{markStudentMode='uni';},
+  ()=>{markStudentMode='school';populateSubjects('markState','markSubject',null,null);}
+);
+document.getElementById('markState')?.addEventListener('change',()=>populateSubjects('markState','markSubject',null,null));
+
 // ── WHATS NEW MODAL ──
 document.getElementById('whatsNewBtn').addEventListener('click',()=>{
   document.getElementById('whatsNewModal').classList.add('show');
@@ -1132,7 +1423,16 @@ document.getElementById('lecBtn').addEventListener('click',async()=>{
     const fmtInstr=lecFormat==='paragraphs'?'Write all notes, summaries and explanations as flowing paragraphs, not dot points.':'Use dot points and bullet lists for notes and summaries where possible.';
     const examExtra=lecModeVal==='exam'?'EXAM FOCUSED MODE: For each topic, also note common exam traps, mark-worthy phrases examiners look for, and high-frequency exam topics. Tag any high-priority exam content with ★.':'';
 
-    const sys=`You are an expert tutor at university and high school level. Auto-detect the subject from the uploaded content. ${examExtra}
+    const syllabusCtx = lecStudentMode==='school'
+      ? buildSyllabusPrompt(
+          document.getElementById('lecState').value,
+          document.getElementById('lecSubject').value,
+          document.getElementById('lecUnit').value,
+          document.getElementById('lecTopic').value
+        )
+      : '';
+
+    const sys=`You are an expert tutor at university and high school level. Auto-detect the subject from the uploaded content. ${examExtra} ${syllabusCtx}
 ${fmtInstr}
 Output everything in ${lang}.
 Return ONLY a JSON object — no markdown, no backticks:
@@ -1446,7 +1746,20 @@ document.getElementById('examBtn').addEventListener('click',async()=>{
   try{
     let sys='',messages=[];
     const FMT=`{"examTitle":"string","totalMarks":number,"timeAllowed":"string","instructions":"string","questions":[{"number":1,"marks":number,"text":"question","modelAnswer":"brief ideal answer","parts":[{"part":"a","marks":number,"text":"sub-q","modelAnswer":"answer"}]}]}`;
-    if(examMode==='both'){
+
+    // School mode — no upload needed
+    if(examStudentMode==='school'){
+      const state=document.getElementById('examState').value;
+      const subject=document.getElementById('examSubject').value||'general';
+      const unit=document.getElementById('examUnit').value;
+      const topic=document.getElementById('examTopic').value;
+      const syllCtx=buildSyllabusPrompt(state,subject,unit,topic);
+      sys=`You are an expert ${SYLLABUS[state]?.name||state} exam writer. ${syllCtx}
+Generate a realistic practice exam with 4-5 questions in the exact style and format used in ${SYLLABUS[state]?.authority||state} external assessments for ${subject}.
+Use the precise command verbs (explain, describe, evaluate, justify, calculate) typical of this assessment body.
+Return ONLY JSON: ${FMT}`;
+      messages=[{role:'user',content:`Generate a ${SYLLABUS[state]?.name} ${subject} practice exam${unit?' for '+unit:''}${topic?' on '+topic:''}. Return JSON only.`}];
+    } else if(examMode==='both'){
       const[nb64,pb64]=await Promise.all([toB64(enF),toB64(epF)]);
       sys=`You are an exam writer. Auto-detect the subject. Use the past exam for style only, generate new questions from the notes. Return ONLY JSON: ${FMT}. Max 3 questions. Keep it short.`;
       messages=[{role:'user',content:[...buildContent(nb64,enF,'Notes'),...buildContent(pb64,epF,'Past exam for style')]}];
@@ -1696,7 +2009,14 @@ document.getElementById('markReadBtn').addEventListener('click',async()=>{
     const b64=await toB64(markF);
     const isAssignment=markType==='assignment';
 
-    let sysBase=`You are a teacher. Auto-detect the subject. Mark strictly, no softness.`;
+    const markSyllCtx = markStudentMode==='school'
+      ? buildSyllabusPrompt(
+          document.getElementById('markState').value,
+          document.getElementById('markSubject').value,
+          null, null
+        )
+      : '';
+    let sysBase=`You are a teacher. Auto-detect the subject. Mark strictly, no softness. ${markSyllCtx}`;
 
     if(isAssignment){
       const rubricExtra=rubricF?`Mark against the provided rubric.`:`Use standard academic criteria.`;
