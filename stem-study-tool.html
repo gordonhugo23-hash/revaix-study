@@ -892,17 +892,17 @@ MathJax = {
       </div>
       <label class="field-label">Exam mode</label>
       <div class="mode-row">
-        <button class="mode-btn active" data-mode="both"><span class="mode-icon">📄📝</span><span class="mode-title">Notes + Past Exam</span><span class="mode-desc">New questions from notes, styled like real exam</span></button>
+        <button class="mode-btn active" data-mode="unionly"><span class="mode-icon">🎓</span><span class="mode-title">Course Only</span><span class="mode-desc">Generate from your course — no upload needed</span></button>
+        <button class="mode-btn" data-mode="both"><span class="mode-icon">📄📝</span><span class="mode-title">Notes + Past Exam</span><span class="mode-desc">New questions from notes, styled like real exam</span></button>
         <button class="mode-btn" data-mode="notes"><span class="mode-icon">📄</span><span class="mode-title">Notes Only</span><span class="mode-desc">Realistic exam from your lecture content</span></button>
         <button class="mode-btn" data-mode="reword"><span class="mode-icon">📝</span><span class="mode-title">Reword Past Exam</span><span class="mode-desc">Same questions, different wording</span></button>
-        <button class="mode-btn" data-mode="unionly"><span class="mode-icon">🎓</span><span class="mode-title">Course Only</span><span class="mode-desc">Generate from your course — no upload needed</span></button>
       </div>
-      <div id="en-wrap" style="margin-bottom:10px">
+      <div id="en-wrap" style="display:none;margin-bottom:10px">
         <label class="field-label">📄 Lecture Notes / Study Material</label>
         <div class="upload-zone" id="enZone"><input type="file" id="enFile" accept=".pdf,.jpg,.jpeg,.png,.webp"><span class="upload-icon">📄</span><h3>Lecture notes, textbook pages, or slides</h3><p>PDF or image (Word/PPT: save as PDF first)</p></div>
         <div class="fp" id="enPill"><div class="fp-ic">📄</div><div class="fp-info"><div class="fp-name" id="enFN">—</div><div class="fp-size" id="enFS">—</div></div><button class="fp-rm" id="enRM">✕</button></div>
       </div>
-      <div id="ep-wrap" style="margin-bottom:10px">
+      <div id="ep-wrap" style="display:none;margin-bottom:10px">
         <label class="field-label">📝 Past Exam PDF <span style="color:var(--muted);font-size:0.6rem">(optional)</span></label>
         <div class="upload-zone v2" id="epZone"><input type="file" id="epFile" accept=".pdf"><span class="upload-icon">📝</span><h3>Past exam PDF</h3><p>Teaches the AI your exam style</p></div>
         <div class="fp" id="epPill"><div class="fp-ic p">📝</div><div class="fp-info"><div class="fp-name" id="epFN">—</div><div class="fp-size" id="epFS">—</div></div><button class="fp-rm" id="epRM">✕</button></div>
@@ -915,7 +915,7 @@ MathJax = {
     </div>
 
     <div class="err" id="examErr"></div>
-    <button class="btn btn-p" id="examBtn" disabled>Generate Practice Exam</button>
+    <button class="btn btn-p" id="examBtn">Generate Practice Exam</button>
   </div>
 
   <div class="loading" id="examLoad">
@@ -1831,7 +1831,7 @@ function renderMiniTest(qs, container, syllabusContext){
 }
 
 // ── PAGE 2: PRACTICE EXAM ──
-let enF=null,epF=null,examData=null,examMode='both';
+let enF=null,epF=null,examData=null,examMode='unionly';
 const checkExam=()=>{
   const nn=examMode==='both'||examMode==='notes';
   const np=examMode==='both'||examMode==='reword';
