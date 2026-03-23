@@ -1490,6 +1490,10 @@ function renderExam(exam){
       const ta=document.getElementById(items[examIdx].id);
       if(ta)answered[examIdx]=ta.value;
       window._examAnswered=answered;
+      nextBtn.disabled=true;
+      nextBtn.textContent='Marking your exam...';
+      nextBtn.style.background='var(--border)';
+      nextBtn.style.color='var(--muted)';
       document.getElementById('examSubBtn').click();
     }
   });
