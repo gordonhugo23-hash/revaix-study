@@ -2853,10 +2853,8 @@ document.getElementById('markReadBtn').addEventListener('click',async()=>{
 
   try{
     const isAssignment=markType==='assignment';
-    const markText=document.getElementById('markTextInput')?.value.trim()||'';
     let msgContent;
     if(markInputMode==='text'&&markText){
-      const isAssignment=markType==='assignment';
       if(rubricF){
         const rb64=await toB64(rubricF);
         msgContent=[...buildContent(rb64,rubricF,'This is the rubric/marking criteria'),{type:'text',text:`This is the student's ${isAssignment?'assignment':'exam'}:\n\n${markText}\n\nMark it against the rubric.`}];
