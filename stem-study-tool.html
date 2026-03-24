@@ -1577,7 +1577,15 @@ MathJax = {
   </div>
 
   <div class="results" id="markFeedbackSection">
-    <div class="res-hdr"><h2>Your Results</h2><button class="btn-reset" id="markReset">↩ New Upload</button></div>
+    <div class="res-hdr">
+      <h2>Your Results</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="markChatToggleBtn" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;padding:9px 20px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(129,140,248,0.35)">
+          <span style="font-size:1rem">🤖</span> Ask Revvy
+        </button>
+        <button class="btn-reset" id="markReset">↩ New Upload</button>
+      </div>
+    </div>
 
     <!-- EXAM READINESS -->
     <div class="readiness-wrap" id="readinessWrap" style="display:none">
@@ -1594,6 +1602,46 @@ MathJax = {
     </div>
     <div id="markFeedbackQs"></div>
   </div>
+
+  <!-- MARK CHATBOT PANEL — Revvy -->
+  <div id="markChatPanel" style="display:none;position:fixed;bottom:0;right:24px;width:400px;height:580px;background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;z-index:200;flex-direction:column;box-shadow:0 -12px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(129,140,248,0.1)">
+    <div style="padding:18px 20px 16px;border-bottom:1px solid var(--border);border-radius:24px 24px 0 0;background:linear-gradient(135deg,rgba(129,140,248,0.12),rgba(129,140,248,0.04));position:relative;overflow:hidden">
+      <div style="position:absolute;top:-30px;right:-20px;width:120px;height:120px;background:radial-gradient(circle,rgba(129,140,248,0.15),transparent 70%);pointer-events:none"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:42px;height:42px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 4px 14px rgba(129,140,248,0.4)">🤖</div>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-0.02em">Revvy</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+              <div style="width:6px;height:6px;background:#6ee7b7;border-radius:50%;box-shadow:0 0 6px rgba(110,231,183,0.6)"></div>
+              <span style="font-size:0.62rem;color:var(--muted)">Knows your full marking feedback</span>
+            </div>
+          </div>
+        </div>
+        <button id="markChatCloseBtn" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s">✕</button>
+      </div>
+    </div>
+    <div id="markChatMessages" style="flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin;scrollbar-color:var(--border) transparent">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="width:28px;height:28px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;margin-top:2px">🤖</div>
+        <div class="chat-msg chat-ai">Hey! I've read through all your marking feedback. Ask me anything — <em>why you lost marks</em>, <em>what a better answer looks like</em>, <em>how to improve</em>, or <em>what to study next</em>.</div>
+      </div>
+      <div id="markChatSuggestions" style="display:flex;gap:7px;flex-wrap:wrap;padding-left:38px">
+        <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">Where did I lose the most marks?</button>
+        <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">What should I study next?</button>
+        <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">Show me a better answer</button>
+        <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">What were my main mistakes?</button>
+      </div>
+    </div>
+    <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surface)">
+      <div style="display:flex;gap:8px;align-items:flex-end;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:8px 8px 8px 14px;transition:all 0.2s" id="markChatInputWrap">
+        <textarea id="markChatInput" rows="1" placeholder="Ask Revvy about your results..." style="flex:1;background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;resize:none;outline:none;line-height:1.6;max-height:100px;overflow-y:auto;padding:2px 0"></textarea>
+        <button id="markChatSendBtn" style="background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;flex-shrink:0;transition:all 0.2s;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(129,140,248,0.3)">↑</button>
+      </div>
+      <div style="text-align:center;font-size:0.59rem;color:var(--muted);margin-top:8px">Revvy knows your marking results · powered by Claude</div>
+    </div>
+  </div>
+
   <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
 </div></div>
 
@@ -2759,6 +2807,21 @@ document.getElementById('markReset').addEventListener('click',()=>{
   document.getElementById('markFeedbackSection').classList.remove('show');
   document.getElementById('mark-form').style.display='';
   document.getElementById('mark-hero-area').style.display='';
+  // Reset mark chat
+  markChatOpen=false;
+  document.getElementById('markChatPanel').style.display='none';
+  document.getElementById('markChatMessages').innerHTML=`
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;margin-top:2px">🤖</div>
+      <div class="chat-msg chat-ai">Hey! I've read through all your marking feedback. Ask me anything — <em>why you lost marks</em>, <em>what a better answer looks like</em>, <em>how to improve</em>, or <em>what to study next</em>.</div>
+    </div>
+    <div id="markChatSuggestions" style="display:flex;gap:7px;flex-wrap:wrap;padding-left:38px">
+      <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">Where did I lose the most marks?</button>
+      <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">What should I study next?</button>
+      <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">Show me a better answer</button>
+      <button class="chat-suggestion" onclick="sendMarkSuggestion(this)">What were my main mistakes?</button>
+    </div>`;
+  markChatHistory=[];
   markF=null;rubricF=null;
   ['markFile','rubricFile'].forEach(id=>document.getElementById(id).value='');
   ['markPill','rubricPill'].forEach(id=>document.getElementById(id).classList.remove('show'));
@@ -2907,6 +2970,25 @@ If blank score 0.`;
     document.getElementById('markFeedbackSection').classList.add('show');
     window.scrollTo({top:0,behavior:'smooth'});
 
+    // Prime Revvy with the full marking results
+    setMarkChatContext({
+      subject: p?.subject || markSub,
+      assignmentTitle: p?.assignmentTitle || '',
+      grade: p?.grade || '',
+      totalScore: p?.totalScore,
+      totalMax: p?.totalMax,
+      overallFeedback: p?.overallFeedback || '',
+      paragraphs: p?.paragraphs || [],
+      sections: p?.sections || [],
+      questions: res ? res.map((r,i)=>({
+        question: answers?.[i]?.text || `Question ${i+1}`,
+        score: r.score,
+        marks: r.maxScore,
+        feedback: r.feedback,
+        errorType: r.errorType||''
+      })) : []
+    });
+
   }catch(e){
     clearInterval(iv);
     finishProgress('markProgressBar',markProg);
@@ -3037,6 +3119,119 @@ document.getElementById('chatCloseBtn')?.addEventListener('click',()=>{
 document.getElementById('chatSendBtn')?.addEventListener('click',sendChatMessage);
 document.getElementById('chatInput')?.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMessage();}
+});
+
+// ── MARK CHATBOT — Revvy ──
+let markChatContext='';
+let markChatHistory=[];
+let markChatOpen=false;
+
+function setMarkChatContext(data){
+  // Build context from marking results
+  const qLines=(data.questions||data.qs||[]).map((q,i)=>
+    `Q${i+1}: "${q.question||q.text}" — Student got ${q.score}/${q.marks||q.maxScore} marks. Feedback: ${q.feedback}. Error type: ${q.errorType||'n/a'}.`
+  ).join('\n');
+  const paraLines=(data.paragraphs||[]).map((p,i)=>
+    `Paragraph ${p.number}: Good: ${p.good}. Improve: ${p.bad}.`
+  ).join('\n');
+  const criteriaLines=(data.sections||[]).map(s=>
+    `${s.criterion}: ${s.score}/${s.max} — ${s.feedback}`
+  ).join('\n');
+
+  markChatContext=`You are Revvy, a friendly AI study assistant. A student just had their work marked. Here are the full results:\n\nSubject: ${data.subject||'unknown'}\nTitle: ${data.assignmentTitle||data.title||'Assessment'}\nOverall: ${data.grade||''} ${data.totalScore!==undefined?data.totalScore+'/'+data.totalMax:''}\nOverall feedback: ${data.overallFeedback||''}\n\nQuestion breakdown:\n${qLines}\n\nParagraph analysis:\n${paraLines}\n\nCriteria scores:\n${criteriaLines}\n\nYour job: Help the student understand their results. Explain clearly where they lost marks, what better answers would look like, and what to study to improve. Be specific, encouraging, and concise. Never say you're an AI language model — you're Revvy.`;
+  markChatHistory=[];
+}
+
+function addMarkChatMsg(text,role){
+  const msgs=document.getElementById('markChatMessages');
+  if(role==='user'){const s=document.getElementById('markChatSuggestions');if(s)s.style.display='none';}
+  const wrap=document.createElement('div');
+  wrap.style.cssText=`display:flex;gap:10px;align-items:flex-start;${role==='user'?'flex-direction:row-reverse;':''}`;
+  if(role==='ai'){
+    const avatar=document.createElement('div');
+    avatar.style.cssText='width:28px;height:28px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;margin-top:2px';
+    avatar.textContent='🤖';
+    wrap.appendChild(avatar);
+  }
+  const bubble=document.createElement('div');
+  bubble.className=`chat-msg ${role==='user'?'chat-user':'chat-ai'}`;
+  bubble.innerHTML=text.replace(/\n/g,'<br>');
+  wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+  return bubble;
+}
+
+function addMarkTyping(){
+  const msgs=document.getElementById('markChatMessages');
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;gap:10px;align-items:flex-start;';
+  wrap.id='markChatTypingWrap';
+  const avatar=document.createElement('div');
+  avatar.style.cssText='width:28px;height:28px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;margin-top:2px';
+  avatar.textContent='🤖';
+  const typing=document.createElement('div');
+  typing.className='chat-typing';
+  typing.innerHTML='<div class="chat-dot"></div><div class="chat-dot"></div><div class="chat-dot"></div>';
+  wrap.appendChild(avatar);wrap.appendChild(typing);
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+  return wrap;
+}
+
+async function sendMarkChatMessage(){
+  const input=document.getElementById('markChatInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';input.style.height='auto';
+  addMarkChatMsg(msg,'user');
+  markChatHistory.push({role:'user',content:msg});
+  const typingEl=addMarkTyping();
+  document.getElementById('markChatSendBtn').disabled=true;
+  try{
+    const raw=await apiHaiku(markChatContext,markChatHistory.map(m=>({role:m.role,content:m.content})),800);
+    typingEl.remove();
+    addMarkChatMsg(raw,'ai');
+    markChatHistory.push({role:'assistant',content:raw});
+  }catch(e){
+    typingEl.remove();
+    addMarkChatMsg('Something went wrong — try again!','ai');
+  }
+  document.getElementById('markChatSendBtn').disabled=false;
+  input.focus();
+}
+
+function sendMarkSuggestion(btn){
+  document.getElementById('markChatInput').value=btn.textContent.trim();
+  sendMarkChatMessage();
+}
+
+// Auto-resize
+document.getElementById('markChatInput')?.addEventListener('input',function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,100)+'px';
+});
+document.getElementById('markChatInput')?.addEventListener('focus',()=>{
+  document.getElementById('markChatInputWrap').style.borderColor='rgba(129,140,248,0.5)';
+  document.getElementById('markChatInputWrap').style.boxShadow='0 0 0 4px rgba(129,140,248,0.06)';
+});
+document.getElementById('markChatInput')?.addEventListener('blur',()=>{
+  document.getElementById('markChatInputWrap').style.borderColor='var(--border)';
+  document.getElementById('markChatInputWrap').style.boxShadow='none';
+});
+document.getElementById('markChatToggleBtn')?.addEventListener('click',()=>{
+  const panel=document.getElementById('markChatPanel');
+  markChatOpen=!markChatOpen;
+  panel.style.display=markChatOpen?'flex':'none';
+  if(markChatOpen)setTimeout(()=>document.getElementById('markChatInput').focus(),100);
+});
+document.getElementById('markChatCloseBtn')?.addEventListener('click',()=>{
+  document.getElementById('markChatPanel').style.display='none';
+  markChatOpen=false;
+});
+document.getElementById('markChatSendBtn')?.addEventListener('click',sendMarkChatMessage);
+document.getElementById('markChatInput')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMarkChatMessage();}
 });
 </script>
 </body>
