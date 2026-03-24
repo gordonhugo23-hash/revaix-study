@@ -1482,7 +1482,10 @@ MathJax = {
 
 <!-- ══ PAGE 3: MARK MY WORK ══ -->
 <div class="page" id="page-mark">
-<div class="container">
+
+  <!-- STATE 1: FORM -->
+  <div id="mark-form-page">
+  <div class="container">
   <div id="mark-hero-area">
   <div class="hero">
     <h1>Submit any work.<br><span class="hl3">Get real feedback.</span></h1>
@@ -1563,8 +1566,11 @@ MathJax = {
 
     <div class="err" id="markErr"></div>
     <button class="btn btn-y" id="markReadBtn" disabled>Mark My Work</button>
-  </div>
+  </div><!-- end mark-form -->
+  </div><!-- end container -->
+  </div><!-- end mark-form-page -->
 
+  <!-- STATE 2: LOADING -->
   <div class="loading" id="markLoad">
     <div class="spinner y"></div>
     <p>Marking your work...<span class="lstep y" id="markStep">Reading questions and answers</span></p>
@@ -1576,7 +1582,9 @@ MathJax = {
     </div>
   </div>
 
+  <!-- STATE 3: RESULTS -->
   <div class="results" id="markFeedbackSection">
+  <div class="container">
     <div class="res-hdr">
       <h2>Your Results</h2>
       <div style="display:flex;gap:8px;align-items:center">
@@ -1601,7 +1609,8 @@ MathJax = {
       <div class="exam-score-sub" id="markScoreSub">—</div>
     </div>
     <div id="markFeedbackQs"></div>
-  </div>
+  </div><!-- end container -->
+  </div><!-- end markFeedbackSection -->
 
   <!-- MARK CHATBOT PANEL — Revvy -->
   <div id="markChatPanel" style="display:none;position:fixed;bottom:0;right:24px;width:400px;height:580px;background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;z-index:200;flex-direction:column;box-shadow:0 -12px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(129,140,248,0.1)">
@@ -1643,7 +1652,8 @@ MathJax = {
   </div>
 
   <footer>Revaix Study · AI-powered study for every student · Powered by Claude</footer>
-</div></div>
+
+</div><!-- end page-mark -->
 
 <script>
 // ── SETTINGS ──
@@ -2805,8 +2815,8 @@ wire('rubricZone','rubricFile','rubricPill','rubricFN','rubricFS','rubricRM',
 
 document.getElementById('markReset').addEventListener('click',()=>{
   document.getElementById('markFeedbackSection').classList.remove('show');
-  document.getElementById('mark-form').style.display='';
-  document.getElementById('mark-hero-area').style.display='';
+  document.getElementById('mark-form-page').style.display='';
+  // hero restored via mark-form-page
   // Reset mark chat
   markChatOpen=false;
   document.getElementById('markChatPanel').style.display='none';
@@ -2836,7 +2846,7 @@ document.getElementById('markReadBtn').addEventListener('click',async()=>{
   const markText=document.getElementById('markTextInput')?.value.trim()||'';
   if(markInputMode==='file' && !markF)return;
   if(markInputMode==='text' && !markText)return;
-  document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form').style.display='none';document.getElementById('mark-hero-area').style.display='none';document.getElementById('markLoad').classList.add('show');
+  document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form-page').style.display='none';document.getElementById('markLoad').classList.add('show');
   const markProg=startProgress('markProgressBar');
   const steps=['Reading your work...','Identifying questions and answers...','Marking step by step...','Classifying errors...','Writing feedback...'];
   let si=0;const stepEl=document.getElementById('markStep');const iv=setInterval(()=>{stepEl.textContent=steps[++si%steps.length];},1800);
@@ -2935,6 +2945,22 @@ If blank score 0.`;
       }
 
       if(p.examReadiness){showReadiness(p.examReadiness);}
+
+      // Prime Revvy for assignment
+      setMarkChatContext({
+        isAssignment: true,
+        subject: p.subject||markSub,
+        assignmentTitle: p.assignmentTitle||'Assignment',
+        grade: p.grade||'',
+        totalScore: p.totalScore||0,
+        totalMax: p.totalMax||100,
+        overallFeedback: p.overallFeedback||'',
+        paragraphs: p.paragraphs||[],
+        sections: p.sections||[],
+        questions: [],
+        rubricUsed: !!rubricF,
+        markSyllCtx
+      });
     }else{
       const res=exArr(raw);
       if(!res.length)throw new Error('No questions found in this exam.');
@@ -2961,40 +2987,35 @@ If blank score 0.`;
       document.getElementById('markScoreBig').textContent=`${tot}/${mx} · ${pc}%`;
       document.getElementById('markScoreSub').textContent=pc>=80?'🎉 Excellent work!':pc>=50?'📚 Good effort — review the feedback carefully':'💪 Keep working at it — the step breakdowns above will help';
       document.getElementById('markScore').classList.add('show');
-      // Readiness
       const avgReadiness=res.length?Math.round(readinessTotal/res.length):pc;
       showReadiness(avgReadiness);
+
+      // Prime Revvy for exam
+      setMarkChatContext({
+        isAssignment: false,
+        subject: markSub,
+        totalScore: tot,
+        totalMax: mx,
+        markSyllCtx,
+        questions: res.map(r=>({
+          number: r.number,
+          question: r.question,
+          studentAnswer: r.studentAnswer||'',
+          score: r.score,
+          marks: r.marks,
+          feedback: r.feedback,
+          errorType: r.errorType||'',
+          stepFeedback: r.stepFeedback||[]
+        }))
+      });
     }
-
-    document.getElementById('markLoad').classList.remove('show');
-    document.getElementById('markFeedbackSection').classList.add('show');
-    window.scrollTo({top:0,behavior:'smooth'});
-
-    // Prime Revvy with the full marking results
-    setMarkChatContext({
-      subject: p?.subject || markSub,
-      assignmentTitle: p?.assignmentTitle || '',
-      grade: p?.grade || '',
-      totalScore: p?.totalScore,
-      totalMax: p?.totalMax,
-      overallFeedback: p?.overallFeedback || '',
-      paragraphs: p?.paragraphs || [],
-      sections: p?.sections || [],
-      questions: res ? res.map((r,i)=>({
-        question: answers?.[i]?.text || `Question ${i+1}`,
-        score: r.score,
-        marks: r.maxScore,
-        feedback: r.feedback,
-        errorType: r.errorType||''
-      })) : []
-    });
 
   }catch(e){
     clearInterval(iv);
     finishProgress('markProgressBar',markProg);
     document.getElementById('markLoad').classList.remove('show');
-    document.getElementById('mark-form').style.display='';
-    document.getElementById('mark-hero-area').style.display='';
+    document.getElementById('mark-form-page').style.display='';
+    // hero restored via mark-form-page
     document.getElementById('markErr').textContent=friendlyErr(e);
     document.getElementById('markErr').classList.add('show');
   }
@@ -3127,18 +3148,57 @@ let markChatHistory=[];
 let markChatOpen=false;
 
 function setMarkChatContext(data){
-  // Build context from marking results
-  const qLines=(data.questions||data.qs||[]).map((q,i)=>
-    `Q${i+1}: "${q.question||q.text}" — Student got ${q.score}/${q.marks||q.maxScore} marks. Feedback: ${q.feedback}. Error type: ${q.errorType||'n/a'}.`
-  ).join('\n');
-  const paraLines=(data.paragraphs||[]).map((p,i)=>
-    `Paragraph ${p.number}: Good: ${p.good}. Improve: ${p.bad}.`
-  ).join('\n');
-  const criteriaLines=(data.sections||[]).map(s=>
-    `${s.criterion}: ${s.score}/${s.max} — ${s.feedback}`
-  ).join('\n');
+  const lines=[];
+  lines.push(`You are Revvy, a friendly and knowledgeable AI study assistant built into Revaix Study.`);
+  lines.push(`A student just had their ${data.isAssignment?'assignment':'exam'} marked. You have been given the FULL results below. Use this to answer their questions specifically and helpfully.\n`);
 
-  markChatContext=`You are Revvy, a friendly AI study assistant. A student just had their work marked. Here are the full results:\n\nSubject: ${data.subject||'unknown'}\nTitle: ${data.assignmentTitle||data.title||'Assessment'}\nOverall: ${data.grade||''} ${data.totalScore!==undefined?data.totalScore+'/'+data.totalMax:''}\nOverall feedback: ${data.overallFeedback||''}\n\nQuestion breakdown:\n${qLines}\n\nParagraph analysis:\n${paraLines}\n\nCriteria scores:\n${criteriaLines}\n\nYour job: Help the student understand their results. Explain clearly where they lost marks, what better answers would look like, and what to study to improve. Be specific, encouraging, and concise. Never say you're an AI language model — you're Revvy.`;
+  if(data.isAssignment){
+    lines.push(`=== ASSIGNMENT RESULTS ===`);
+    lines.push(`Subject: ${data.subject||'unknown'}`);
+    lines.push(`Title: ${data.assignmentTitle||'Assignment'}`);
+    lines.push(`Grade: ${data.grade||'—'}`);
+    lines.push(`Score: ${data.totalScore}/${data.totalMax}`);
+    lines.push(`Rubric used: ${data.rubricUsed?'Yes':'No'}`);
+    if(data.markSyllCtx) lines.push(`Syllabus context: ${data.markSyllCtx}`);
+    lines.push(`\nOverall feedback: ${data.overallFeedback}`);
+    if(data.sections&&data.sections.length){
+      lines.push(`\n=== MARKING CRITERIA ===`);
+      data.sections.forEach(s=>lines.push(`• ${s.criterion}: ${s.score}/${s.max} — ${s.feedback}`));
+    }
+    if(data.paragraphs&&data.paragraphs.length){
+      lines.push(`\n=== PARAGRAPH-BY-PARAGRAPH ANALYSIS ===`);
+      data.paragraphs.forEach(p=>{
+        lines.push(`Paragraph ${p.number}${p.quote?` ("${p.quote}...")`:''}`);
+        lines.push(`  ✓ What worked: ${p.good}`);
+        lines.push(`  ✗ What to improve: ${p.bad}`);
+      });
+    }
+  }else{
+    lines.push(`=== EXAM RESULTS ===`);
+    lines.push(`Subject: ${data.subject||'unknown'}`);
+    lines.push(`Total: ${data.totalScore}/${data.totalMax} (${Math.round((data.totalScore/data.totalMax)*100)}%)`);
+    if(data.markSyllCtx) lines.push(`Syllabus context: ${data.markSyllCtx}`);
+    if(data.questions&&data.questions.length){
+      lines.push(`\n=== QUESTION-BY-QUESTION BREAKDOWN ===`);
+      data.questions.forEach(q=>{
+        lines.push(`\nQuestion ${q.number} (${q.marks} marks) — scored ${q.score}/${q.marks}`);
+        lines.push(`Question: ${q.question}`);
+        lines.push(`Student's answer: ${q.studentAnswer||'(blank)'}`);
+        lines.push(`Error type: ${q.errorType||'n/a'}`);
+        lines.push(`Feedback: ${q.feedback}`);
+        if(q.stepFeedback&&q.stepFeedback.length) lines.push(`Step breakdown: ${q.stepFeedback.join(' | ')}`);
+      });
+    }
+  }
+
+  lines.push(`\n=== YOUR ROLE ===`);
+  lines.push(`Be specific — always refer to the actual questions, scores and feedback above.`);
+  lines.push(`Be encouraging but honest. Explain WHY marks were lost, not just WHAT was wrong.`);
+  lines.push(`When asked for a better answer, write one using the correct concepts.`);
+  lines.push(`Keep responses concise — 2-5 sentences unless the student asks for more detail.`);
+  lines.push(`Never say you're an AI — you're Revvy, part of Revaix Study.`);
+
+  markChatContext=lines.join('\n');
   markChatHistory=[];
 }
 
