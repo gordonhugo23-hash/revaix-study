@@ -3008,6 +3008,10 @@ If blank score 0.`;
       });
     }
 
+    document.getElementById('markLoad').classList.remove('show');
+    document.getElementById('markFeedbackSection').classList.add('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+
   }catch(e){
     clearInterval(iv);
     finishProgress('markProgressBar',markProg);
