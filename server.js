@@ -276,7 +276,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Stripe Checkout endpoint
-  if (req.method === 'POST' && pathname === '/api/checkout') {
+  if ((req.method === 'GET' || req.method === 'POST') && pathname === '/api/checkout') {
     if (!stripe || !STRIPE_SECRET_KEY) {
       res.writeHead(503, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Stripe is not configured' }));
@@ -331,8 +331,14 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ sessionId: session.id, url: session.url }));
+      if (req.method === 'GET') {
+        // Direct link click — redirect to Stripe hosted checkout page
+        res.writeHead(302, { Location: session.url });
+        res.end();
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ sessionId: session.id, url: session.url }));
+      }
     });
     return;
   }
