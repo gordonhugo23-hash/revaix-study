@@ -997,6 +997,45 @@ MathJax = {
   .shuffle-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:7px;font-family:'DM Mono',monospace;font-size:0.68rem;cursor:pointer;transition:all 0.15s;margin-bottom:12px;}
   .shuffle-btn:hover{border-color:var(--accent2);color:var(--accent2);}
 
+  /* GAMIFICATION — Streak & XP Badge */
+  .nav-streak{font-size:0.55rem;background:rgba(251,191,36,0.12);color:var(--accent3);border:1px solid rgba(251,191,36,0.25);padding:3px 9px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:4px;cursor:pointer;transition:all 0.2s;}
+  .nav-streak:hover{background:rgba(251,191,36,0.2);box-shadow:0 0 16px rgba(251,191,36,0.2);}
+  .xp-info{font-size:0.55rem;background:rgba(110,231,183,0.12);color:var(--accent);border:1px solid rgba(110,231,183,0.25);padding:3px 9px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+  .xp-info:hover{background:rgba(110,231,183,0.2);box-shadow:0 0 16px rgba(110,231,183,0.2);}
+
+  /* USAGE COUNTER */
+  .usage-indicator{font-size:0.65rem;color:var(--muted);padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;text-align:center;}
+
+  /* PAYWALL OVERLAY */
+  .paywall-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:400;align-items:center;justify-content:center;}
+  .paywall-overlay.show{display:flex;}
+  .paywall-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:40px 32px;max-width:520px;width:92%;box-shadow:0 60px 120px rgba(0,0,0,0.6);}
+  .paywall-heading{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:8px;color:var(--text);}
+  .paywall-sub{font-size:0.75rem;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+  .paywall-plans{display:flex;gap:16px;margin-bottom:24px;}
+  .paywall-plan{flex:1;border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;}
+  .paywall-plan:hover{border-color:var(--accent);background:rgba(110,231,183,0.05);}
+  .paywall-plan-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:6px;}
+  .paywall-plan-price{font-size:1.3rem;font-weight:700;margin-bottom:12px;}
+  .paywall-plan-btn{background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-family:'Syne',sans-serif;font-size:0.8rem;cursor:pointer;width:100%;transition:all 0.2s;}
+  .paywall-plan-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(110,231,183,0.3);}
+  .paywall-footer{text-align:center;}
+  .paywall-skip{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;transition:color 0.2s;}
+  .paywall-skip:hover{color:var(--text);}
+
+  /* CONFETTI */
+  .confetti{position:fixed;pointer-events:none;width:10px;height:10px;background:var(--accent);z-index:9999;}
+  .confetti.confetti-2{background:var(--accent2);}
+  .confetti.confetti-3{background:var(--accent3);}
+  @keyframes confetti-fall{to{transform:translateY(100vh) rotate(360deg);opacity:0;}}
+  .confetti.falling{animation:confetti-fall 2.5s ease-in forwards;}
+
+  /* ONBOARDING TOOLTIP */
+  .onboarding-highlight{animation:pulse-highlight 2s ease-in-out infinite;}
+  @keyframes pulse-highlight{0%,100%{box-shadow:0 0 0 0 rgba(110,231,183,0.4);} 50%{box-shadow:0 0 0 8px rgba(110,231,183,0.1);}}
+  .tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:0.75rem;color:var(--text);white-space:nowrap;z-index:500;margin-bottom:8px;box-shadow:0 10px 30px rgba(0,0,0,0.3);}
+  .tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--surface);}
+
 </style>
 </head>
 <body>
@@ -1053,6 +1092,29 @@ MathJax = {
   </div>
 </div>
 
+<!-- PAYWALL OVERLAY -->
+<div class="paywall-overlay" id="paywallOverlay">
+  <div class="paywall-card">
+    <div class="paywall-heading">🎯 You've used all 3 free generations</div>
+    <div class="paywall-sub">Ready to unlock unlimited generations? Choose a plan below or continue with limited access.</div>
+    <div class="paywall-plans">
+      <div class="paywall-plan">
+        <div class="paywall-plan-name">Student</div>
+        <div class="paywall-plan-price">$5<span style="font-size:0.6rem">/mo</span></div>
+        <button class="paywall-plan-btn" onclick="window.location.href='/api/checkout?plan=student'">Upgrade Now</button>
+      </div>
+      <div class="paywall-plan">
+        <div class="paywall-plan-name">Serious</div>
+        <div class="paywall-plan-price">$10<span style="font-size:0.6rem">/mo</span></div>
+        <button class="paywall-plan-btn" onclick="window.location.href='/api/checkout?plan=serious'">Upgrade Now</button>
+      </div>
+    </div>
+    <div class="paywall-footer">
+      <button class="paywall-skip" onclick="closePaywall()">Continue with limited access</button>
+    </div>
+  </div>
+</div>
+
 <!-- FULLSCREEN FLASHCARD MODE -->
 <div class="fc-overlay" id="fcOverlay">
   <div class="fc-overlay-nav">
@@ -1087,6 +1149,8 @@ MathJax = {
     <button class="nav-link" data-page="exam">✏️ Practice Exam</button>
     <button class="nav-link" data-page="mark">🎯 Mark My Work</button>
     <div class="nav-right">
+      <div class="nav-streak" id="streakBadge" title="Daily visit streak" style="display:none">🔥 <span id="streakCount">0</span></div>
+      <div class="xp-info" id="xpBadge" title="Experience points" style="display:none"><span id="xpDisplay">0 XP</span> · <span id="levelDisplay">Beginner</span></div>
       <div class="nav-free">✦ Free</div>
       <button class="nav-settings-btn" id="settingsBtn">⚙️</button>
       <div class="nav-badge" id="whatsNewBtn">What's New</div>
@@ -1256,6 +1320,7 @@ MathJax = {
     </div>
 
     <div class="err" id="lecErr"></div>
+    <div class="usage-indicator" id="lecUsageIndicator" style="display:none"></div>
     <button class="btn btn-g" id="lecBtn" disabled>Generate Study Pack — Free ✦</button>
     </div><!-- end lec-form -->
   </div><!-- end container -->
@@ -1456,6 +1521,7 @@ MathJax = {
     </div>
 
     <div class="err" id="examErr"></div>
+    <div class="usage-indicator" id="examUsageIndicator" style="display:none"></div>
     <button class="btn btn-p" id="examBtn">Generate Practice Exam</button>
   </div>
 
@@ -3294,6 +3360,259 @@ document.getElementById('markChatCloseBtn')?.addEventListener('click',()=>{
 document.getElementById('markChatSendBtn')?.addEventListener('click',sendMarkChatMessage);
 document.getElementById('markChatInput')?.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMarkChatMessage();}
+});
+
+// ══════════════════════════════════════════════════════════════
+// ────────────────── GAMIFICATION & MONETIZATION ──────────────
+// ══════════════════════════════════════════════════════════════
+
+// Check for upgraded=true URL param
+window.addEventListener('load',()=>{
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('upgraded')==='true'){
+    localStorage.setItem('revaix_plan','paid');
+    window.history.replaceState({},'',window.location.pathname);
+  }
+});
+
+// ── User Data Management ──
+function loadUserData(){
+  try{
+    const stored=localStorage.getItem('revaix_user_data');
+    return stored?JSON.parse(stored):{xp:0,streak:0,lastVisit:null};
+  }catch(e){
+    return {xp:0,streak:0,lastVisit:null};
+  }
+}
+
+function saveUserData(data){
+  localStorage.setItem('revaix_user_data',JSON.stringify(data));
+}
+
+function updateStreak(){
+  const data=loadUserData();
+  const today=new Date().toDateString();
+  if(data.lastVisit!==today){
+    const yesterday=new Date(Date.now()-86400000).toDateString();
+    if(data.lastVisit===yesterday){
+      data.streak=(data.streak||0)+1;
+    }else{
+      data.streak=1;
+    }
+    data.lastVisit=today;
+    saveUserData(data);
+  }
+  return data;
+}
+
+function addXP(amount){
+  const data=loadUserData();
+  const oldLevel=getLevel(data.xp);
+  data.xp+=amount;
+  const newLevel=getLevel(data.xp);
+  saveUserData(data);
+  if(newLevel>oldLevel){
+    triggerConfetti();
+  }
+  updateGameUI();
+}
+
+function getLevel(xp){
+  if(xp>=2000)return 'Legend';
+  if(xp>=1000)return 'Master';
+  if(xp>=500)return 'Expert';
+  if(xp>=200)return 'Scholar';
+  return 'Beginner';
+}
+
+function updateGameUI(){
+  const data=loadUserData();
+  if(data.streak>0){
+    document.getElementById('streakCount').textContent=data.streak;
+    document.getElementById('streakBadge').style.display='flex';
+  }
+  const level=getLevel(data.xp);
+  document.getElementById('xpDisplay').textContent=data.xp+' XP';
+  document.getElementById('levelDisplay').textContent=level;
+  document.getElementById('xpBadge').style.display='flex';
+}
+
+// ── Usage Tracking ──
+function loadUsage(){
+  const plan=localStorage.getItem('revaix_plan')||'free';
+  if(plan==='paid')return {count:0,limit:Infinity};
+  try{
+    const stored=localStorage.getItem('revaix_usage');
+    const data=stored?JSON.parse(stored):{count:0,limit:3};
+    return data;
+  }catch(e){
+    return {count:0,limit:3};
+  }
+}
+
+function saveUsage(usage){
+  localStorage.setItem('revaix_usage',JSON.stringify(usage));
+}
+
+function canGenerate(){
+  const usage=loadUsage();
+  return usage.count<usage.limit;
+}
+
+function incrementUsage(){
+  const usage=loadUsage();
+  usage.count++;
+  saveUsage(usage);
+  updateUsageUI();
+  if(!canGenerate()){
+    showPaywall();
+  }
+}
+
+function updateUsageUI(){
+  const usage=loadUsage();
+  const remaining=Math.max(0,usage.limit-usage.count);
+  if(usage.limit===Infinity){
+    document.getElementById('lecUsageIndicator').style.display='none';
+    document.getElementById('examUsageIndicator').style.display='none';
+  }else{
+    const msg=`${remaining} of 3 free uses remaining`;
+    document.getElementById('lecUsageIndicator').textContent=msg;
+    document.getElementById('examUsageIndicator').textContent=msg;
+    if(usage.count>0){
+      document.getElementById('lecUsageIndicator').style.display='';
+      document.getElementById('examUsageIndicator').style.display='';
+    }
+  }
+}
+
+// ── Paywall ──
+function showPaywall(){
+  document.getElementById('paywallOverlay').classList.add('show');
+}
+
+function closePaywall(){
+  document.getElementById('paywallOverlay').classList.remove('show');
+}
+
+// ── Confetti ──
+function triggerConfetti(){
+  if(localStorage.getItem('reduceMotionToggle')==='true')return;
+  for(let i=0;i<30;i++){
+    const conf=document.createElement('div');
+    conf.className='confetti '+(i%3===0?'confetti-2':i%3===1?'confetti-3':'');
+    conf.style.left=Math.random()*100+'%';
+    conf.style.top='-10px';
+    document.body.appendChild(conf);
+    setTimeout(()=>{
+      conf.classList.add('falling');
+    },10);
+    setTimeout(()=>conf.remove(),2600);
+  }
+}
+
+// ── Keyboard Shortcuts ──
+document.addEventListener('keydown',e=>{
+  const fcOverlay=document.getElementById('fcOverlay');
+  if(fcOverlay.style.display==='flex'||fcOverlay.classList.contains('show')){
+    if(e.code==='Space'){e.preventDefault();document.getElementById('fcFlipBtn').click();}
+    else if(e.code==='ArrowLeft'){e.preventDefault();document.getElementById('fcPrevBtn').click();}
+    else if(e.code==='ArrowRight'){e.preventDefault();document.getElementById('fcNextBtn').click();}
+    else if(e.key==='s'||e.key==='S'){e.preventDefault();document.getElementById('fcShuffleOverlay').click();}
+    else if(e.key==='Escape'){e.preventDefault();document.getElementById('fcOverlayClose').click();}
+  }
+});
+
+// ── Onboarding ──
+function initOnboarding(){
+  if(localStorage.getItem('revaix_onboarded'))return;
+  const toggle=document.querySelector('.mode-toggle');
+  if(!toggle)return;
+  toggle.classList.add('onboarding-highlight');
+  const tooltip=document.createElement('div');
+  tooltip.className='tooltip';
+  tooltip.textContent='Start here! Choose if you\u0027re a uni or high school student';
+  tooltip.style.position='relative';
+  toggle.parentElement.style.position='relative';
+  toggle.parentElement.insertBefore(tooltip,toggle);
+  function dismissOnboarding(){
+    localStorage.setItem('revaix_onboarded','true');
+    toggle.classList.remove('onboarding-highlight');
+    tooltip.remove();
+    document.removeEventListener('click',dismissOnboarding);
+  }
+  document.addEventListener('click',dismissOnboarding);
+}
+
+// ── Hook into existing Generate buttons ──
+const origLecBtnClick=document.getElementById('lecBtn').onclick;
+document.getElementById('lecBtn').addEventListener('click',function(){
+  if(!canGenerate()){
+    showPaywall();
+    return;
+  }
+  incrementUsage();
+  addXP(50);
+});
+
+const origExamBtnClick=document.getElementById('examBtn').onclick;
+document.getElementById('examBtn').addEventListener('click',function(){
+  if(!canGenerate()){
+    showPaywall();
+    return;
+  }
+  incrementUsage();
+  addXP(50);
+});
+
+// ── Flashcard completion tracking ──
+const origFcFlipClick=document.getElementById('fcFlipBtn')?.onclick;
+let fcCardsViewed=0;
+let fcTotalCards=0;
+document.getElementById('fcFlipBtn')?.addEventListener('click',function(){
+  fcCardsViewed=parseInt(document.getElementById('fcOverlayCounter').textContent.split('/')[0])||0;
+  fcTotalCards=parseInt(document.getElementById('fcOverlayCounter').textContent.split('/')[1])||0;
+});
+document.getElementById('fcOverlayClose')?.addEventListener('click',function(){
+  if(fcCardsViewed===fcTotalCards&&fcTotalCards>0){
+    addXP(30);
+    triggerConfetti();
+  }
+});
+
+// ── MCQ perfect score ──
+window.checkMCQScore=function(){
+  const labels=document.querySelectorAll('[id^="lq-q-"]');
+  let total=0,correct=0;
+  labels.forEach(l=>{
+    const id=l.id.replace('lq-q-','');
+    const q=window.lecData?.mcq?.find(m=>m.id===id);
+    if(q){
+      total++;
+      const selected=document.querySelector('input[name="q-'+id+'"]:checked');
+      if(selected&&selected.value===(q.correctAnswer||q.answer)){
+        correct++;
+      }
+    }
+  });
+  if(total>0&&correct===total){
+    addXP(40);
+    triggerConfetti();
+  }
+};
+
+// ── Mini test completion ──
+window.onMiniTestComplete=function(){
+  addXP(35);
+  triggerConfetti();
+};
+
+// Initialize on page load
+window.addEventListener('load',()=>{
+  updateStreak();
+  updateGameUI();
+  updateUsageUI();
+  initOnboarding();
 });
 </script>
 </body>

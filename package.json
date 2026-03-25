@@ -1,8 +1,12 @@
 {
   "name": "revaix-study",
   "version": "1.0.0",
+  "description": "AI-powered study platform with Stripe payment integration and usage-based gating",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
+  },
+  "dependencies": {
+    "stripe": "^15.0.0"
   }
 }
