@@ -3491,6 +3491,11 @@ function incrementUsage(){
   usage.count++;
   saveUsage(usage);
   updateUsageUI();
+  // Also record on server for persistence across devices
+  const token=localStorage.getItem('revaix_token');
+  if(token){
+    fetch('/api/usage/increment',{method:'POST',headers:{Authorization:'Bearer '+token}}).catch(()=>{});
+  }
   if(!canGenerate()){
     showPaywall();
   }
@@ -3598,32 +3603,49 @@ function lockApp(){
 }
 
 async function checkAuthAndUnlock(){
-  if(!_sbClient)return checkSavedEmail();
+  if(!_sbClient){checkSavedEmail();return;}
 
   const{data:{session}}=await _sbClient.auth.getSession();
   if(!session){
-    // No Supabase session — fall back to email verify
-    checkSavedEmail();
+    // Not logged in — redirect to login
+    window.location.href='/login?redirect=/app';
     return;
   }
 
-  // Logged in — get plan from server
+  // Logged in — get plan + usage from server
   try{
     const resp=await fetch('/api/me',{headers:{Authorization:'Bearer '+session.access_token}});
-    if(!resp.ok){checkSavedEmail();return;}
+    if(!resp.ok){window.location.href='/login?redirect=/app';return;}
     const data=await resp.json();
+
+    // Sync usage from server into localStorage
+    if(typeof data.generations_used==='number'&&!data.active){
+      const usage={count:data.generations_used,limit:3};
+      localStorage.setItem('revaix_usage',JSON.stringify(usage));
+    }
+
     if(data.active){
       unlockApp(data.email,data.plan);
     }else{
       lockApp();
+      updateUsageUI();
     }
-    // Update account badge with email
+
+    // Store session token for later API calls
+    localStorage.setItem('revaix_token',session.access_token);
+    localStorage.setItem('revaix_email',data.email);
+
+    // Update account badge
     const badge=document.getElementById('accountBadge');
     if(badge){
-      badge.textContent=data.active?(data.plan==='serious'||data.plan==='serious_yearly'?'Serious ✓':'Student ✓'):'Free';
+      badge.textContent=data.active?(data.plan==='serious'||data.plan==='serious_yearly'?'Serious ✓':'Student ✓'):'Free plan';
+      badge.title='Sign out';
       badge.style.display='inline-flex';
+      badge.style.cursor='pointer';
+      badge.onclick=signOut;
     }
   }catch(e){
+    // Network error — let them use cached state
     checkSavedEmail();
   }
 }

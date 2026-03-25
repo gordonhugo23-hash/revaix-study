@@ -505,22 +505,42 @@ const server = http.createServer((req, res) => {
         }
         return supabaseAdmin
           .from('profiles')
-          .select('plan, active, email')
+          .select('plan, active, email, generations_used')
           .eq('id', user.id)
           .single()
           .then(({ data: profile }) => {
-            // Also check paid_users.json as fallback
             const jsonUser = isPaidUser(user.email);
             const active = profile?.active || jsonUser?.active || false;
             const plan   = active ? (profile?.plan || jsonUser?.plan || 'student') : 'free';
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ email: user.email, plan, active }));
+            res.end(JSON.stringify({
+              email: user.email,
+              plan,
+              active,
+              generations_used: profile?.generations_used || 0,
+            }));
           });
       })
       .catch(err => {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       });
+    return;
+  }
+
+  // Increment usage count for free users
+  if (req.method === 'POST' && pathname === '/api/usage/increment') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+    if (!token || !supabaseAdmin) {
+      res.writeHead(401); res.end(); return;
+    }
+    supabaseAdmin.auth.getUser(token)
+      .then(({ data: { user }, error }) => {
+        if (error || !user) { res.writeHead(401); res.end(); return; }
+        return supabaseAdmin.rpc('increment_usage', { user_id: user.id })
+          .then(() => { res.writeHead(200); res.end('{}'); });
+      })
+      .catch(() => { res.writeHead(500); res.end(); });
     return;
   }
 

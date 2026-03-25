@@ -287,7 +287,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
   </div>
   <div style="display:flex;align-items:center;gap:12px">
     <a href="/login" style="font-size:0.85rem;color:var(--muted);text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Sign in</a>
-    <a href="/app" class="nav-cta">Try Free →</a>
+    <a href="/signup" class="nav-cta">Sign up free →</a>
   </div>
 </nav>
 
@@ -298,7 +298,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
     <h1>Study smarter, not harder.<br>Turn your notes into <em>everything.</em></h1>
     <p class="hero-sub">Upload your lecture slides, class notes, or textbook pages. In under 30 seconds, AI generates study notes, flashcards, practice exams, and instant assignment marking. Built for QCE, VCE, HSC, and university students.</p>
     <div class="hero-actions">
-      <a href="/app" class="btn-primary">Generate my study pack →</a>
+      <a href="/signup" class="btn-primary">Generate my study pack →</a>
       <a href="#demo" class="btn-secondary">See it in action</a>
     </div>
     <p class="hero-note">✦ <span>100% free</span> to start · No credit card · Australian-made</p>
@@ -616,7 +616,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
         <li class="disabled">Assignment marking</li>
         <li class="disabled">Priority support</li>
       </ul>
-      <a href="/app" class="price-btn outline">Get started free</a>
+      <a href="/signup" class="price-btn outline">Get started free</a>
     </div>
 
     <!-- Student Plan (Most Popular) -->
@@ -635,7 +635,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
         <li>QCE / VCE / HSC mode</li>
         <li>11 language options</li>
       </ul>
-      <a href="/api/checkout?plan=student" class="price-btn solid">Start free trial →</a>
+      <a href="/signup?plan=student" class="price-btn solid">Start free trial →</a>
     </div>
 
     <!-- Serious Plan -->
@@ -653,7 +653,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
         <li>AI study chatbot</li>
         <li>Deeper comprehensive notes</li>
       </ul>
-      <a href="/api/checkout?plan=serious" class="price-btn outline">Start free trial →</a>
+      <a href="/signup?plan=serious" class="price-btn outline">Start free trial →</a>
     </div>
   </div>
 </section>
@@ -799,7 +799,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
   <div class="cta-inner reveal">
     <h2 class="cta-title">Ready to study<br><em>smarter?</em></h2>
     <p class="cta-sub">Join 12,000+ students across Australia using Revaix to turn hours of studying into minutes. Free to start, no signup needed, no credit card.</p>
-    <a href="/app" class="btn-primary" style="font-size:1rem;padding:18px 40px;">Generate my study pack — free →</a>
+    <a href="/signup" class="btn-primary" style="font-size:1rem;padding:18px 40px;">Generate my study pack — free →</a>
     <p class="cta-note">QCE · VCE · HSC · University · Any subject · Data never stored</p>
   </div>
 </section>
@@ -812,7 +812,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
     <a href="#features">Features</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
-    <a href="/app">Launch App</a>
+    <a href="/signup">Launch App</a>
     <a href="/privacy">Privacy</a>
     <a href="/terms">Terms</a>
     <a href="mailto:gordonhugo20@gmail.com">Contact</a>
@@ -909,8 +909,8 @@ function togglePricing() {
     saveLabel.textContent = '(Save 20%)';
 
     document.querySelectorAll('.price-btn').forEach(btn => {
-      if (btn.href.includes('student')) btn.href = '/api/checkout?plan=student_yearly';
-      if (btn.href.includes('serious')) btn.href = '/api/checkout?plan=serious_yearly';
+      if (btn.href.includes('plan=student')) btn.href = '/signup?plan=student_yearly';
+      if (btn.href.includes('plan=serious')) btn.href = '/signup?plan=serious_yearly';
     });
   } else {
     studentPrice.innerHTML = '$7<span>/month</span>';
@@ -918,9 +918,8 @@ function togglePricing() {
     saveLabel.textContent = '';
 
     document.querySelectorAll('.price-btn').forEach(btn => {
-      if (btn.href.includes('_yearly')) {
-        btn.href = btn.href.replace('_yearly', '');
-      }
+      if (btn.href.includes('plan=student_yearly')) btn.href = '/signup?plan=student';
+      if (btn.href.includes('plan=serious_yearly')) btn.href = '/signup?plan=serious';
     });
   }
 }

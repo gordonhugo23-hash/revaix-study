@@ -91,9 +91,13 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXFxb2V1a2hsa2J2bnpoZHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDk2MjQsImV4cCI6MjA4OTk4NTYyNH0.1pz8cvgdYfUo5i5mQeobsfLsVdUXNA4R8piw9QZhRkY'
     );
 
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan');
+    const redirectAfterAuth = plan ? '/api/checkout?plan=' + plan : (params.get('redirect') || '/app');
+
     // Redirect if already signed in
     sb.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = '/app';
+      if (session) window.location.href = redirectAfterAuth;
     });
 
     const emailEl   = document.getElementById('email');
@@ -130,6 +134,11 @@
       // Show email confirmation screen
       document.getElementById('signupCard').style.display = 'none';
       document.getElementById('confirmedEmail').textContent = email;
+      if (plan) {
+        document.getElementById('confirmCard').querySelector('p').innerHTML =
+          'We sent a confirmation link to <strong>' + email + '</strong>.<br>Click it to activate your account, then sign in to complete your purchase.';
+        document.getElementById('confirmCard').querySelector('.go-btn').href = '/login?plan=' + plan;
+      }
       document.getElementById('confirmCard').style.display = 'block';
     }
 

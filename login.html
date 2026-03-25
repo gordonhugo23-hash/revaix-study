@@ -79,9 +79,13 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXFxb2V1a2hsa2J2bnpoZHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDk2MjQsImV4cCI6MjA4OTk4NTYyNH0.1pz8cvgdYfUo5i5mQeobsfLsVdUXNA4R8piw9QZhRkY'
     );
 
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan');
+    const redirectAfterAuth = plan ? '/api/checkout?plan=' + plan : (params.get('redirect') || '/app');
+
     // Redirect if already signed in
     sb.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = '/app';
+      if (session) window.location.href = redirectAfterAuth;
     });
 
     const emailEl  = document.getElementById('email');
@@ -114,7 +118,7 @@
         return;
       }
 
-      window.location.href = '/app';
+      window.location.href = redirectAfterAuth;
     }
 
     document.getElementById('forgotLink').addEventListener('click', async e => {
