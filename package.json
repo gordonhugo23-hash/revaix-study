@@ -7,6 +7,7 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "stripe": "^15.0.0"
+    "stripe": "^15.0.0",
+    "@supabase/supabase-js": "^2.0.0"
   }
 }

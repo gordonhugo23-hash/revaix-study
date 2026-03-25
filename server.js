@@ -15,6 +15,20 @@ try {
   console.warn('Stripe module not available:', e.message);
 }
 
+let supabaseAdmin = null;
+try {
+  const { createClient } = require('@supabase/supabase-js');
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (supabaseUrl && supabaseKey) {
+    supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  }
+} catch (e) {
+  console.warn('Supabase module not available:', e.message);
+}
+
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
@@ -62,6 +76,35 @@ function isPaidUser(email) {
   const users = loadPaidUsers();
   const normalised = email.toLowerCase().trim();
   return users[normalised]?.active === true ? users[normalised] : null;
+}
+
+// ── Supabase helpers ──
+
+// Update a user's plan in Supabase profiles table (by email)
+async function updateUserPlanInSupabase(email, plan, stripeCustomerId, stripeSessionId) {
+  if (!supabaseAdmin) return false;
+  const normalised = email.toLowerCase().trim();
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      plan,
+      active: true,
+      stripe_customer_id: stripeCustomerId || null,
+      stripe_session_id: stripeSessionId || null,
+      paid_at: new Date().toISOString(),
+    })
+    .eq('email', normalised);
+  if (error) { console.warn('[supabase] updateUserPlan error:', error.message); return false; }
+  console.log(`[supabase] Updated plan for ${normalised} → ${plan}`);
+  return true;
+}
+
+// Deactivate a user's plan in Supabase (subscription cancelled)
+async function deactivateUserInSupabase(email) {
+  if (!supabaseAdmin) return;
+  const normalised = email.toLowerCase().trim();
+  await supabaseAdmin.from('profiles').update({ active: false }).eq('email', normalised);
+  console.log(`[supabase] Deactivated ${normalised}`);
 }
 
 // Rate limiting for API requests: 20 requests per minute per IP
@@ -235,6 +278,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Auth pages
+  if (req.method === 'GET' && pathname === '/login') {
+    serveFile(req, res, path.join(__dirname, 'login.html'), 'text/html');
+    return;
+  }
+  if (req.method === 'GET' && pathname === '/signup') {
+    serveFile(req, res, path.join(__dirname, 'signup.html'), 'text/html');
+    return;
+  }
+
   // Logo
   if (req.method === 'GET' && req.url === '/revaix_study_logo_v3.svg') {
     serveFile(req, res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml');
@@ -365,7 +418,9 @@ const server = http.createServer((req, res) => {
             : 'student';
 
           if (email) {
+            // Write to both Supabase and JSON fallback
             addPaidUser(email, plan, session.customer, session.id);
+            updateUserPlanInSupabase(email, plan, session.customer, session.id);
           } else {
             console.warn(`[${new Date().toISOString()}] Checkout completed but no email found: ${session.id}`);
           }
@@ -377,13 +432,15 @@ const server = http.createServer((req, res) => {
           if (sub.customer && stripe) {
             stripe.customers.retrieve(sub.customer).then(customer => {
               if (customer.email) {
-                const users = loadPaidUsers();
                 const normalised = customer.email.toLowerCase().trim();
+                // Deactivate in both stores
+                const users = loadPaidUsers();
                 if (users[normalised]) {
                   users[normalised].active = false;
                   savePaidUsers(users);
-                  console.log(`[${new Date().toISOString()}] Deactivated user: ${normalised}`);
                 }
+                deactivateUserInSupabase(normalised);
+                console.log(`[${new Date().toISOString()}] Deactivated user: ${normalised}`);
               }
             }).catch(e => {
               console.warn('Could not deactivate user:', e.message);
@@ -427,6 +484,43 @@ const server = http.createServer((req, res) => {
       plan: user ? user.plan : 'free',
       email: email,
     }));
+    return;
+  }
+
+  // /api/me — verify Supabase JWT and return user's plan
+  if (req.method === 'GET' && pathname === '/api/me') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+    if (!token || !supabaseAdmin) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+
+    supabaseAdmin.auth.getUser(token)
+      .then(({ data: { user }, error }) => {
+        if (error || !user) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid token' }));
+          return;
+        }
+        return supabaseAdmin
+          .from('profiles')
+          .select('plan, active, email')
+          .eq('id', user.id)
+          .single()
+          .then(({ data: profile }) => {
+            // Also check paid_users.json as fallback
+            const jsonUser = isPaidUser(user.email);
+            const active = profile?.active || jsonUser?.active || false;
+            const plan   = active ? (profile?.plan || jsonUser?.plan || 'student') : 'free';
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ email: user.email, plan, active }));
+          });
+      })
+      .catch(err => {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      });
     return;
   }
 

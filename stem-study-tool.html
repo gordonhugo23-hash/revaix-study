@@ -1113,7 +1113,8 @@ MathJax = {
       </div>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px">Already paid? Enter your email to unlock:</div>
+      <a href="/login" style="display:block;width:100%;text-align:center;background:rgba(129,140,248,0.15);border:1px solid rgba(129,140,248,0.3);color:var(--accent2);border-radius:10px;padding:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;text-decoration:none;margin-bottom:12px;transition:all 0.2s" onmouseover="this.style.background='rgba(129,140,248,0.25)'" onmouseout="this.style.background='rgba(129,140,248,0.15)'">Already have an account? Sign in →</a>
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px">Or enter your payment email to unlock:</div>
       <div style="display:flex;gap:8px">
         <input type="email" id="verifyEmailInput" placeholder="your@email.com" style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.76rem;padding:9px 12px;outline:none;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <button id="verifyEmailBtn" onclick="verifyEmail()" style="background:var(--accent2);color:#fff;border:none;padding:9px 16px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;white-space:nowrap;transition:opacity 0.15s">Verify</button>
@@ -3569,26 +3570,80 @@ function verifyEmail(){
     });
 }
 
-// ── Check saved email on load ──
+// ── Supabase auth check ──
+const _sbClient=(()=>{
+  try{
+    const{createClient}=supabase;
+    return createClient(
+      'https://jaaqqoeukhlkbvnzhdqt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXFxb2V1a2hsa2J2bnpoZHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDk2MjQsImV4cCI6MjA4OTk4NTYyNH0.1pz8cvgdYfUo5i5mQeobsfLsVdUXNA4R8piw9QZhRkY'
+    );
+  }catch(e){return null;}
+})();
+
+function unlockApp(email,plan){
+  localStorage.setItem('revaix_plan','paid');
+  localStorage.setItem('revaix_email',email);
+  updateUsageUI();
+  closePaywall();
+  // Update account badge
+  const badge=document.getElementById('accountBadge');
+  if(badge){badge.textContent=plan==='serious'||plan==='serious_yearly'?'Serious ✓':'Student ✓';badge.style.display='inline-flex';}
+}
+
+function lockApp(){
+  localStorage.setItem('revaix_plan','free');
+  localStorage.removeItem('revaix_email');
+  updateUsageUI();
+}
+
+async function checkAuthAndUnlock(){
+  if(!_sbClient)return checkSavedEmail();
+
+  const{data:{session}}=await _sbClient.auth.getSession();
+  if(!session){
+    // No Supabase session — fall back to email verify
+    checkSavedEmail();
+    return;
+  }
+
+  // Logged in — get plan from server
+  try{
+    const resp=await fetch('/api/me',{headers:{Authorization:'Bearer '+session.access_token}});
+    if(!resp.ok){checkSavedEmail();return;}
+    const data=await resp.json();
+    if(data.active){
+      unlockApp(data.email,data.plan);
+    }else{
+      lockApp();
+    }
+    // Update account badge with email
+    const badge=document.getElementById('accountBadge');
+    if(badge){
+      badge.textContent=data.active?(data.plan==='serious'||data.plan==='serious_yearly'?'Serious ✓':'Student ✓'):'Free';
+      badge.style.display='inline-flex';
+    }
+  }catch(e){
+    checkSavedEmail();
+  }
+}
+
 function checkSavedEmail(){
   const email=localStorage.getItem('revaix_email');
   const plan=localStorage.getItem('revaix_plan');
   if(!email||plan!=='paid')return;
-
-  // Re-verify with server that subscription is still active
   fetch('/api/verify?email='+encodeURIComponent(email))
     .then(r=>r.json())
     .then(data=>{
-      if(!data.paid){
-        // Subscription lapsed, revert to free
-        localStorage.setItem('revaix_plan','free');
-        localStorage.removeItem('revaix_email');
-        updateUsageUI();
-      }
+      if(!data.paid){lockApp();}
     })
-    .catch(()=>{
-      // Network error — keep current state, don't lock them out
-    });
+    .catch(()=>{});
+}
+
+async function signOut(){
+  if(_sbClient)await _sbClient.auth.signOut();
+  lockApp();
+  window.location.href='/login';
 }
 
 // ── Confetti ──
@@ -3709,8 +3764,9 @@ window.addEventListener('load',()=>{
   updateGameUI();
   updateUsageUI();
   initOnboarding();
-  checkSavedEmail();
+  checkAuthAndUnlock();
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>
