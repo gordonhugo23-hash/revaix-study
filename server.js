@@ -277,7 +277,10 @@ const server = http.createServer((req, res) => {
 
   // Stripe Checkout endpoint
   if ((req.method === 'GET' || req.method === 'POST') && pathname === '/api/checkout') {
+    console.log('[checkout] request received, plan:', parsedUrl.query.plan, '| stripe ready:', !!stripe, '| priceStudent:', STRIPE_PRICE_STUDENT ? 'set' : 'MISSING');
+
     if (!stripe || !STRIPE_SECRET_KEY) {
+      console.log('[checkout] Stripe not configured — returning 503');
       res.writeHead(503, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Stripe is not configured' }));
       return;
