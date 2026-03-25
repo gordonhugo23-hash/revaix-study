@@ -1116,14 +1116,14 @@ MathJax = {
         <div class="paywall-plan-name">Student</div>
         <div class="paywall-plan-price">$7<span style="font-size:0.6rem">/mo</span></div>
         <div style="font-size:0.68rem;color:var(--muted);margin-bottom:10px">20 uploads/month</div>
-        <button class="paywall-plan-btn" onclick="window.location.href='/api/checkout?plan=student'">Upgrade Now</button>
+        <button class="paywall-plan-btn" onclick="window.location.href='/api/checkout?plan=student'">Upgrade — $7/mo</button>
       </div>
       <div class="paywall-plan" style="border-color:var(--accent);position:relative">
         <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#06060b;font-size:0.55rem;font-weight:700;padding:2px 10px;border-radius:100px;white-space:nowrap">BEST VALUE</div>
         <div class="paywall-plan-name">Serious</div>
         <div class="paywall-plan-price">$14<span style="font-size:0.6rem">/mo</span></div>
         <div style="font-size:0.68rem;color:var(--muted);margin-bottom:10px">Unlimited uploads</div>
-        <button class="paywall-plan-btn" style="background:var(--accent);color:#06060b" onclick="window.location.href='/api/checkout?plan=serious'">Upgrade Now</button>
+        <button class="paywall-plan-btn" style="background:var(--accent);color:#06060b" onclick="window.location.href='/api/checkout?plan=serious'">Upgrade — $14/mo</button>
       </div>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
@@ -1134,9 +1134,6 @@ MathJax = {
         <button id="verifyEmailBtn" onclick="verifyEmail()" style="background:var(--accent2);color:#fff;border:none;padding:9px 16px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;white-space:nowrap;transition:opacity 0.15s">Verify</button>
       </div>
       <div id="verifyEmailMsg" style="font-size:0.68rem;margin-top:6px;display:none"></div>
-    </div>
-    <div class="paywall-footer">
-      <button class="paywall-skip" onclick="closePaywall()">Continue with limited access</button>
     </div>
   </div>
 </div>
@@ -1194,7 +1191,6 @@ MathJax = {
       <h1>Study smarter.<br><span class="hl">No notes required.</span></h1>
       <p>Enter your course and topic — or upload your notes — and get an instant study pack with summaries, flashcards, practice exams and marking. Built for high school and university students.</p>
     </div>
-    <div class="free-banner">🎉 <strong>100% Free</strong> — no account needed, no credit card, just enter your subject and go</div>
     <div id="lec-form">
 
     <!-- STUDENT MODE TOGGLE -->
@@ -3639,7 +3635,9 @@ function unlockApp(email,plan){
   const badge=document.getElementById('accountBadge');
   if(badge){
     badge.textContent=isSerious()?'Serious ✓':'Student ✓';
+    badge.title='Manage account';
     badge.style.display='inline-flex';
+    badge.onclick=()=>window.location.href='/account';
   }
 }
 
@@ -3650,10 +3648,27 @@ function lockApp(){
   applyFeatureGating();
 }
 
-async function checkAuthAndUnlock(){
-  if(!_sbClient){checkSavedEmail();return;}
+function _getSupabaseClient(){
+  if(_sbClient)return _sbClient;
+  // Retry: CDN may have loaded after the inline script ran
+  try{
+    const{createClient}=supabase;
+    return createClient(
+      'https://jaaqqoeukhlkbvnzhdqt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXFxb2V1a2hsa2J2bnpoZHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDk2MjQsImV4cCI6MjA4OTk4NTYyNH0.1pz8cvgdYfUo5i5mQeobsfLsVdUXNA4R8piw9QZhRkY'
+    );
+  }catch(e){return null;}
+}
 
-  const{data:{session}}=await _sbClient.auth.getSession();
+async function checkAuthAndUnlock(){
+  const sb=_getSupabaseClient();
+  if(!sb){
+    // Supabase completely unavailable (CDN blocked?) — force login
+    window.location.href='/login?redirect=/app';
+    return;
+  }
+
+  const{data:{session}}=await sb.auth.getSession();
   if(!session){
     // Not logged in — redirect to login
     window.location.href='/login?redirect=/app';
@@ -3686,15 +3701,17 @@ async function checkAuthAndUnlock(){
     // Update account badge
     const badge=document.getElementById('accountBadge');
     if(badge){
-      badge.textContent=data.active?(data.plan==='serious'||data.plan==='serious_yearly'?'Serious ✓':'Student ✓'):'Free plan';
-      badge.title='Sign out';
+      const planLabel=data.active?(data.plan==='serious'||data.plan==='serious_yearly'?'Serious ✓':'Student ✓'):'My Account';
+      badge.textContent=planLabel;
+      badge.title='Manage account';
       badge.style.display='inline-flex';
       badge.style.cursor='pointer';
-      badge.onclick=signOut;
+      badge.onclick=()=>window.location.href='/account';
     }
   }catch(e){
-    // Network error — let them use cached state
-    checkSavedEmail();
+    // Network error — show badge anyway so user can still access account
+    const badge=document.getElementById('accountBadge');
+    if(badge){badge.textContent='My Account';badge.style.display='inline-flex';badge.onclick=()=>window.location.href='/account';}
   }
 }
 
@@ -3711,8 +3728,10 @@ function checkSavedEmail(){
 }
 
 async function signOut(){
-  if(_sbClient)await _sbClient.auth.signOut();
+  const sb=_getSupabaseClient();
+  if(sb)await sb.auth.signOut();
   lockApp();
+  localStorage.removeItem('revaix_token');
   window.location.href='/login';
 }
 
