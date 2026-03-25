@@ -620,7 +620,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
     <div class="price-card popular">
       <div class="price-badge">MOST POPULAR</div>
       <div class="price-tier">Student</div>
-      <div class="price-amount" id="studentPrice">$5<span>/month</span></div>
+      <div class="price-amount" id="studentPrice">$7<span>/month</span></div>
       <div class="price-desc">Everything you need to ace your exams.</div>
       <ul class="price-features">
         <li>20 uploads per month</li>
@@ -638,7 +638,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
     <!-- Serious Plan -->
     <div class="price-card">
       <div class="price-tier">Serious Student</div>
-      <div class="price-amount" id="seriousPrice">$10<span>/month</span></div>
+      <div class="price-amount" id="seriousPrice">$14<span>/month</span></div>
       <div class="price-desc">For students who study seriously.</div>
       <ul class="price-features">
         <li>Unlimited uploads</li>
@@ -697,7 +697,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
 
       <div class="testimonial">
         <div class="testimonial-stars">★★★★★</div>
-        <div class="testimonial-text">"Best $5 I spent on my education. No upload needed for my subjects—just picked my course and got everything. It's like having a personal tutor."</div>
+        <div class="testimonial-text">"Best $7 I spent on my education. No upload needed for my subjects—just picked my course and got everything. It's like having a personal tutor."</div>
         <div class="testimonial-author"><div class="testimonial-dot" style="background:var(--accent3)"></div><strong>Max P.</strong> Year 11, WA</div>
       </div>
     </div>
@@ -767,7 +767,7 @@ hr{border:none;border-top:1px solid rgba(100,100,138,0.2);margin:0;height:0;}
           <span>How much does it cost?</span>
           <div class="faq-chevron">+</div>
         </div>
-        <div class="faq-answer">Free to start with 3 uploads. The Student plan is $5/month for 20 uploads per month, and the Serious Student plan is $10/month for unlimited uploads. Payments aren't live yet—everything is completely free while we're in beta. When we go live, you'll have plenty of notice.</div>
+        <div class="faq-answer">Free to start with 3 uploads. The Student plan is $7/month for 20 uploads per month, and the Serious Student plan is $14/month for unlimited uploads.</div>
       </div>
 
       <div class="faq-item">
@@ -901,8 +901,8 @@ function togglePricing() {
   toggle.classList.toggle('active');
 
   if (isYearly) {
-    studentPrice.innerHTML = '$60<span>/year</span>';
-    seriousPrice.innerHTML = '$120<span>/year</span>';
+    studentPrice.innerHTML = '$67<span>/year</span>';
+    seriousPrice.innerHTML = '$134<span>/year</span>';
     saveLabel.textContent = '(Save 20%)';
 
     document.querySelectorAll('.price-btn').forEach(btn => {
@@ -910,8 +910,8 @@ function togglePricing() {
       if (btn.href.includes('serious')) btn.href = '/api/checkout?plan=serious_yearly';
     });
   } else {
-    studentPrice.innerHTML = '$5<span>/month</span>';
-    seriousPrice.innerHTML = '$10<span>/month</span>';
+    studentPrice.innerHTML = '$7<span>/month</span>';
+    seriousPrice.innerHTML = '$14<span>/month</span>';
     saveLabel.textContent = '';
 
     document.querySelectorAll('.price-btn').forEach(btn => {

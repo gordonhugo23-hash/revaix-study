@@ -362,9 +362,9 @@ const server = http.createServer((req, res) => {
         if (event?.type === 'checkout.session.completed') {
           const session = event.data.object;
           const email = session.customer_email || session.customer_details?.email;
-          const plan = session.amount_total >= 9600 ? 'serious_yearly'
-            : session.amount_total >= 4800 ? 'student_yearly'
-            : session.amount_total >= 1000 ? 'serious'
+          const plan = session.amount_total >= 13440 ? 'serious_yearly'
+            : session.amount_total >= 6720 ? 'student_yearly'
+            : session.amount_total >= 1400 ? 'serious'
             : 'student';
 
           if (email) {
