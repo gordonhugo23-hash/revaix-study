@@ -241,8 +241,8 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Static file serving with dynamic MIME types
-  if (req.method === 'GET' && pathname.startsWith('/')) {
+  // Static file serving with dynamic MIME types (skip /api/* routes)
+  if (req.method === 'GET' && pathname.startsWith('/') && !pathname.startsWith('/api/')) {
     const filePath = path.join(__dirname, pathname);
 
     // Security: prevent directory traversal
