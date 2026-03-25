@@ -22,6 +22,48 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const STRIPE_PRICE_STUDENT = process.env.STRIPE_PRICE_STUDENT || '';
 const STRIPE_PRICE_SERIOUS = process.env.STRIPE_PRICE_SERIOUS || '';
 
+// ── Paid users store (JSON file on disk) ──
+const PAID_USERS_FILE = path.join(__dirname, 'paid_users.json');
+
+function loadPaidUsers() {
+  try {
+    if (fs.existsSync(PAID_USERS_FILE)) {
+      return JSON.parse(fs.readFileSync(PAID_USERS_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.warn('Failed to load paid users file:', e.message);
+  }
+  return {};
+}
+
+function savePaidUsers(users) {
+  try {
+    fs.writeFileSync(PAID_USERS_FILE, JSON.stringify(users, null, 2));
+  } catch (e) {
+    console.warn('Failed to save paid users file:', e.message);
+  }
+}
+
+function addPaidUser(email, plan, stripeCustomerId, stripeSessionId) {
+  const users = loadPaidUsers();
+  const normalised = email.toLowerCase().trim();
+  users[normalised] = {
+    plan: plan || 'student',
+    stripeCustomerId: stripeCustomerId || null,
+    stripeSessionId: stripeSessionId || null,
+    paidAt: new Date().toISOString(),
+    active: true,
+  };
+  savePaidUsers(users);
+  console.log(`[${new Date().toISOString()}] Added paid user: ${normalised} (${plan})`);
+}
+
+function isPaidUser(email) {
+  const users = loadPaidUsers();
+  const normalised = email.toLowerCase().trim();
+  return users[normalised]?.active === true ? users[normalised] : null;
+}
+
 // Rate limiting for API requests: 20 requests per minute per IP
 const rateLimitMap = new Map();
 const RATE_LIMIT_REQUESTS = 20;
@@ -277,8 +319,9 @@ const server = http.createServer((req, res) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${origin}/app?upgraded=true`,
+      success_url: `${origin}/app?upgraded=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
+      // Stripe collects email automatically; we retrieve it from the webhook
     }, (err, session) => {
       logAPIUsage('POST', '/api/checkout', err ? 500 : 200, clientIP);
 
@@ -318,7 +361,37 @@ const server = http.createServer((req, res) => {
 
         if (event?.type === 'checkout.session.completed') {
           const session = event.data.object;
-          console.log(`[${new Date().toISOString()}] Checkout session completed: ${session.id}`);
+          const email = session.customer_email || session.customer_details?.email;
+          const plan = session.amount_total >= 9600 ? 'serious_yearly'
+            : session.amount_total >= 4800 ? 'student_yearly'
+            : session.amount_total >= 1000 ? 'serious'
+            : 'student';
+
+          if (email) {
+            addPaidUser(email, plan, session.customer, session.id);
+          } else {
+            console.warn(`[${new Date().toISOString()}] Checkout completed but no email found: ${session.id}`);
+          }
+        }
+
+        // Also handle subscription cancellations
+        if (event?.type === 'customer.subscription.deleted') {
+          const sub = event.data.object;
+          if (sub.customer && stripe) {
+            stripe.customers.retrieve(sub.customer).then(customer => {
+              if (customer.email) {
+                const users = loadPaidUsers();
+                const normalised = customer.email.toLowerCase().trim();
+                if (users[normalised]) {
+                  users[normalised].active = false;
+                  savePaidUsers(users);
+                  console.log(`[${new Date().toISOString()}] Deactivated user: ${normalised}`);
+                }
+              }
+            }).catch(e => {
+              console.warn('Could not deactivate user:', e.message);
+            });
+          }
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -336,7 +409,27 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && pathname === '/api/status') {
     logAPIUsage('GET', '/api/status', 200, clientIP);
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', plan: 'free' }));
+    res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  // Verify paid user by email
+  if (req.method === 'GET' && pathname === '/api/verify') {
+    const email = (parsedUrl.query.email || '').toLowerCase().trim();
+    if (!email) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Email required' }));
+      return;
+    }
+
+    const user = isPaidUser(email);
+    logAPIUsage('GET', '/api/verify', 200, clientIP);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      paid: !!user,
+      plan: user ? user.plan : 'free',
+      email: email,
+    }));
     return;
   }
 

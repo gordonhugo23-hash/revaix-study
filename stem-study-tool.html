@@ -1096,18 +1096,29 @@ MathJax = {
 <div class="paywall-overlay" id="paywallOverlay">
   <div class="paywall-card">
     <div class="paywall-heading">🎯 You've used all 3 free generations</div>
-    <div class="paywall-sub">Ready to unlock unlimited generations? Choose a plan below or continue with limited access.</div>
+    <div class="paywall-sub">Upgrade to unlock unlimited study packs, practice exams, and assignment marking.</div>
     <div class="paywall-plans">
       <div class="paywall-plan">
         <div class="paywall-plan-name">Student</div>
         <div class="paywall-plan-price">$5<span style="font-size:0.6rem">/mo</span></div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-bottom:10px">20 uploads/month</div>
         <button class="paywall-plan-btn" onclick="window.location.href='/api/checkout?plan=student'">Upgrade Now</button>
       </div>
-      <div class="paywall-plan">
+      <div class="paywall-plan" style="border-color:var(--accent);position:relative">
+        <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#06060b;font-size:0.55rem;font-weight:700;padding:2px 10px;border-radius:100px;white-space:nowrap">BEST VALUE</div>
         <div class="paywall-plan-name">Serious</div>
         <div class="paywall-plan-price">$10<span style="font-size:0.6rem">/mo</span></div>
-        <button class="paywall-plan-btn" onclick="window.location.href='/api/checkout?plan=serious'">Upgrade Now</button>
+        <div style="font-size:0.68rem;color:var(--muted);margin-bottom:10px">Unlimited uploads</div>
+        <button class="paywall-plan-btn" style="background:var(--accent);color:#06060b" onclick="window.location.href='/api/checkout?plan=serious'">Upgrade Now</button>
       </div>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px">Already paid? Enter your email to unlock:</div>
+      <div style="display:flex;gap:8px">
+        <input type="email" id="verifyEmailInput" placeholder="your@email.com" style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.76rem;padding:9px 12px;outline:none;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <button id="verifyEmailBtn" onclick="verifyEmail()" style="background:var(--accent2);color:#fff;border:none;padding:9px 16px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;white-space:nowrap;transition:opacity 0.15s">Verify</button>
+      </div>
+      <div id="verifyEmailMsg" style="font-size:0.68rem;margin-top:6px;display:none"></div>
     </div>
     <div class="paywall-footer">
       <button class="paywall-skip" onclick="closePaywall()">Continue with limited access</button>
@@ -3366,11 +3377,26 @@ document.getElementById('markChatInput')?.addEventListener('keydown',e=>{
 // ────────────────── GAMIFICATION & MONETIZATION ──────────────
 // ══════════════════════════════════════════════════════════════
 
-// Check for upgraded=true URL param
+// Check for upgraded=true URL param (redirect from Stripe)
 window.addEventListener('load',()=>{
   const params=new URLSearchParams(window.location.search);
   if(params.get('upgraded')==='true'){
     localStorage.setItem('revaix_plan','paid');
+    // Show a success message
+    const banner=document.createElement('div');
+    banner.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(110,231,183,0.15);border:1px solid rgba(110,231,183,0.4);color:var(--accent);padding:12px 24px;border-radius:12px;font-size:0.82rem;font-family:Syne,sans-serif;font-weight:700;z-index:999;backdrop-filter:blur(8px);box-shadow:0 8px 32px rgba(0,0,0,0.3)';
+    banner.textContent='✅ Payment successful! You now have unlimited access.';
+    document.body.appendChild(banner);
+    setTimeout(()=>{banner.style.transition='opacity 0.5s';banner.style.opacity='0';setTimeout(()=>banner.remove(),500);},4000);
+
+    // Prompt for email so we can verify on future visits
+    setTimeout(()=>{
+      const email=prompt('Enter the email you used to pay so we can remember you:');
+      if(email&&email.includes('@')){
+        localStorage.setItem('revaix_email',email.toLowerCase().trim());
+      }
+    },1500);
+
     window.history.replaceState({},'',window.location.pathname);
   }
 });
@@ -3495,6 +3521,76 @@ function closePaywall(){
   document.getElementById('paywallOverlay').classList.remove('show');
 }
 
+// ── Email Verification ──
+function verifyEmail(){
+  const input=document.getElementById('verifyEmailInput');
+  const btn=document.getElementById('verifyEmailBtn');
+  const msg=document.getElementById('verifyEmailMsg');
+  const email=input.value.trim();
+
+  if(!email||!email.includes('@')){
+    msg.style.display='block';
+    msg.style.color='var(--danger)';
+    msg.textContent='Please enter a valid email address.';
+    return;
+  }
+
+  btn.textContent='Checking...';
+  btn.disabled=true;
+
+  fetch('/api/verify?email='+encodeURIComponent(email))
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.paid){
+        // Unlock the app
+        localStorage.setItem('revaix_plan','paid');
+        localStorage.setItem('revaix_email',email.toLowerCase());
+        msg.style.display='block';
+        msg.style.color='var(--accent)';
+        msg.textContent='Verified! Unlocking unlimited access...';
+        setTimeout(()=>{
+          closePaywall();
+          updateUsageUI();
+        },1000);
+      }else{
+        msg.style.display='block';
+        msg.style.color='var(--danger)';
+        msg.textContent='No active subscription found for this email.';
+      }
+    })
+    .catch(()=>{
+      msg.style.display='block';
+      msg.style.color='var(--danger)';
+      msg.textContent='Could not verify. Please try again.';
+    })
+    .finally(()=>{
+      btn.textContent='Verify';
+      btn.disabled=false;
+    });
+}
+
+// ── Check saved email on load ──
+function checkSavedEmail(){
+  const email=localStorage.getItem('revaix_email');
+  const plan=localStorage.getItem('revaix_plan');
+  if(!email||plan!=='paid')return;
+
+  // Re-verify with server that subscription is still active
+  fetch('/api/verify?email='+encodeURIComponent(email))
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.paid){
+        // Subscription lapsed, revert to free
+        localStorage.setItem('revaix_plan','free');
+        localStorage.removeItem('revaix_email');
+        updateUsageUI();
+      }
+    })
+    .catch(()=>{
+      // Network error — keep current state, don't lock them out
+    });
+}
+
 // ── Confetti ──
 function triggerConfetti(){
   if(localStorage.getItem('reduceMotionToggle')==='true')return;
@@ -3613,6 +3709,7 @@ window.addEventListener('load',()=>{
   updateGameUI();
   updateUsageUI();
   initOnboarding();
+  checkSavedEmail();
 });
 </script>
 </body>
