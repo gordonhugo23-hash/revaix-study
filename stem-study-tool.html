@@ -55,6 +55,20 @@ MathJax = {
   .nav-badge{font-size:0.55rem;background:rgba(110,231,183,0.12);color:var(--accent);border:1px solid rgba(110,231,183,0.25);padding:3px 9px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
   .nav-badge:hover{background:rgba(110,231,183,0.2);box-shadow:0 0 16px rgba(110,231,183,0.2);}
   .nav-free{font-size:0.55rem;background:rgba(251,191,36,0.12);color:var(--accent3);border:1px solid rgba(251,191,36,0.25);padding:3px 9px;border-radius:100px;letter-spacing:0.08em;text-transform:uppercase;}
+  .nav-link-locked{opacity:0.55;}
+  .nav-link-locked::after{content:' 🔒';font-size:0.6rem;}
+  .tab-locked{opacity:0.5;}
+  .tab-locked::after{content:' 🔒';font-size:0.6em;}
+  .opt-locked{opacity:0.5;}
+  .opt-locked::after{content:' 🔒';margin-left:4px;font-size:0.7em;}
+  .upgrade-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent2);border-radius:16px;padding:16px 24px;z-index:500;box-shadow:0 20px 60px rgba(0,0,0,0.6);display:flex;align-items:center;gap:14px;min-width:300px;max-width:480px;animation:fu 0.3s ease;}
+  .upgrade-toast-text{flex:1;font-size:0.82rem;line-height:1.5;color:var(--text);}
+  .upgrade-toast-text strong{font-family:'Syne',sans-serif;display:block;margin-bottom:2px;}
+  .upgrade-toast-btn{background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:8px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
+  .upgrade-toast-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(110,231,183,0.35);}
+  .save-pack-btn{display:none;align-items:center;gap:6px;background:rgba(110,231,183,0.1);color:var(--accent);border:1px solid rgba(110,231,183,0.3);padding:8px 14px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .save-pack-btn:hover{background:rgba(110,231,183,0.2);box-shadow:0 4px 14px rgba(110,231,183,0.25);}
+  .save-pack-btn:disabled{opacity:0.5;cursor:not-allowed;}
 
   /* SETTINGS */
   .settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(8px);}
@@ -1163,7 +1177,7 @@ MathJax = {
     <div class="nav-right">
       <div class="nav-streak" id="streakBadge" title="Daily visit streak" style="display:none">🔥 <span id="streakCount">0</span></div>
       <div class="xp-info" id="xpBadge" title="Experience points" style="display:none"><span id="xpDisplay">0 XP</span> · <span id="levelDisplay">Beginner</span></div>
-      <div class="nav-free">✦ Free</div>
+      <div class="nav-free" id="accountBadge" style="display:none;cursor:pointer" onclick="window.location.href='/account'" title="My Account">✦ Free</div>
       <button class="nav-settings-btn" id="settingsBtn">⚙️</button>
       <div class="nav-badge" id="whatsNewBtn">What's New</div>
     </div>
@@ -1361,9 +1375,12 @@ MathJax = {
           <div id="lecSubjectLabel" style="font-size:0.65rem;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace"></div>
         </div>
       </div>
-      <button id="chatToggleBtn" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;padding:9px 20px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(129,140,248,0.35)">
-        <span style="font-size:1rem">🤖</span> Ask Revvy
-      </button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="save-pack-btn" id="lecSaveBtn" onclick="savePack('notes')">💾 Save Pack</button>
+        <button id="chatToggleBtn" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;padding:9px 20px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(129,140,248,0.35)">
+          <span style="font-size:1rem">🤖</span> Ask Revvy
+        </button>
+      </div>
     </div>
     <div class="tabs" id="lecTabs">
       <button class="tab active" data-tab="ls">📋 Notes</button>
@@ -1549,7 +1566,7 @@ MathJax = {
   </div>
 
   <div class="results" id="examRes">
-    <div class="res-hdr"><h2>Practice Exam</h2><div class="res-hdr-actions"><button class="btn-dl" id="examDlBtn">⬇ Download</button><button class="btn-reset" id="examReset">↩ New Exam</button></div></div>
+    <div class="res-hdr"><h2>Practice Exam</h2><div class="res-hdr-actions"><button class="save-pack-btn" id="examSaveBtn" onclick="savePack('exam')">💾 Save</button><button class="btn-dl" id="examDlBtn">⬇ Download</button><button class="btn-reset" id="examReset">↩ New Exam</button></div></div>
     <div class="exam-score" id="examScore"><div class="exam-score-big" id="examScoreBig">—</div><div class="exam-score-sub" id="examScoreSub">Submit your answers to see your score</div></div>
     <div class="exam-meta" id="examMeta"></div>
     <div id="examQs"></div>
@@ -1666,6 +1683,7 @@ MathJax = {
     <div class="res-hdr">
       <h2>Your Results</h2>
       <div style="display:flex;gap:8px;align-items:center">
+        <button class="save-pack-btn" id="markSaveBtn" onclick="savePack('marking')">💾 Save</button>
         <button id="markChatToggleBtn" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border:none;padding:9px 20px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(129,140,248,0.35)">
           <span style="font-size:1rem">🤖</span> Ask Revvy
         </button>
@@ -1759,6 +1777,10 @@ document.getElementById('fontSelect').addEventListener('change',function(){docum
 // ── NAV ──
 document.querySelectorAll('.nav-link').forEach(l=>{
   l.addEventListener('click',()=>{
+    if(l.classList.contains('nav-link-locked')){
+      showUpgradePrompt('Practice Exam requires a Student plan or above.','student');
+      return;
+    }
     document.querySelectorAll('.nav-link').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
     l.classList.add('active');
@@ -1869,6 +1891,10 @@ function wire(zoneId,inputId,pillId,fnId,fsId,rmId,onAdd,onRm){
 function wireTabs(tabsId){
   document.querySelectorAll('#'+tabsId+' .tab').forEach(t=>{
     t.addEventListener('click',()=>{
+      if(t.classList.contains('tab-locked')){
+        showUpgradePrompt('Formulas tab requires a Student plan or above.','student');
+        return;
+      }
       document.querySelectorAll('#'+tabsId+' .tab').forEach(x=>x.classList.remove('active'));
       t.classList.add('active');
       let el=document.getElementById(tabsId).nextElementSibling;
@@ -2274,6 +2300,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
     clearInterval(iv);
     finishProgress('lecProgressBar',lecProg);
     const p=exJSON(raw);
+    window._lastLecPack=p; // stored for save functionality
 
     // Summary / Notes
     document.getElementById('ls').innerHTML=`<div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">📌 Subject detected: <strong style="color:var(--accent)">${p.subject||'Auto-detected'}</strong></div>${p.summary}`;
@@ -2653,6 +2680,7 @@ Return ONLY JSON: ${FMT}`;
     clearInterval(iv);
     finishProgress('examProgressBar',examProg);
     examData=exJSON(raw);
+    window._lastExamData=examData; // stored for save functionality
     renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');
     document.getElementById('examRes').classList.add('show');
@@ -2858,6 +2886,10 @@ let markF=null,rubricF=null,markType='exam';
 
 document.querySelectorAll('#markTypeRow .opt-btn').forEach(b=>{
   b.addEventListener('click',()=>{
+    if(b.classList.contains('opt-locked')){
+      showUpgradePrompt('Assignment marking requires a Student plan or above.','student');
+      return;
+    }
     document.querySelectorAll('#markTypeRow .opt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');markType=b.dataset.marktype;
     document.getElementById('rubric-wrap').style.display=markType==='assignment'?'':'none';
   });
@@ -2985,6 +3017,7 @@ If blank score 0.`;
 
     if(isAssignment){
       const p=exJSON(raw);
+      window._lastMarkData={type:'assignment',...p}; // stored for save functionality
       let tot=p.totalScore||0,mx=p.totalMax||100;
       document.getElementById('markScoreBig').textContent=`${p.grade||'—'} · ${tot}/${mx}`;
       document.getElementById('markScoreSub').textContent=`Subject: ${p.subject||'Auto-detected'} · ${p.assignmentTitle||'Assignment'}`;
@@ -3039,6 +3072,7 @@ If blank score 0.`;
       });
     }else{
       const res=exArr(raw);
+      window._lastMarkData={type:'exam',questions:res,subject:markSub}; // stored for save functionality
       if(!res.length)throw new Error('No questions found in this exam.');
       let tot=0,mx=0,readinessTotal=0;
       res.forEach(r=>{
@@ -3586,20 +3620,34 @@ const _sbClient=(()=>{
   }catch(e){return null;}
 })();
 
+// ── Plan hierarchy ──
+window._userPlan='free';
+window._userEmail='';
+const PLAN_LEVEL={free:0,student:1,student_yearly:1,serious:2,serious_yearly:2};
+function hasPlan(required){return(PLAN_LEVEL[window._userPlan]||0)>=(PLAN_LEVEL[required]||0);}
+function isSerious(){return window._userPlan==='serious'||window._userPlan==='serious_yearly';}
+
 function unlockApp(email,plan){
+  window._userPlan=plan||'student';
+  window._userEmail=email;
   localStorage.setItem('revaix_plan','paid');
   localStorage.setItem('revaix_email',email);
   updateUsageUI();
   closePaywall();
+  applyFeatureGating();
   // Update account badge
   const badge=document.getElementById('accountBadge');
-  if(badge){badge.textContent=plan==='serious'||plan==='serious_yearly'?'Serious ✓':'Student ✓';badge.style.display='inline-flex';}
+  if(badge){
+    badge.textContent=isSerious()?'Serious ✓':'Student ✓';
+    badge.style.display='inline-flex';
+  }
 }
 
 function lockApp(){
   localStorage.setItem('revaix_plan','free');
   localStorage.removeItem('revaix_email');
   updateUsageUI();
+  applyFeatureGating();
 }
 
 async function checkAuthAndUnlock(){
@@ -3666,6 +3714,104 @@ async function signOut(){
   if(_sbClient)await _sbClient.auth.signOut();
   lockApp();
   window.location.href='/login';
+}
+
+// ── Feature Gating ──
+function applyFeatureGating(){
+  const hasStudent=hasPlan('student');
+  const hasSerious=isSerious();
+
+  // Lock / unlock Practice Exam nav
+  const examNav=document.querySelector('.nav-link[data-page="exam"]');
+  if(examNav){
+    examNav.classList.toggle('nav-link-locked',!hasStudent);
+  }
+
+  // Lock / unlock Formulas tab (student+ only)
+  const formulasTab=document.querySelector('[data-tab="lf"]');
+  if(formulasTab){
+    formulasTab.classList.toggle('tab-locked',!hasStudent);
+  }
+
+  // Lock / unlock Assignment mark type (student+ only)
+  const assignmentBtn=document.querySelector('[data-marktype="assignment"]');
+  if(assignmentBtn){
+    assignmentBtn.classList.toggle('opt-locked',!hasStudent);
+  }
+
+  // Show / hide save pack buttons (serious only)
+  ['lecSaveBtn','examSaveBtn','markSaveBtn'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display=hasSerious?'inline-flex':'none';
+  });
+}
+
+// ── Upgrade prompt toast ──
+let _upgradeToastTimer=null;
+function showUpgradePrompt(message,requiredPlan){
+  if(_upgradeToastTimer)clearTimeout(_upgradeToastTimer);
+  const existing=document.getElementById('upgradeToast');
+  if(existing)existing.remove();
+
+  const planLabel=requiredPlan==='serious'?'Serious':'Student';
+  const planKey=requiredPlan==='serious'?'serious':'student';
+  const toast=document.createElement('div');
+  toast.className='upgrade-toast';
+  toast.id='upgradeToast';
+  toast.innerHTML=`
+    <div style="font-size:1.4rem">🔒</div>
+    <div class="upgrade-toast-text">
+      <strong>${planLabel} plan required</strong>
+      ${message}
+    </div>
+    <button class="upgrade-toast-btn" onclick="window.location.href='/signup?plan=${planKey}'">Upgrade →</button>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 6px;transition:color 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+  `;
+  document.body.appendChild(toast);
+  _upgradeToastTimer=setTimeout(()=>toast.remove(),5000);
+}
+
+// ── Save Pack ──
+async function savePack(type){
+  if(!isSerious()){showUpgradePrompt('Saving study packs requires the Serious plan.','serious');return;}
+
+  const token=localStorage.getItem('revaix_token');
+  if(!token){showUpgradePrompt('Please sign in to save packs.','serious');return;}
+
+  let title,content;
+  if(type==='notes'){
+    if(!window._lastLecPack){alert('Generate a study pack first.');return;}
+    const p=window._lastLecPack;
+    title=(p.subject||'Study Pack')+' — Notes';
+    content=p;
+  }else if(type==='exam'){
+    if(!window._lastExamData){alert('Generate a practice exam first.');return;}
+    const d=window._lastExamData;
+    title=(d.subject||'Practice Exam')+' — Exam';
+    content=d;
+  }else if(type==='marking'){
+    if(!window._lastMarkData){alert('Mark some work first.');return;}
+    const d=window._lastMarkData;
+    title=(d.subject||'Marking')+' — '+(d.type==='assignment'?'Assignment':'Exam Marking');
+    content=d;
+  }else{return;}
+
+  const btn=document.getElementById(type==='notes'?'lecSaveBtn':type==='exam'?'examSaveBtn':'markSaveBtn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+
+  try{
+    const resp=await fetch('/api/packs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({title,type,content})
+    });
+    if(!resp.ok)throw new Error('Save failed');
+    if(btn){btn.textContent='✓ Saved!';btn.style.color='var(--accent)';}
+    setTimeout(()=>{if(btn){btn.disabled=false;btn.textContent='💾 Save'+(type==='notes'?' Pack':'');}},2500);
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='💾 Save'+(type==='notes'?' Pack':'');}
+    alert('Could not save. Please try again.');
+  }
 }
 
 // ── Confetti ──

@@ -278,13 +278,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Auth pages
+  // Auth + account pages
   if (req.method === 'GET' && pathname === '/login') {
     serveFile(req, res, path.join(__dirname, 'login.html'), 'text/html');
     return;
   }
   if (req.method === 'GET' && pathname === '/signup') {
     serveFile(req, res, path.join(__dirname, 'signup.html'), 'text/html');
+    return;
+  }
+  if (req.method === 'GET' && pathname === '/account') {
+    serveFile(req, res, path.join(__dirname, 'account.html'), 'text/html');
     return;
   }
 
@@ -541,6 +545,87 @@ const server = http.createServer((req, res) => {
           .then(() => { res.writeHead(200); res.end('{}'); });
       })
       .catch(() => { res.writeHead(500); res.end(); });
+    return;
+  }
+
+  // ── Saved Packs API ──
+  // Helper: verify JWT and return user (reused across pack routes)
+  const getPacksUser = (token) => {
+    if (!token || !supabaseAdmin) return Promise.reject(new Error('Unauthorized'));
+    return supabaseAdmin.auth.getUser(token).then(({ data: { user }, error }) => {
+      if (error || !user) throw new Error('Unauthorized');
+      return user;
+    });
+  };
+
+  const packToken = (req.headers.authorization || '').replace('Bearer ', '').trim();
+
+  // GET /api/packs — list user's packs
+  if (req.method === 'GET' && pathname === '/api/packs') {
+    getPacksUser(packToken)
+      .then(user => supabaseAdmin.from('saved_packs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }))
+      .then(({ data, error }) => {
+        if (error) { res.writeHead(500); res.end(JSON.stringify({ error: error.message })); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data || []));
+      })
+      .catch(() => { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); });
+    return;
+  }
+
+  // POST /api/packs — save a pack (Serious only)
+  if (req.method === 'POST' && pathname === '/api/packs') {
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      let parsed;
+      try { parsed = JSON.parse(body); } catch { res.writeHead(400); res.end(); return; }
+      getPacksUser(packToken)
+        .then(user => supabaseAdmin.from('profiles').select('plan,active').eq('id', user.id).single()
+          .then(({ data: profile }) => {
+            const isSeriousPlan = profile?.active && (profile?.plan === 'serious' || profile?.plan === 'serious_yearly');
+            if (!isSeriousPlan) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Serious plan required to save packs' })); return; }
+            return supabaseAdmin.from('saved_packs').insert({
+              user_id: user.id,
+              title: parsed.title || 'Untitled',
+              type: parsed.type || 'notes',
+              content: parsed.content || {},
+              is_favourite: false,
+            }).select().single()
+              .then(({ data, error }) => {
+                if (error) { res.writeHead(500); res.end(JSON.stringify({ error: error.message })); return; }
+                res.writeHead(201, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(data));
+              });
+          })
+        )
+        .catch(() => { res.writeHead(401); res.end(); });
+    });
+    return;
+  }
+
+  // PATCH /api/packs/:id/favourite — toggle favourite
+  if (req.method === 'PATCH' && /^\/api\/packs\/[^/]+\/favourite$/.test(pathname)) {
+    const packId = pathname.split('/')[3];
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      const { is_favourite } = JSON.parse(body || '{}');
+      getPacksUser(packToken)
+        .then(user => supabaseAdmin.from('saved_packs').update({ is_favourite }).eq('id', packId).eq('user_id', user.id))
+        .then(() => { res.writeHead(200); res.end('{}'); })
+        .catch(() => { res.writeHead(401); res.end(); });
+    });
+    return;
+  }
+
+  // DELETE /api/packs/:id
+  if (req.method === 'DELETE' && /^\/api\/packs\/[^/]+$/.test(pathname)) {
+    const packId = pathname.split('/')[3];
+    getPacksUser(packToken)
+      .then(user => supabaseAdmin.from('saved_packs').delete().eq('id', packId).eq('user_id', user.id))
+      .then(() => { res.writeHead(200); res.end('{}'); })
+      .catch(() => { res.writeHead(401); res.end(); });
     return;
   }
 
