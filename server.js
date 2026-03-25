@@ -7,9 +7,12 @@ const url = require('url');
 
 let stripe = null;
 try {
-  stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeKey) {
+    stripe = require('stripe')(stripeKey);
+  }
 } catch (e) {
-  // stripe module not available, will handle gracefully
+  console.warn('Stripe module not available:', e.message);
 }
 
 const PORT = process.env.PORT || 3000;
@@ -92,7 +95,7 @@ function shouldCompress(contentType) {
   );
 }
 
-function serveFile(res, filePath, contentType) {
+function serveFile(req, res, filePath, contentType) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -113,14 +116,15 @@ function serveFile(res, filePath, contentType) {
 
     // Add gzip compression for text-based content
     if (shouldCompress(contentType)) {
-      const acceptEncoding = res.req?.headers?.['accept-encoding'] || '';
+      const acceptEncoding = (req && req.headers && req.headers['accept-encoding']) || '';
       if (acceptEncoding.includes('gzip')) {
-        headers['Content-Encoding'] = 'gzip';
-        res.writeHead(200, headers);
-        zlib.gzip(data, (err, compressed) => {
-          if (err) {
+        zlib.gzip(data, (gzErr, compressed) => {
+          if (gzErr) {
+            res.writeHead(200, headers);
             res.end(data);
           } else {
+            headers['Content-Encoding'] = 'gzip';
+            res.writeHead(200, headers);
             res.end(compressed);
           }
         });
@@ -150,6 +154,8 @@ function parseQueryString(queryString) {
 
 const server = http.createServer((req, res) => {
   const clientIP = getClientIP(req);
+  const parsedUrl = url.parse(req.url, true);
+  const pathname = parsedUrl.pathname;
 
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -169,34 +175,33 @@ const server = http.createServer((req, res) => {
   }
 
   // Health check
-  if (req.method === 'GET' && req.url === '/health') {
+  if (req.method === 'GET' && pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok' }));
     return;
   }
 
   // Landing page at /
-  if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-    serveFile(res, path.join(__dirname, 'landing.html'), 'text/html');
+  if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+    serveFile(req, res, path.join(__dirname, 'landing.html'), 'text/html');
     return;
   }
 
-  // App at /app
-  if (req.method === 'GET' && req.url === '/app') {
-    serveFile(res, path.join(__dirname, 'stem-study-tool.html'), 'text/html');
+  // App at /app (handles /app, /app?upgraded=true, etc.)
+  if (req.method === 'GET' && pathname === '/app') {
+    serveFile(req, res, path.join(__dirname, 'stem-study-tool.html'), 'text/html');
     return;
   }
 
   // Logo
   if (req.method === 'GET' && req.url === '/revaix_study_logo_v3.svg') {
-    serveFile(res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml');
+    serveFile(req, res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml');
     return;
   }
 
   // Static file serving with dynamic MIME types
-  if (req.method === 'GET' && req.url.startsWith('/')) {
-    const urlParts = url.parse(req.url);
-    const filePath = path.join(__dirname, urlParts.pathname);
+  if (req.method === 'GET' && pathname.startsWith('/')) {
+    const filePath = path.join(__dirname, pathname);
 
     // Security: prevent directory traversal
     if (!filePath.startsWith(__dirname)) {
@@ -217,7 +222,7 @@ const server = http.createServer((req, res) => {
 
       // Only serve certain file types
       if (contentType !== 'application/octet-stream' || ext === '') {
-        serveFile(res, filePath, contentType);
+        serveFile(req, res, filePath, contentType);
         return;
       }
 
@@ -229,15 +234,14 @@ const server = http.createServer((req, res) => {
   }
 
   // Stripe Checkout endpoint
-  if (req.method === 'POST' && req.url.startsWith('/api/checkout')) {
+  if (req.method === 'POST' && pathname === '/api/checkout') {
     if (!stripe || !STRIPE_SECRET_KEY) {
       res.writeHead(503, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Stripe is not configured' }));
       return;
     }
 
-    const urlParts = url.parse(req.url, true);
-    const plan = urlParts.query.plan || 'student';
+    const plan = parsedUrl.query.plan || 'student';
 
     const STRIPE_PRICE_STUDENT_YEARLY = process.env.STRIPE_PRICE_STUDENT_YEARLY || '';
     const STRIPE_PRICE_SERIOUS_YEARLY = process.env.STRIPE_PRICE_SERIOUS_YEARLY || '';
@@ -291,7 +295,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Stripe webhook endpoint
-  if (req.method === 'POST' && req.url === '/api/webhook') {
+  if (req.method === 'POST' && pathname === '/api/webhook') {
     if (!STRIPE_WEBHOOK_SECRET) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Webhook secret not configured' }));
@@ -329,7 +333,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Status endpoint
-  if (req.method === 'GET' && req.url === '/api/status') {
+  if (req.method === 'GET' && pathname === '/api/status') {
     logAPIUsage('GET', '/api/status', 200, clientIP);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok', plan: 'free' }));
@@ -337,7 +341,7 @@ const server = http.createServer((req, res) => {
   }
 
   // API proxy to Anthropic with rate limiting
-  if (req.method === 'POST' && req.url === '/api/messages') {
+  if (req.method === 'POST' && pathname === '/api/messages') {
     if (!checkRateLimit(clientIP)) {
       logAPIUsage('POST', '/api/messages', 429, clientIP);
       res.writeHead(429, { 'Content-Type': 'application/json' });
