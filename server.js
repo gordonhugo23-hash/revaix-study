@@ -308,37 +308,25 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    const origin = req.headers.origin || `http://localhost:${PORT}`;
+    const origin = `https://revaixstudy.com`;
 
     stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
       success_url: `${origin}/app?upgraded=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
-      // Stripe collects email automatically; we retrieve it from the webhook
-    }, (err, session) => {
-      logAPIUsage('POST', '/api/checkout', err ? 500 : 200, clientIP);
-
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
-        return;
-      }
-
-      if (req.method === 'GET') {
-        // Direct link click — redirect to Stripe hosted checkout page
-        res.writeHead(302, { Location: session.url });
-        res.end();
-      } else {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ sessionId: session.id, url: session.url }));
-      }
+    })
+    .then(session => {
+      logAPIUsage('GET', '/api/checkout', 302, clientIP);
+      res.writeHead(302, { Location: session.url });
+      res.end();
+    })
+    .catch(err => {
+      logAPIUsage('GET', '/api/checkout', 500, clientIP);
+      console.error('Stripe checkout error:', err.message);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Checkout failed: ' + err.message);
     });
     return;
   }
