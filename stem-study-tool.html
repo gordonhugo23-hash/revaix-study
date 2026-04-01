@@ -1868,7 +1868,7 @@ document.querySelectorAll('.nav-link').forEach(l=>{
 
 // ── SUBSCRIPTION & USAGE TRACKING ──
 const FREE_LIMIT = 3;
-const STRIPE_PRO_LINK = 'https://buy.stripe.com/REPLACE_WITH_YOUR_LINK'; // Replace with your Stripe payment link
+const STRIPE_PRO_LINK = 'https://buy.stripe.com/eVq3cu8q30TQ8hE39PdUY00';
 
 function getPacksUsed(){ return parseInt(localStorage.getItem('revaixPacksUsed')||'0'); }
 function incrementPacksUsed(){ localStorage.setItem('revaixPacksUsed', String(getPacksUsed()+1)); }
@@ -2657,6 +2657,7 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
     document.getElementById('lecRes').classList.add('show');
 
     // Track usage
+    console.log('incrementUsage notes — firing');
     await incrementUsage('notes');
     updateUsageUI();
 
