@@ -30,12 +30,6 @@
     .footer-link a{color:var(--accent);text-decoration:none;font-weight:600;}
     .footer-link a:hover{text-decoration:underline;}
     .terms{font-size:0.75rem;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6;}
-    .check-email{text-align:center;padding:8px 0;}
-    .check-email .icon{font-size:2.5rem;margin-bottom:16px;}
-    .check-email h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;margin-bottom:8px;}
-    .check-email p{color:var(--muted);font-size:0.85rem;line-height:1.6;}
-    .check-email .go-btn{display:inline-block;margin-top:24px;background:var(--accent);color:#08080d;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;padding:12px 28px;cursor:pointer;text-decoration:none;transition:all 0.2s;}
-    .check-email .go-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(110,231,183,0.3);}
   </style>
 </head>
 <body>
@@ -72,15 +66,6 @@
       </div>
     </div>
 
-    <!-- Shown after signup -->
-    <div class="card" id="confirmCard" style="display:none">
-      <div class="check-email">
-        <div class="icon">📬</div>
-        <h2>Check your email</h2>
-        <p>We sent a confirmation link to <strong id="confirmedEmail"></strong>.<br>Click it to activate your account, then sign in.</p>
-        <a href="/login" class="go-btn">Go to sign in →</a>
-      </div>
-    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -131,15 +116,7 @@
         return;
       }
 
-      // Show email confirmation screen
-      document.getElementById('signupCard').style.display = 'none';
-      document.getElementById('confirmedEmail').textContent = email;
-      if (plan) {
-        document.getElementById('confirmCard').querySelector('p').innerHTML =
-          'We sent a confirmation link to <strong>' + email + '</strong>.<br>Click it to activate your account, then sign in to complete your purchase.';
-        document.getElementById('confirmCard').querySelector('.go-btn').href = '/login?plan=' + plan;
-      }
-      document.getElementById('confirmCard').style.display = 'block';
+      window.location.href = redirectAfterAuth;
     }
 
     btn.addEventListener('click', signUp);
