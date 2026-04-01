@@ -1718,19 +1718,19 @@ MathJax = {
 
     <label class="field-label">📝 Your completed work</label>
     <div class="input-mode-row" id="markInputModeRow">
-      <button class="input-mode-btn active" id="markInputFile">📄 Upload File</button>
-      <button class="input-mode-btn" id="markInputText">✏️ Paste Text</button>
+      <button class="input-mode-btn" id="markInputFile">📄 Upload File</button>
+      <button class="input-mode-btn active" id="markInputText">✏️ Paste Text</button>
     </div>
-    <div id="markFileWrap">
+    <div id="markFileWrap" style="display:none">
       <div class="upload-zone v3" id="markZone"><input type="file" id="markFile" accept=".pdf,.jpg,.jpeg,.png,.webp"><span class="upload-icon">📝</span><h3>Drop your completed exam or assignment here</h3><p>PDF or image (Word: save as PDF first) · max 20MB</p></div>
     </div>
-    <div id="markTextWrap" style="display:none">
+    <div id="markTextWrap">
       <textarea class="text-input-area" id="markTextInput" placeholder="Paste your assignment or exam answers here..." style="min-height:180px;margin-bottom:10px"></textarea>
     </div>
     <div class="fp" id="markPill"><div class="fp-ic" style="background:rgba(251,191,36,0.1)">📝</div><div class="fp-info"><div class="fp-name" id="markFN">—</div><div class="fp-size" id="markFS">—</div></div><button class="fp-rm" id="markRM">✕</button></div>
 
     <div class="err" id="markErr"></div>
-    <button class="btn btn-y" id="markReadBtn" disabled>Mark My Work</button>
+    <button class="btn btn-y" id="markReadBtn">Mark My Work</button>
   </div><!-- end mark-form -->
   </div><!-- end container -->
   </div><!-- end mark-form-page -->
@@ -2348,11 +2348,13 @@ document.getElementById('lecReset').addEventListener('click',()=>{
 });
 
 document.getElementById('lecBtn').addEventListener('click',async()=>{
-  if(!await checkCanGenerate()) return;
+  const lecBtn=document.getElementById('lecBtn');
+  lecBtn.disabled=true; lecBtn.textContent='Generating…';
+  if(!await checkCanGenerate()){lecBtn.disabled=false;lecBtn.textContent='Generate My Study Pack →';return;}
 
   const textContent = document.getElementById('lecTextInput').value.trim();
   const uniReady = lecStudentMode==='uni' && (document.getElementById('uniCourse')?.value.trim()||document.getElementById('uniSubject')?.value.trim()||lecF);
-  if(lecStudentMode==='uni' && !uniReady) return;
+  if(lecStudentMode==='uni' && !uniReady){lecBtn.disabled=false;lecBtn.textContent='Generate My Study Pack →';return;}
   if(lecStudentMode==='school') {} // always allowed
   document.getElementById('lecErr').classList.remove('show');
   document.getElementById('lec-form-page').style.display='none';
@@ -2796,7 +2798,9 @@ document.getElementById('examReset').addEventListener('click',()=>{
 });
 
 document.getElementById('examBtn').addEventListener('click',async()=>{
-  if(!await checkCanGenerate()) return;
+  const examBtn=document.getElementById('examBtn');
+  examBtn.disabled=true; examBtn.textContent='Generating…';
+  if(!await checkCanGenerate()){examBtn.disabled=false;examBtn.textContent='Generate Practice Exam';return;}
   document.getElementById('examErr').classList.remove('show');document.getElementById('exam-form').style.display='none';document.getElementById('exam-hero-area').style.display='none';document.getElementById('examLoad').classList.add('show');
   const examProg=startProgress('examProgressBar');
   let si=0;
@@ -3061,7 +3065,7 @@ document.querySelectorAll('#markTypeRow .opt-btn').forEach(b=>{
   });
 });
 
-let markInputMode='file';
+let markInputMode='text';
 document.getElementById('markInputFile')?.addEventListener('click',()=>{
   markInputMode='file';
   document.getElementById('markInputFile').classList.add('active');
@@ -3119,10 +3123,12 @@ document.getElementById('markReset').addEventListener('click',()=>{
 });
 
 document.getElementById('markReadBtn').addEventListener('click',async()=>{
-  if(!await checkCanGenerate()) return;
+  const markReadBtn=document.getElementById('markReadBtn');
+  markReadBtn.disabled=true; markReadBtn.textContent='Marking…';
+  if(!await checkCanGenerate()){markReadBtn.disabled=false;markReadBtn.textContent='Mark My Work';return;}
   const markText=document.getElementById('markTextInput')?.value.trim()||'';
-  if(markInputMode==='file' && !markF)return;
-  if(markInputMode==='text' && !markText)return;
+  if(markInputMode==='file' && !markF){markReadBtn.disabled=false;markReadBtn.textContent='Mark My Work';return;}
+  if(markInputMode==='text' && !markText){markReadBtn.disabled=false;markReadBtn.textContent='Mark My Work';return;}
   document.getElementById('markErr').classList.remove('show');document.getElementById('mark-form-page').style.display='none';document.getElementById('markLoad').classList.add('show');
   const markProg=startProgress('markProgressBar');
   let si=0;
@@ -3581,8 +3587,10 @@ document.getElementById('markChatInput')?.addEventListener('keydown',e=>{
 });
 
 // ── UPGRADE MODAL WIRING ──
-document.getElementById('upgradeMainBtn')?.addEventListener('click',()=>{
-  window.open(STRIPE_PRO_LINK,'_blank');
+document.getElementById('upgradeMainBtn')?.addEventListener('click',async()=>{
+  const{data:{user}}=await _supabase.auth.getUser();
+  const url=user?STRIPE_PRO_LINK+'?client_reference_id='+user.id:STRIPE_PRO_LINK;
+  window.open(url,'_blank');
 });
 document.getElementById('upgradeSkipBtn')?.addEventListener('click',hideUpgradeModal);
 document.getElementById('upgradeModal')?.addEventListener('click',function(e){

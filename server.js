@@ -194,14 +194,23 @@ const server = http.createServer(async (req, res) => {
     }
 
     const event = JSON.parse(body.toString());
-    const sub = event.data.object;
+    const obj = event.data.object;
 
-    if (['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(event.type)) {
-      const isActive = sub.status === 'active';
+    if (event.type === 'checkout.session.completed') {
+      const userId = obj.client_reference_id;
+      if (userId) {
+        await supabase
+          .from('subscriptions')
+          .upsert({ user_id: userId, stripe_customer_id: obj.customer, plan: 'pro', updated_at: new Date() }, { onConflict: 'user_id' });
+      }
+    }
+
+    if (['customer.subscription.updated', 'customer.subscription.deleted'].includes(event.type)) {
+      const isActive = obj.status === 'active';
       await supabase
         .from('subscriptions')
         .update({ plan: isActive ? 'pro' : 'free', updated_at: new Date() })
-        .eq('stripe_customer_id', sub.customer);
+        .eq('stripe_customer_id', obj.customer);
     }
 
     return jsonResponse(res, 200, { received: true });
