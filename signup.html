@@ -71,10 +71,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
-    const sb = createClient(
-      'https://jaaqqoeukhlkbvnzhdqt.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXFxb2V1a2hsa2J2bnpoZHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDk2MjQsImV4cCI6MjA4OTk4NTYyNH0.1pz8cvgdYfUo5i5mQeobsfLsVdUXNA4R8piw9QZhRkY'
-    );
+    const supabaseUrl = 'https://yoyhkdxorgdajzttafas.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlveWhrZHhvcmdkYWp6dHRhZmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMTA1ODIsImV4cCI6MjA5MDU4NjU4Mn0.qdzEUBxvoSy4Psrj0HDD0rp81Jve68bifNYbWIOJQp0';
+    console.log('supabase url:', supabaseUrl, 'anon key:', supabaseAnonKey);
+    const sb = createClient(supabaseUrl, supabaseAnonKey);
 
     const params = new URLSearchParams(window.location.search);
     const plan = params.get('plan');
@@ -107,7 +107,8 @@
       btn.textContent = 'Creating account…';
       clearError();
 
-      const { error } = await sb.auth.signUp({ email, password });
+      const { data, error } = await sb.auth.signUp({ email, password });
+      console.log('signup result:', data, error);
 
       if (error) {
         showError(error.message);
