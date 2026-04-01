@@ -96,6 +96,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url.startsWith('/signup')) {
     serveFile(res, path.join(__dirname, 'signup.html'), 'text/html'); return;
   }
+  if (req.method === 'GET' && req.url.startsWith('/login')) {
+    serveFile(res, path.join(__dirname, 'login.html'), 'text/html'); return;
+  }
   if (req.method === 'GET' && req.url === '/revaix_study_logo_v3.svg') {
     serveFile(res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml'); return;
   }
