@@ -2,711 +2,216 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const zlib = require('zlib');
-const url = require('url');
-
-let stripe = null;
-try {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  if (stripeKey) {
-    stripe = require('stripe')(stripeKey);
-  }
-} catch (e) {
-  console.warn('Stripe module not available:', e.message);
-}
-
-let supabaseAdmin = null;
-try {
-  const { createClient } = require('@supabase/supabase-js');
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  if (supabaseUrl && supabaseKey) {
-    supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-  }
-} catch (e) {
-  console.warn('Supabase module not available:', e.message);
-}
+const { createClient } = require('@supabase/supabase-js');
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY || '';
+const FAL_KEY = process.env.FAL_KEY || '';
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
-const STRIPE_PRICE_STUDENT = process.env.STRIPE_PRICE_STUDENT || '';
-const STRIPE_PRICE_SERIOUS = process.env.STRIPE_PRICE_SERIOUS || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 
-// ── Paid users store (JSON file on disk) ──
-const PAID_USERS_FILE = path.join(__dirname, 'paid_users.json');
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-function loadPaidUsers() {
-  try {
-    if (fs.existsSync(PAID_USERS_FILE)) {
-      return JSON.parse(fs.readFileSync(PAID_USERS_FILE, 'utf8'));
-    }
-  } catch (e) {
-    console.warn('Failed to load paid users file:', e.message);
-  }
-  return {};
-}
-
-function savePaidUsers(users) {
-  try {
-    fs.writeFileSync(PAID_USERS_FILE, JSON.stringify(users, null, 2));
-  } catch (e) {
-    console.warn('Failed to save paid users file:', e.message);
-  }
-}
-
-function addPaidUser(email, plan, stripeCustomerId, stripeSessionId) {
-  const users = loadPaidUsers();
-  const normalised = email.toLowerCase().trim();
-  users[normalised] = {
-    plan: plan || 'student',
-    stripeCustomerId: stripeCustomerId || null,
-    stripeSessionId: stripeSessionId || null,
-    paidAt: new Date().toISOString(),
-    active: true,
-  };
-  savePaidUsers(users);
-  console.log(`[${new Date().toISOString()}] Added paid user: ${normalised} (${plan})`);
-}
-
-function isPaidUser(email) {
-  const users = loadPaidUsers();
-  const normalised = email.toLowerCase().trim();
-  return users[normalised]?.active === true ? users[normalised] : null;
-}
-
-// ── Supabase helpers ──
-
-// Update a user's plan in Supabase profiles table (by email)
-async function updateUserPlanInSupabase(email, plan, stripeCustomerId, stripeSessionId) {
-  if (!supabaseAdmin) return false;
-  const normalised = email.toLowerCase().trim();
-  const { error } = await supabaseAdmin
-    .from('profiles')
-    .update({
-      plan,
-      active: true,
-      stripe_customer_id: stripeCustomerId || null,
-      stripe_session_id: stripeSessionId || null,
-      paid_at: new Date().toISOString(),
-    })
-    .eq('email', normalised);
-  if (error) { console.warn('[supabase] updateUserPlan error:', error.message); return false; }
-  console.log(`[supabase] Updated plan for ${normalised} → ${plan}`);
-  return true;
-}
-
-// Deactivate a user's plan in Supabase (subscription cancelled)
-async function deactivateUserInSupabase(email) {
-  if (!supabaseAdmin) return;
-  const normalised = email.toLowerCase().trim();
-  await supabaseAdmin.from('profiles').update({ active: false }).eq('email', normalised);
-  console.log(`[supabase] Deactivated ${normalised}`);
-}
-
-// Rate limiting for API requests: 20 requests per minute per IP
-const rateLimitMap = new Map();
-const RATE_LIMIT_REQUESTS = 20;
-const RATE_LIMIT_WINDOW = 60000; // 1 minute in ms
+const FREE_LIMIT = 3;
 
 const MIME_TYPES = {
   '.html': 'text/html',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
   '.css': 'text/css',
   '.js': 'application/javascript',
-  '.json': 'application/json',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf',
-  '.eot': 'application/vnd.ms-fontobject',
 };
 
-// Cache control headers by extension
-const CACHE_HEADERS = {
-  '.html': 'public, max-age=3600', // 1 hour
-  '.css': 'public, max-age=604800', // 1 week
-  '.js': 'public, max-age=604800', // 1 week
-  '.json': 'public, max-age=604800', // 1 week
-  '.png': 'public, max-age=604800', // 1 week
-  '.jpg': 'public, max-age=604800', // 1 week
-  '.jpeg': 'public, max-age=604800', // 1 week
-  '.gif': 'public, max-age=604800', // 1 week
-  '.webp': 'public, max-age=604800', // 1 week
-  '.svg': 'public, max-age=604800', // 1 week
-  '.ico': 'public, max-age=604800', // 1 week
-  '.woff': 'public, max-age=604800', // 1 week
-  '.woff2': 'public, max-age=604800', // 1 week
-  '.ttf': 'public, max-age=604800', // 1 week
-};
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, []);
-  }
-
-  const requests = rateLimitMap.get(ip);
-  // Remove requests outside the window
-  const filtered = requests.filter(time => now - time < RATE_LIMIT_WINDOW);
-  rateLimitMap.set(ip, filtered);
-
-  if (filtered.length >= RATE_LIMIT_REQUESTS) {
-    return false;
-  }
-
-  filtered.push(now);
-  return true;
-}
-
-function getClientIP(req) {
-  return (req.headers['x-forwarded-for'] || req.connection.remoteAddress || '').split(',')[0].trim();
-}
-
-function shouldCompress(contentType) {
-  return contentType && (
-    contentType.includes('text') ||
-    contentType.includes('json') ||
-    contentType.includes('javascript') ||
-    contentType.includes('svg')
-  );
-}
-
-function serveFile(req, res, filePath, contentType) {
+function serveFile(res, filePath, contentType) {
   fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not found');
-      return;
-    }
-
-    const headers = {
-      'Content-Type': contentType,
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'SAMEORIGIN',
-    };
-
-    const ext = path.extname(filePath);
-    if (CACHE_HEADERS[ext]) {
-      headers['Cache-Control'] = CACHE_HEADERS[ext];
-    }
-
-    // Add gzip compression for text-based content
-    if (shouldCompress(contentType)) {
-      const acceptEncoding = (req && req.headers && req.headers['accept-encoding']) || '';
-      if (acceptEncoding.includes('gzip')) {
-        zlib.gzip(data, (gzErr, compressed) => {
-          if (gzErr) {
-            res.writeHead(200, headers);
-            res.end(data);
-          } else {
-            headers['Content-Encoding'] = 'gzip';
-            res.writeHead(200, headers);
-            res.end(compressed);
-          }
-        });
-        return;
-      }
-    }
-
-    res.writeHead(200, headers);
+    if (err) { res.writeHead(404); res.end('Not found'); return; }
+    res.writeHead(200, { 'Content-Type': contentType });
     res.end(data);
   });
 }
 
-function logAPIUsage(method, path, statusCode, ip) {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${method} ${path} - ${statusCode} - IP: ${ip}`);
-}
-
-function parseQueryString(queryString) {
-  const params = {};
-  if (!queryString) return params;
-  queryString.split('&').forEach(pair => {
-    const [key, value] = pair.split('=');
-    params[key] = decodeURIComponent(value || '');
+function proxyPost(res, hostname, pathname, headers, body) {
+  const options = { hostname, path: pathname, method: 'POST', headers };
+  const proxyReq = https.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
+    proxyRes.pipe(res);
   });
-  return params;
+  proxyReq.on('error', (e) => {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: { message: e.message } }));
+  });
+  proxyReq.write(body);
+  proxyReq.end();
 }
 
-const server = http.createServer((req, res) => {
-  const clientIP = getClientIP(req);
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+function jsonResponse(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
 
-  // Security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+// Collect request body as buffer
+function collectBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
-  // CORS
+// Verify Stripe webhook signature manually (no Express, no stripe package needed)
+function verifyStripeSignature(payload, sigHeader, secret) {
+  const crypto = require('crypto');
+  const parts = sigHeader.split(',').reduce((acc, part) => {
+    const [k, v] = part.split('=');
+    acc[k] = v;
+    return acc;
+  }, {});
+
+  const timestamp = parts['t'];
+  const signature = parts['v1'];
+  const signed = `${timestamp}.${payload}`;
+  const expected = crypto.createHmac('sha256', secret).update(signed).digest('hex');
+  return expected === signature;
+}
+
+const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, stripe-signature');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
+  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
-  // Health check
-  if (req.method === 'GET' && pathname === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok' }));
-    return;
+  // --- Static pages ---
+  if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
+    serveFile(res, path.join(__dirname, 'landing.html'), 'text/html'); return;
   }
-
-  // Landing page at /
-  if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
-    serveFile(req, res, path.join(__dirname, 'landing.html'), 'text/html');
-    return;
+  if (req.method === 'GET' && req.url.startsWith('/app')) {
+    serveFile(res, path.join(__dirname, 'stem-study-tool.html'), 'text/html'); return;
   }
-
-  // App at /app (handles /app, /app?upgraded=true, etc.)
-  if (req.method === 'GET' && pathname === '/app') {
-    serveFile(req, res, path.join(__dirname, 'stem-study-tool.html'), 'text/html');
-    return;
-  }
-
-  // Auth + account pages
-  if (req.method === 'GET' && pathname === '/login') {
-    serveFile(req, res, path.join(__dirname, 'login.html'), 'text/html');
-    return;
-  }
-  if (req.method === 'GET' && pathname === '/signup') {
-    serveFile(req, res, path.join(__dirname, 'signup.html'), 'text/html');
-    return;
-  }
-  if (req.method === 'GET' && pathname === '/account') {
-    serveFile(req, res, path.join(__dirname, 'account.html'), 'text/html');
-    return;
-  }
-
-  // Logo
   if (req.method === 'GET' && req.url === '/revaix_study_logo_v3.svg') {
-    serveFile(req, res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml');
+    serveFile(res, path.join(__dirname, 'revaix_study_logo_v3.svg'), 'image/svg+xml'); return;
+  }
+  const ext = path.extname(req.url);
+  if (req.method === 'GET' && MIME_TYPES[ext]) {
+    serveFile(res, path.join(__dirname, req.url.split('?')[0]), MIME_TYPES[ext]); return;
+  }
+
+  // --- Anthropic API proxy ---
+  if (req.method === 'POST' && req.url === '/api/messages') {
+    const body = await collectBody(req);
+    proxyPost(res, 'api.anthropic.com', '/v1/messages', {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'Content-Length': body.length
+    }, body);
     return;
   }
 
-  // Static file serving with dynamic MIME types (skip /api/* routes)
-  if (req.method === 'GET' && pathname.startsWith('/') && !pathname.startsWith('/api/')) {
-    const filePath = path.join(__dirname, pathname);
-
-    // Security: prevent directory traversal
-    if (!filePath.startsWith(__dirname)) {
-      res.writeHead(403);
-      res.end('Forbidden');
-      return;
+  // --- fal.ai image proxy ---
+  if (req.method === 'POST' && req.url === '/api/generate-image') {
+    if (!FAL_KEY) {
+      jsonResponse(res, 503, { error: { message: 'Image generation not configured' } }); return;
     }
-
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    // Only serve files if they exist and have known types (avoid serving arbitrary files)
-    fs.stat(filePath, (err, stats) => {
-      if (err || !stats.isFile()) {
-        // Not a file, will fall through to 404
-        return;
-      }
-
-      // Only serve certain file types
-      if (contentType !== 'application/octet-stream' || ext === '') {
-        serveFile(req, res, filePath, contentType);
-        return;
-      }
-
-      // Unknown extension, skip
-      res.writeHead(404);
-      res.end('Not found');
-    });
-    return;
-  }
-
-  // Stripe Checkout endpoint
-  if ((req.method === 'GET' || req.method === 'POST') && pathname === '/api/checkout') {
-    console.log('[checkout] request received, plan:', parsedUrl.query.plan, '| stripe ready:', !!stripe, '| priceStudent:', STRIPE_PRICE_STUDENT ? 'set' : 'MISSING');
-
-    if (!stripe || !STRIPE_SECRET_KEY) {
-      console.log('[checkout] Stripe not configured — returning 503');
-      res.writeHead(503, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Stripe is not configured' }));
-      return;
-    }
-
-    const plan = parsedUrl.query.plan || 'student';
-
-    const STRIPE_PRICE_STUDENT_YEARLY = process.env.STRIPE_PRICE_STUDENT_YEARLY || '';
-    const STRIPE_PRICE_SERIOUS_YEARLY = process.env.STRIPE_PRICE_SERIOUS_YEARLY || '';
-
-    let priceId = STRIPE_PRICE_STUDENT;
-    let amount = 5;
-
-    if (plan === 'serious') {
-      priceId = STRIPE_PRICE_SERIOUS;
-      amount = 10;
-    } else if (plan === 'student_yearly') {
-      priceId = STRIPE_PRICE_STUDENT_YEARLY || STRIPE_PRICE_STUDENT;
-      amount = 48;
-    } else if (plan === 'serious_yearly') {
-      priceId = STRIPE_PRICE_SERIOUS_YEARLY || STRIPE_PRICE_SERIOUS;
-      amount = 96;
-    }
-
-    if (!priceId) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Price ID not configured for this plan' }));
-      return;
-    }
-
-    const origin = `https://revaixstudy.com`;
-
-    stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
-      success_url: `${origin}/app?upgraded=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/#pricing`,
-    })
-    .then(session => {
-      logAPIUsage('GET', '/api/checkout', 302, clientIP);
-      res.writeHead(302, { Location: session.url });
-      res.end();
-    })
-    .catch(err => {
-      logAPIUsage('GET', '/api/checkout', 500, clientIP);
-      console.error('Stripe checkout error:', err.message);
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Checkout failed: ' + err.message);
-    });
-    return;
-  }
-
-  // Stripe webhook endpoint
-  if (req.method === 'POST' && pathname === '/api/webhook') {
-    if (!STRIPE_WEBHOOK_SECRET) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Webhook secret not configured' }));
-      return;
-    }
-
-    let body = '';
-    req.on('data', chunk => {
-      if (body.length > 10 * 1024 * 1024) {
-        req.connection.destroy();
-      }
-      body += chunk;
-    });
-
-    req.on('end', () => {
-      const sig = req.headers['stripe-signature'];
-
-      try {
-        const event = stripe?.webhooks?.constructEvent(body, sig, STRIPE_WEBHOOK_SECRET);
-
-        if (event?.type === 'checkout.session.completed') {
-          const session = event.data.object;
-          const email = session.customer_email || session.customer_details?.email;
-          const plan = session.amount_total >= 13440 ? 'serious_yearly'
-            : session.amount_total >= 6720 ? 'student_yearly'
-            : session.amount_total >= 1400 ? 'serious'
-            : 'student';
-
-          if (email) {
-            // Write to both Supabase and JSON fallback
-            addPaidUser(email, plan, session.customer, session.id);
-            updateUserPlanInSupabase(email, plan, session.customer, session.id);
-          } else {
-            console.warn(`[${new Date().toISOString()}] Checkout completed but no email found: ${session.id}`);
-          }
-        }
-
-        // Also handle subscription cancellations
-        if (event?.type === 'customer.subscription.deleted') {
-          const sub = event.data.object;
-          if (sub.customer && stripe) {
-            stripe.customers.retrieve(sub.customer).then(customer => {
-              if (customer.email) {
-                const normalised = customer.email.toLowerCase().trim();
-                // Deactivate in both stores
-                const users = loadPaidUsers();
-                if (users[normalised]) {
-                  users[normalised].active = false;
-                  savePaidUsers(users);
-                }
-                deactivateUserInSupabase(normalised);
-                console.log(`[${new Date().toISOString()}] Deactivated user: ${normalised}`);
-              }
-            }).catch(e => {
-              console.warn('Could not deactivate user:', e.message);
-            });
-          }
-        }
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ received: true }));
-      } catch (err) {
-        logAPIUsage('POST', '/api/webhook', 400, clientIP);
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
-      }
-    });
-    return;
-  }
-
-  // Status endpoint
-  if (req.method === 'GET' && pathname === '/api/status') {
-    logAPIUsage('GET', '/api/status', 200, clientIP);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok' }));
-    return;
-  }
-
-  // Verify paid user by email
-  if (req.method === 'GET' && pathname === '/api/verify') {
-    const email = (parsedUrl.query.email || '').toLowerCase().trim();
-    if (!email) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Email required' }));
-      return;
-    }
-
-    const user = isPaidUser(email);
-    logAPIUsage('GET', '/api/verify', 200, clientIP);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      paid: !!user,
-      plan: user ? user.plan : 'free',
-      email: email,
+    const body = await collectBody(req);
+    const parsed = JSON.parse(body.toString());
+    const falBody = Buffer.from(JSON.stringify({
+      prompt: parsed.prompt,
+      image_size: 'landscape_4_3',
+      num_inference_steps: 28,
+      guidance_scale: 3.5,
+      num_images: 1,
+      enable_safety_checker: true
     }));
+    proxyPost(res, 'fal.run', '/fal-ai/flux/schnell', {
+      'Content-Type': 'application/json',
+      'Authorization': `Key ${FAL_KEY}`,
+      'Content-Length': falBody.length
+    }, falBody);
     return;
   }
 
-  // /api/me — verify Supabase JWT and return user's plan
-  if (req.method === 'GET' && pathname === '/api/me') {
-    const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
-    if (!token || !supabaseAdmin) {
-      res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized' }));
-      return;
+  // --- Check usage ---
+  if (req.method === 'POST' && req.url === '/api/check-usage') {
+    const body = await collectBody(req);
+    const { user_id } = JSON.parse(body.toString());
+
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('plan')
+      .eq('user_id', user_id)
+      .single();
+
+    if (sub?.plan === 'pro') {
+      return jsonResponse(res, 200, { allowed: true, plan: 'pro', remaining: null });
     }
 
-    supabaseAdmin.auth.getUser(token)
-      .then(({ data: { user }, error }) => {
-        if (error || !user) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid token' }));
-          return;
-        }
-        return supabaseAdmin
-          .from('profiles')
-          .select('plan, active, email, generations_used')
-          .eq('id', user.id)
-          .single()
-          .then(({ data: profile }) => {
-            const jsonUser = isPaidUser(user.email);
-            const active = profile?.active || jsonUser?.active || false;
-            const plan   = active ? (profile?.plan || jsonUser?.plan || 'student') : 'free';
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-              email: user.email,
-              plan,
-              active,
-              generations_used: profile?.generations_used || 0,
-            }));
-          });
-      })
-      .catch(err => {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
-      });
-    return;
-  }
+    const { data: usage } = await supabase
+      .from('usage')
+      .select('total_count, notes_count, exam_count, mark_count')
+      .eq('user_id', user_id)
+      .single();
 
-  // Increment usage count for free users
-  if (req.method === 'POST' && pathname === '/api/usage/increment') {
-    const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
-    if (!token || !supabaseAdmin) {
-      res.writeHead(401); res.end(); return;
-    }
-    supabaseAdmin.auth.getUser(token)
-      .then(({ data: { user }, error }) => {
-        if (error || !user) { res.writeHead(401); res.end(); return; }
-        return supabaseAdmin.rpc('increment_usage', { user_id: user.id })
-          .then(() => { res.writeHead(200); res.end('{}'); });
-      })
-      .catch(() => { res.writeHead(500); res.end(); });
-    return;
-  }
-
-  // ── Saved Packs API ──
-  // Helper: verify JWT and return user (reused across pack routes)
-  const getPacksUser = (token) => {
-    if (!token || !supabaseAdmin) return Promise.reject(new Error('Unauthorized'));
-    return supabaseAdmin.auth.getUser(token).then(({ data: { user }, error }) => {
-      if (error || !user) throw new Error('Unauthorized');
-      return user;
+    const total = usage?.total_count ?? 0;
+    return jsonResponse(res, 200, {
+      allowed: total < FREE_LIMIT,
+      plan: 'free',
+      total_count: total,
+      notes_count: usage?.notes_count ?? 0,
+      exam_count: usage?.exam_count ?? 0,
+      mark_count: usage?.mark_count ?? 0,
+      remaining: Math.max(0, FREE_LIMIT - total)
     });
-  };
-
-  const packToken = (req.headers.authorization || '').replace('Bearer ', '').trim();
-
-  // GET /api/packs — list user's packs
-  if (req.method === 'GET' && pathname === '/api/packs') {
-    getPacksUser(packToken)
-      .then(user => supabaseAdmin.from('saved_packs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }))
-      .then(({ data, error }) => {
-        if (error) { res.writeHead(500); res.end(JSON.stringify({ error: error.message })); return; }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(data || []));
-      })
-      .catch(() => { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); });
-    return;
   }
 
-  // POST /api/packs — save a pack (Serious only)
-  if (req.method === 'POST' && pathname === '/api/packs') {
-    let body = '';
-    req.on('data', c => { body += c; });
-    req.on('end', () => {
-      let parsed;
-      try { parsed = JSON.parse(body); } catch { res.writeHead(400); res.end(); return; }
-      getPacksUser(packToken)
-        .then(user => supabaseAdmin.from('profiles').select('plan,active').eq('id', user.id).single()
-          .then(({ data: profile }) => {
-            const isSeriousPlan = profile?.active && (profile?.plan === 'serious' || profile?.plan === 'serious_yearly');
-            if (!isSeriousPlan) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Serious plan required to save packs' })); return; }
-            return supabaseAdmin.from('saved_packs').insert({
-              user_id: user.id,
-              title: parsed.title || 'Untitled',
-              type: parsed.type || 'notes',
-              content: parsed.content || {},
-              is_favourite: false,
-            }).select().single()
-              .then(({ data, error }) => {
-                if (error) { res.writeHead(500); res.end(JSON.stringify({ error: error.message })); return; }
-                res.writeHead(201, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(data));
-              });
-          })
-        )
-        .catch(() => { res.writeHead(401); res.end(); });
-    });
-    return;
+  // --- Increment usage ---
+  if (req.method === 'POST' && req.url === '/api/increment-usage') {
+    const body = await collectBody(req);
+    const { user_id, tool } = JSON.parse(body.toString()); // tool: 'notes' | 'exam' | 'mark'
+
+    await supabase.rpc('increment_usage', { uid: user_id, tool });
+    return jsonResponse(res, 200, { ok: true });
   }
 
-  // PATCH /api/packs/:id/favourite — toggle favourite
-  if (req.method === 'PATCH' && /^\/api\/packs\/[^/]+\/favourite$/.test(pathname)) {
-    const packId = pathname.split('/')[3];
-    let body = '';
-    req.on('data', c => { body += c; });
-    req.on('end', () => {
-      const { is_favourite } = JSON.parse(body || '{}');
-      getPacksUser(packToken)
-        .then(user => supabaseAdmin.from('saved_packs').update({ is_favourite }).eq('id', packId).eq('user_id', user.id))
-        .then(() => { res.writeHead(200); res.end('{}'); })
-        .catch(() => { res.writeHead(401); res.end(); });
-    });
-    return;
-  }
+  // --- Stripe webhook ---
+  if (req.method === 'POST' && req.url === '/api/stripe-webhook') {
+    const body = await collectBody(req);
+    const sig = req.headers['stripe-signature'];
 
-  // DELETE /api/packs/:id
-  if (req.method === 'DELETE' && /^\/api\/packs\/[^/]+$/.test(pathname)) {
-    const packId = pathname.split('/')[3];
-    getPacksUser(packToken)
-      .then(user => supabaseAdmin.from('saved_packs').delete().eq('id', packId).eq('user_id', user.id))
-      .then(() => { res.writeHead(200); res.end('{}'); })
-      .catch(() => { res.writeHead(401); res.end(); });
-    return;
-  }
-
-  // API proxy to Anthropic with rate limiting
-  if (req.method === 'POST' && pathname === '/api/messages') {
-    if (!checkRateLimit(clientIP)) {
-      logAPIUsage('POST', '/api/messages', 429, clientIP);
-      res.writeHead(429, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Too many requests. Max 20 requests per minute.' }));
-      return;
+    if (!verifyStripeSignature(body.toString(), sig, STRIPE_WEBHOOK_SECRET)) {
+      return jsonResponse(res, 400, { error: 'Invalid signature' });
     }
 
-    let body = '';
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const event = JSON.parse(body.toString());
+    const sub = event.data.object;
 
-    req.on('data', chunk => {
-      body += chunk;
-      if (body.length > maxSize) {
-        req.connection.destroy();
-      }
-    });
+    if (['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(event.type)) {
+      const isActive = sub.status === 'active';
+      await supabase
+        .from('subscriptions')
+        .update({ plan: isActive ? 'pro' : 'free', updated_at: new Date() })
+        .eq('stripe_customer_id', sub.customer);
+    }
 
-    req.on('end', () => {
-      if (!API_KEY) {
-        logAPIUsage('POST', '/api/messages', 503, clientIP);
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: { message: 'API key not configured' } }));
-        return;
-      }
-
-      logAPIUsage('POST', '/api/messages', 200, clientIP);
-
-      const options = {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Length': Buffer.byteLength(body)
-        }
-      };
-
-      const proxyReq = https.request(options, (proxyRes) => {
-        res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
-        proxyRes.pipe(res);
-      });
-
-      proxyReq.on('error', (e) => {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: { message: e.message } }));
-      });
-
-      proxyReq.write(body);
-      proxyReq.end();
-    });
-    return;
+    return jsonResponse(res, 200, { received: true });
   }
 
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.writeHead(404);
   res.end('Not found');
 });
 
 server.listen(PORT, () => {
   console.log(`\n✅ Revaix Study running at http://localhost:${PORT}`);
-  console.log(`   Landing page: http://localhost:${PORT}`);
-  console.log(`   App: http://localhost:${PORT}/app`);
-  console.log(`   Health: http://localhost:${PORT}/health\n`);
-
-  if (!API_KEY) {
-    console.warn('⚠️  No Anthropic API key found. Set it with:');
-    console.warn('   PowerShell: $env:ANTHROPIC_API_KEY="your_key_here"; node server.js\n');
-  }
-
-  if (!STRIPE_SECRET_KEY) {
-    console.warn('⚠️  No Stripe secret key found. Stripe endpoints will not work.');
-    console.warn('   Set it with: $env:STRIPE_SECRET_KEY="your_key_here"\n');
-  } else if (!STRIPE_PRICE_STUDENT || !STRIPE_PRICE_SERIOUS) {
-    console.warn('⚠️  Stripe price IDs not fully configured:');
-    if (!STRIPE_PRICE_STUDENT) console.warn('   STRIPE_PRICE_STUDENT not set');
-    if (!STRIPE_PRICE_SERIOUS) console.warn('   STRIPE_PRICE_SERIOUS not set\n');
-  }
+  console.log(`   Landing: http://localhost:${PORT}`);
+  console.log(`   App:     http://localhost:${PORT}/app\n`);
+  if (!API_KEY) console.warn('⚠️  ANTHROPIC_API_KEY not set');
+  if (!SUPABASE_URL) console.warn('⚠️  SUPABASE_URL not set');
+  if (!SUPABASE_SERVICE_KEY) console.warn('⚠️  SUPABASE_SERVICE_KEY not set');
+  if (!STRIPE_SECRET_KEY) console.warn('⚠️  STRIPE_SECRET_KEY not set');
+  if (!STRIPE_WEBHOOK_SECRET) console.warn('⚠️  STRIPE_WEBHOOK_SECRET not set');
 });
