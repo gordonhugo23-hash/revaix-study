@@ -1870,8 +1870,6 @@ document.querySelectorAll('.nav-link').forEach(l=>{
 const FREE_LIMIT = 3;
 const STRIPE_PRO_LINK = 'https://buy.stripe.com/eVq3cu8q30TQ8hE39PdUY00';
 
-function getPacksUsed(){ return parseInt(localStorage.getItem('revaixPacksUsed')||'0'); }
-function incrementPacksUsed(){ localStorage.setItem('revaixPacksUsed', String(getPacksUsed()+1)); }
 function isPro(){ return localStorage.getItem('revaixPlan')==='pro'; }
 function setPro(){ localStorage.setItem('revaixPlan','pro'); }
 function makeBannerHtml(used, pro){
@@ -1883,9 +1881,7 @@ function makeBannerHtml(used, pro){
   return `<div class="usage-banner"><div class="usage-banner-left"><div class="usage-dots">${dots}</div><span>${msg}</span></div>${rem<=1?`<button class="usage-banner-upgrade" onclick="showUpgradeModal()">Upgrade Pro →</button>`:''}</div>`;
 }
 
-function updateUsageUI(){
-  const used = getPacksUsed();
-  const pro = isPro();
+function updateUsageUI(used, pro){
 
   // Nav
   const navUsage = document.getElementById('navUsage');
@@ -1920,7 +1916,7 @@ function hideUpgradeModal(){
 (function checkProParam(){
   const params = new URLSearchParams(window.location.search);
   if(params.get('pro')==='true'){ setPro(); history.replaceState({},'',window.location.pathname); }
-  updateUsageUI();
+  fetchAndUpdateUsage();
 })();
 
 // ── HELPERS ──
@@ -2659,7 +2655,6 @@ flashcards=6, questions=5, sections=3-4, formulas=only if relevant, test=3. Be c
     // Track usage
     console.log('incrementUsage notes — firing');
     await incrementUsage('notes');
-    updateUsageUI();
 
     // Show detected subject in header
     const subjectLbl = document.getElementById('lecSubjectLabel');
@@ -2858,7 +2853,7 @@ Return ONLY JSON: ${FMT}`;
     renderExam(examData);
     document.getElementById('examLoad').classList.remove('show');
     document.getElementById('examRes').classList.add('show');
-    await incrementUsage('exam'); updateUsageUI();
+    await incrementUsage('exam');
     window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){
     clearInterval(iv);finishProgress('examProgressBar',examProg);
@@ -3298,7 +3293,7 @@ If blank score 0.`;
 
     document.getElementById('markLoad').classList.remove('show');
     document.getElementById('markFeedbackSection').classList.add('show');
-    await incrementUsage('mark'); updateUsageUI();
+    await incrementUsage('mark');
     window.scrollTo({top:0,behavior:'smooth'});
 
   }catch(e){
@@ -3630,12 +3625,14 @@ async function handleSignIn(){
   const{error}=await _supabase.auth.signInWithPassword({email,password});
   document.getElementById('authSignInBtn').textContent='Already have an account? Sign in';
   if(error){errEl.textContent=error.message;errEl.style.display='block';}
-  else{closeAuthModal();updateAuthUI();}
+  else{closeAuthModal();updateAuthUI();fetchAndUpdateUsage();}
 }
 
 async function handleSignOut(){
-  await _supabase.auth.signOut();
-  updateAuthUI();
+  await _supabase.auth.signOut({ scope: 'local' });
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.reload();
 }
 
 async function updateAuthUI(){
@@ -3655,6 +3652,25 @@ async function updateAuthUI(){
     btn.style.color='#07070e';
     btn.style.border='none';
   }
+  await fetchAndUpdateUsage();
+}
+
+async function fetchAndUpdateUsage(){
+  try{
+    const{data:{user}}=await _supabase.auth.getUser();
+    if(!user){ updateUsageUI(0, false); return; }
+    const res=await fetch('/api/check-usage',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user_id:user.id})
+    });
+    const data=await res.json();
+    const pro=data.plan==='pro';
+    if(pro) setPro();
+    updateUsageUI(data.total_count??0, pro);
+  }catch(e){
+    updateUsageUI(0, isPro());
+  }
 }
 
 async function checkCanGenerate(){
@@ -3670,14 +3686,11 @@ async function checkCanGenerate(){
     if(!data.allowed){showUpgradeModal();return false;}
     return true;
   } catch(e){
-    // Supabase not configured — fall back to localStorage
-    if(!isPro()&&getPacksUsed()>=FREE_LIMIT){showUpgradeModal();return false;}
-    return true;
+    return false;
   }
 }
 
 async function incrementUsage(tool){
-  incrementPacksUsed(); // immediate localStorage update for UI
   try{
     const{data:{user}}=await _supabase.auth.getUser();
     if(!user)return;
@@ -3686,7 +3699,8 @@ async function incrementUsage(tool){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({user_id:user.id,tool})
     });
-  } catch(e){ /* silent — localStorage already updated */ }
+    await fetchAndUpdateUsage();
+  } catch(e){ /* silent */ }
 }
 
 // Close auth modal on backdrop click
