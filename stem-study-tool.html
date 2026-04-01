@@ -3632,7 +3632,7 @@ async function handleSignOut(){
   await _supabase.auth.signOut({ scope: 'local' });
   localStorage.clear();
   sessionStorage.clear();
-  window.location.reload();
+  window.location.href = '/login';
 }
 
 async function updateAuthUI(){
